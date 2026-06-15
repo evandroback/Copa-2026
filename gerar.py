@@ -71,11 +71,83 @@ def pred_score(a,b):
     s=(3,0) if d>=25 else (2,0) if d>=18 else (2,1) if d>=11 else (1,0)
     return hi,lo,s
 
+# ---- palpite original do mata-mata (pre-computado) e fase de cada jogo ----
+def phase_of(i):
+    if i<=88: return "R32"
+    if i<=96: return "R16"
+    if i<=100: return "QF"
+    if i<=102: return "SF"
+    if i==103: return "3P"
+    return "F"
+def original_phases(alloc_map):
+    pg={}
+    for g,ts in GR.items():
+        st={t:{"P":0,"GF":0,"GA":0} for t in ts}
+        for a,b in itertools.combinations(ts,2):
+            hi,lo,s=pred_score(a,b)
+            gh=s[0] if hi==a else s[1]; ga=s[0] if hi==b else s[1]
+            st[a]["GF"]+=gh;st[a]["GA"]+=ga;st[b]["GF"]+=ga;st[b]["GA"]+=gh
+            if gh>ga: st[a]["P"]+=3
+            elif gh<ga: st[b]["P"]+=3
+            else: st[a]["P"]+=1;st[b]["P"]+=1
+        order=sorted(ts,key=lambda t:(-st[t]["P"],-(st[t]["GF"]-st[t]["GA"]),-st[t]["GF"],-F[t]))
+        pg[g]=(order,st)
+    thirds=[]
+    for g in GR:
+        t=pg[g][0][2]; s=pg[g][1][t]
+        thirds.append((g,s["P"],s["GF"]-s["GA"],s["GF"],t))
+    thirds.sort(key=lambda x:(-x[1],-x[2],-x[3],-F[x[4]]))
+    top8="".join(sorted(x[0] for x in thirds[:8]))
+    alloc=alloc_map.get(top8)
+    posp=lambda g,rk: pg[g][0][rk-1]
+    RESp={}
+    def slot(spec):
+        if "wn" in spec: return posp(spec["wn"],1)
+        if "ru" in spec: return posp(spec["ru"],2)
+        if "th" in spec:
+            if not alloc: return None
+            g=alloc.get(spec["th"]); return posp(g,3) if g else None
+        if "win" in spec: r=RESp.get(spec["win"]); return r["w"] if r else None
+        if "lose" in spec: r=RESp.get(spec["lose"]); return (r["b"] if r["a"]==r["w"] else r["a"]) if r else None
+        return None
+    phases={"R32":[],"R16":[],"QF":[],"SF":[],"F":[],"CH":[]}
+    for i in sorted(KO):
+        a=slot(KO[i]["a"]); b=slot(KO[i]["b"])
+        w = b if not a else a if not b else (a if F[a]>=F[b] else b)
+        RESp[i]={"a":a,"b":b,"w":w}
+        ph=phase_of(i)
+        if ph in phases:
+            if a: phases[ph].append(a)
+            if b: phases[ph].append(b)
+        if i==104 and w: phases["CH"].append(w)
+    return phases
+
+# fase do mata-mata a partir do texto "round" da API (defensivo)
+def ko_phase(round_str):
+    r=(round_str or "").lower()
+    if "group" in r: return None
+    if "32" in r: return "R32"
+    if "16" in r: return "R16"
+    if "quart" in r: return "QF"
+    if "semi" in r: return "SF"
+    if "3rd" in r or "third" in r or "place" in r: return "3P"
+    if "final" in r: return "F"
+    return None
+
+# matchday (rodada) por confronto — preenchido pela API; no seed, tudo rodada 1
+ROUNDS={}
+KO_REAL=[]   # jogos reais do mata-mata: {"ph","h","a","gh","ga","w"}
+def parse_round(s):
+    import re
+    m=re.search(r'(\d+)', s or '')
+    return int(m.group(1)) if m else None
+
 # ---------- fontes de resultado ----------
 # rede de seguranca: usada SO se a API falhar (1a rodada, grupos A-D)
 SEED = {("MEX","RSA"):(2,0),("KOR","CZE"):(2,1),("QAT","SUI"):(1,1),("CAN","BIH"):(1,1),
         ("BRA","MAR"):(1,1),("HAI","SCO"):(0,1),("USA","PAR"):(4,1),("AUS","TUR"):(2,0)}
 def load_seed():
+    for k in SEED: ROUNDS.setdefault(k,1)   # os 8 jogos do seed sao da rodada 1
     return dict(SEED)
 
 def fetch_api():
@@ -98,7 +170,16 @@ def fetch_api():
         ch, ca = code_from_name(th), code_from_name(ta)
         if not ch or not ca: bad.append((th,ta)); continue
         if gh is None or ga is None: continue
+        rnd=(it.get("league") or {}).get("round")
+        ph=ko_phase(rnd)
+        if ph:
+            hw=((it.get("teams",{}).get("home") or {}).get("winner"))
+            aw=((it.get("teams",{}).get("away") or {}).get("winner"))
+            w = ch if hw else (ca if aw else (ch if gh>ga else ca if ga>gh else None))
+            KO_REAL.append({"ph":ph,"h":ch,"a":ca,"gh":int(gh),"ga":int(ga),"w":w})
+            continue
         out[(ch,ca)]=(int(gh),int(ga))
+        ROUNDS[(ch,ca)]=parse_round(rnd)
     if bad: print("[aviso] selecoes nao reconhecidas (ajustar ALIASES):", bad)
     print(f"[ok] API retornou {len(out)} jogos encerrados")
     return out
@@ -112,7 +193,8 @@ def build():
             if (a,b) in real:   H,A=a,b; gh,ga=real[(a,b)]; rr=True
             elif (b,a) in real: H,A=b,a; gh,ga=real[(b,a)]; rr=True
             else: H,A,s=pred_score(a,b); gh,ga=s; rr=False
-            games.append({"g":g,"h":H,"a":A,"gh":gh,"ga":ga,"r":rr})
+            rd=ROUNDS.get((H,A)) or ROUNDS.get((A,H))
+            games.append({"g":g,"h":H,"a":A,"gh":gh,"ga":ga,"r":rr,"rd":rd})
     return games
 
 def standings(games):
@@ -140,8 +222,9 @@ def main():
     now=datetime.datetime.now(TZ) if TZ else datetime.datetime.utcnow()
     asof=now.strftime("%d/%m/%Y %H:%M")+(" (Brasília)" if TZ else " UTC")
     # injetar no template
-    DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games}
     ALLOC=json.load(open(os.path.join(HERE,"third_alloc.json"),encoding="utf-8"))
+    DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
+          "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))

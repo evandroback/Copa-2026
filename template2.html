@@ -141,6 +141,48 @@ footer b{color:var(--mut)}
 ::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:#1f3329;border-radius:6px}
 *:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ---- assertividade ---- */
+.accsum{background:linear-gradient(180deg,var(--surf2),#0f211a);border:1px solid var(--line2);border-radius:14px;padding:18px 16px;margin-bottom:16px;display:flex;flex-wrap:wrap;align-items:center;gap:6px 18px}
+.accpct{font-family:Archivo;font-weight:900;font-size:clamp(40px,11vw,60px);line-height:.9;color:var(--gold)}
+.accpctlab{font-size:13px;color:var(--mut);font-weight:600}
+.accpctlab span{color:var(--mut2);font-weight:500;font-size:12px}
+.accbar{flex-basis:100%;height:9px;border-radius:6px;background:rgba(255,255,255,.07);overflow:hidden;margin:5px 0 2px}
+.accbarfill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--qual),var(--gold));transition:width .4s}
+.accstats{flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.accstats .st{font-family:Archivo;font-weight:700;font-size:12px;padding:5px 10px;border-radius:8px;background:var(--surf);border:1px solid var(--line)}
+.accstats .st.hit{color:var(--live)}.accstats .st.draw{color:var(--gold)}.accstats .st.miss{color:var(--copa)}.accstats .st.exact{color:var(--txt)}
+.acch{font-family:Archivo;font-weight:800;font-size:13.5px;margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.acch.hit{color:var(--live)}.acch.draw{color:var(--gold)}.acch.miss{color:var(--copa)}
+.accm{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px}
+.accm.hit{border-left:3px solid var(--live)}.accm.draw{border-left:3px solid var(--gold)}.accm.miss{border-left:3px solid var(--copa)}
+.accteams{display:flex;align-items:center;gap:7px;font-family:Archivo;font-weight:700;font-size:14px;flex-wrap:wrap}
+.accteams .fl{font-size:18px}
+.accteams .accscore{font-weight:900;font-size:15px;color:var(--txt);padding:0 4px}
+.accteams .accbadge{margin-left:auto;font-size:11px;font-weight:700;padding:3px 8px;border-radius:7px;white-space:nowrap}
+.accbadge.hit{color:var(--live);background:rgba(54,196,107,.13)}.accbadge.draw{color:var(--gold);background:rgba(244,194,75,.13)}.accbadge.miss{color:var(--copa);background:rgba(232,51,74,.13)}
+.accpred{font-size:12px;color:var(--mut);margin-top:5px}
+.accpred .ex{color:var(--gold);font-weight:600}
+.accrtabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.accrt{font-family:Archivo;font-weight:700;font-size:12px;color:var(--mut);background:var(--surf);border:1px solid var(--line);padding:7px 13px;border-radius:9px;cursor:pointer;transition:.15s}
+.accrt.on{background:linear-gradient(180deg,var(--surf2),#0f211a);color:var(--txt);border-color:var(--line2)}
+.accrt:hover:not(.on){color:var(--txt)}
+.accdim{display:flex;gap:8px;margin-bottom:14px}
+.accdb{flex:1;font-family:Archivo;font-weight:800;font-size:13px;color:var(--mut);background:var(--surf);border:1px solid var(--line);padding:11px 8px;border-radius:11px;cursor:pointer;transition:.15s}
+.accdb.on{background:linear-gradient(180deg,var(--surf2),#0f211a);color:var(--txt);border-color:var(--line2)}
+.accdb:hover:not(.on){color:var(--txt)}
+.accphase{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+.acphh{display:flex;align-items:center;justify-content:space-between}
+.acphn{font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt)}
+.acphp{font-family:Archivo;font-weight:900;font-size:22px;color:var(--gold)}
+.acphsub{font-size:12px;color:var(--mut);margin:2px 0 8px}
+.acphbar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:9px}
+.acphfill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--qual),var(--gold));transition:width .4s}
+.acphlist{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:5px}
+.acphteam{font-size:11.5px;font-weight:600;padding:4px 8px;border-radius:7px;white-space:nowrap}
+.acphteam.hit{color:var(--live);background:rgba(54,196,107,.12)}
+.acphteam.miss{color:var(--copa);background:rgba(232,51,74,.12)}
+.acphnote{font-size:11.5px;color:var(--mut2);margin-top:10px;line-height:1.5}
+.accempty{font-size:13.5px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:18px 16px;text-align:center}
 </style>
 </head>
 <body>
@@ -155,6 +197,7 @@ footer b{color:var(--mut)}
     <div class="tabs">
       <button class="tab on" id="tabGroups">Grupos</button>
       <button class="tab" id="tabKO">Chaveamento</button>
+      <button class="tab" id="tabAcc">📊 Acertos</button>
     </div>
     <div class="spacer"></div>
     <button class="btn gold" id="btnPreset">🎯 Restaurar palpite</button>
@@ -178,6 +221,11 @@ footer b{color:var(--mut)}
     <div class="finals" id="finalsBox"></div>
   </section>
 
+  <section class="panel hidden" id="secAcc">
+    <div class="hint">Comparo <b>meu palpite original</b> (favorito por força, definido antes da Copa começar) com os <span class="real">resultados reais</span> dos jogos já encerrados. Atualiza sozinho conforme novos jogos terminam. <b>Critério:</b> acertar o resultado — quem venceu. Como o palpite sempre cravava um vencedor, jogo que terminou <b>empatado</b> conta como não-acerto.</div>
+    <div id="accBox"></div>
+  </section>
+
   <footer>
     <b>Resultados reais já fixados (__ASOF__):</b> __REALLIST__. Os jogos ainda não realizados usam meu palpite (favorito por força). Desempate entre 3ºs colocados: pontos → saldo → gols (oficial). Dentro do grupo, o critério fino de confronto direto é aproximado por força. Terceiros alocados no mata-mata pela tabela oficial da FIFA (Anexo C, 495 combinações).
   </footer>
@@ -187,6 +235,7 @@ footer b{color:var(--mut)}
 const DATA = /*__DATA__*/;
 const THIRD_ALLOC = /*__ALLOC__*/;
 const F=DATA.F, GR=DATA.GR, NAME=DATA.NAME, FLAG=DATA.FLAG, GAMES0=DATA.GAMES;
+const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
 const LETTERS=Object.keys(GR);
 const clone=x=>JSON.parse(JSON.stringify(x));
 const canon=m=>m.g+':'+[m.h,m.a].slice().sort().join('-');
@@ -358,6 +407,112 @@ function buildFollow(){
 }
 function renderAll(){ recompute(); renderGroups(); renderKO(); saveSoon(); }
 
+// ---- assertividade do palpite original ----
+function predScore(a,b){
+  const d=Math.abs(F[a]-F[b]);
+  const hi=F[a]>=F[b]?a:b, lo=F[a]>=F[b]?b:a;
+  const s = d>=25?[3,0] : d>=18?[2,0] : d>=11?[2,1] : [1,0];
+  return {hi,lo,sh:s[0],sl:s[1]};   // favorito (hi) vence por sh-sl
+}
+let accDim='groups', accRound='all';
+function accRow(it){
+  const m=it.m, p=it.p, K=it.kind;
+  const badge = K==='hit'?'✅ acertou' : K==='draw'?'🤝 empate' : '❌ zebra';
+  const exTxt = it.exact?` · <span class="ex">🎯 cravou o placar</span>`:'';
+  const rdTxt = m.rd?` · R${m.rd}`:'';
+  return `<div class="accm ${K}">`+
+    `<div class="accteams"><span class="fl">${FLAG[m.h]}</span><span class="ab">${NAME[m.h]}</span>`+
+    `<span class="accscore">${m.gh}–${m.ga}</span>`+
+    `<span class="ab">${NAME[m.a]}</span><span class="fl">${FLAG[m.a]}</span>`+
+    `<span class="accbadge ${K}">${badge}</span></div>`+
+    `<div class="accpred">palpite: <b>${NAME[p.hi]}</b> vencia ${p.sh}–${p.sl}${exTxt}${rdTxt}</div></div>`;
+}
+function accStats(reals){
+  const hits=[],draws=[],misses=[]; let exact=0;
+  for(const m of reals){
+    const p=predScore(m.h,m.a);
+    const realWin = m.gh>m.ga?m.h : (m.ga>m.gh?m.a : null);
+    const phHome=(p.hi===m.h)?p.sh:p.sl, phAway=(p.hi===m.a)?p.sh:p.sl;
+    const isExact=(phHome===m.gh && phAway===m.ga);
+    let kind;
+    if(realWin===null) kind='draw';
+    else if(realWin===p.hi){ kind='hit'; if(isExact) exact++; }
+    else kind='miss';
+    (kind==='hit'?hits:kind==='draw'?draws:misses).push({m,p,kind,exact:isExact});
+  }
+  return {hits,draws,misses,exact,total:reals.length};
+}
+function accGroupsHTML(){
+  const allReals=GAMES0.filter(m=>m.r);
+  if(!allReals.length) return `<div class="accempty">Nenhum jogo de grupo encerrado ainda.<br>Assim que os primeiros resultados reais entrarem, a assertividade aparece aqui.</div>`;
+  const roundsPresent=[...new Set(allReals.map(m=>m.rd).filter(x=>x!=null))].sort((a,b)=>a-b);
+  if(accRound!=='all' && !roundsPresent.includes(accRound)) accRound='all';
+  let tabs='';
+  if(roundsPresent.length>1){
+    tabs=`<div class="accrtabs"><button class="accrt ${accRound==='all'?'on':''}" data-r="all">Todas</button>`;
+    roundsPresent.forEach(r=> tabs+=`<button class="accrt ${accRound===r?'on':''}" data-r="${r}">Rodada ${r}</button>`);
+    tabs+=`</div>`;
+  }
+  const reals = accRound==='all'? allReals : allReals.filter(m=>m.rd===accRound);
+  const {hits,draws,misses,exact,total}=accStats(reals);
+  const nHit=hits.length, pct=total?Math.round(nHit/total*100):0;
+  const scope = accRound==='all'? `${total} ${total===1?'jogo encerrado':'jogos encerrados'}` : `Rodada ${accRound} · ${total} ${total===1?'jogo':'jogos'}`;
+  let h=tabs+`<div class="accsum">`+
+    `<div class="accpct">${pct}%</div>`+
+    `<div class="accpctlab">de acerto no resultado<br><span>${scope}</span></div>`+
+    `<div class="accbar"><div class="accbarfill" style="width:${pct}%"></div></div>`+
+    `<div class="accstats">`+
+      `<span class="st hit">✅ ${nHit} ${nHit===1?'acerto':'acertos'}</span>`+
+      `<span class="st draw">🤝 ${draws.length} ${draws.length===1?'empate':'empates'}</span>`+
+      `<span class="st miss">❌ ${misses.length} ${misses.length===1?'zebra':'zebras'}</span>`+
+      `<span class="st exact">🎯 ${exact} ${exact===1?'placar exato':'placares exatos'}</span>`+
+    `</div></div>`;
+  const sortGM=arr=>arr.sort((x,y)=> (x.m.rd||0)-(y.m.rd||0) || x.m.g.localeCompare(y.m.g));
+  if(hits.length){ h+=`<h3 class="acch hit">✅ Acertou o resultado (${hits.length})</h3>`; sortGM(hits).forEach(it=>h+=accRow(it)); }
+  if(draws.length){ h+=`<h3 class="acch draw">🤝 Terminou empatado — palpite cravava vencedor (${draws.length})</h3>`; sortGM(draws).forEach(it=>h+=accRow(it)); }
+  if(misses.length){ h+=`<h3 class="acch miss">❌ Deu zebra — o azarão venceu (${misses.length})</h3>`; sortGM(misses).forEach(it=>h+=accRow(it)); }
+  return h;
+}
+function realByPhase(){
+  const bp={R32:new Set(),R16:new Set(),QF:new Set(),SF:new Set(),F:new Set(),CH:new Set()};
+  for(const j of (KO_REAL||[])){
+    if(bp[j.ph]){ if(j.h)bp[j.ph].add(j.h); if(j.a)bp[j.ph].add(j.a); }
+    if(j.ph==='F'&&j.w) bp.CH.add(j.w);
+  }
+  return bp;
+}
+function accKOHTML(){
+  const real=realByPhase();
+  const order=[['R32','16-avos de final'],['R16','Oitavas de final'],['QF','Quartas de final'],['SF','Semifinais'],['F','Final'],['CH','Campeão']];
+  const active=order.filter(([k])=> real[k]&&real[k].size>0);
+  if(!active.length) return `<div class="accempty">O mata-mata ainda não começou.<br>Quando os 16-avos arrancarem, a precisão do palpite <b>por fase</b> aparece aqui sozinha — comparando quem eu projetei em cada fase com quem realmente chegou.</div>`;
+  let h='';
+  for(const [k,label] of active){
+    const realSet=real[k], predSet=new Set(PRED_PHASES[k]||[]);
+    const hit=[...realSet].filter(c=>predSet.has(c));
+    const surp=[...realSet].filter(c=>!predSet.has(c));
+    const pct=realSet.size?Math.round(hit.length/realSet.size*100):0;
+    const noun = k==='CH'?'o campeão':`os ${realSet.size} que chegaram`;
+    h+=`<div class="accphase"><div class="acphh"><span class="acphn">${label}</span><span class="acphp">${pct}%</span></div>`+
+       `<div class="acphsub">acertei <b>${hit.length}</b> de ${realSet.size} — ${noun}</div>`+
+       `<div class="acphbar"><div class="acphfill" style="width:${pct}%"></div></div>`;
+    if(hit.length){ h+=`<div class="acphlist">`+hit.map(c=>`<span class="acphteam hit">${FLAG[c]} ${NAME[c]} ✓</span>`).join('')+`</div>`; }
+    if(surp.length){ h+=`<div class="acphlist">`+surp.map(c=>`<span class="acphteam miss">${FLAG[c]} ${NAME[c]} ✗</span>`).join('')+`</div>`; }
+    h+=`</div>`;
+  }
+  h+=`<div class="acphnote">✓ = projetei nesta fase e o time chegou · ✗ = chegou, mas eu não projetava. Aqui a métrica é <b>"quem alcança cada fase"</b> — não o placar do jogo — porque no mata-mata o confronto previsto pode nem acontecer.</div>`;
+  return h;
+}
+function renderAccuracy(){
+  const box=document.getElementById('accBox');
+  const koStarted=(KO_REAL&&KO_REAL.length>0);
+  const dim=`<div class="accdim">`+
+    `<button class="accdb ${accDim==='groups'?'on':''}" data-dim="groups">⚽ Fase de grupos</button>`+
+    `<button class="accdb ${accDim==='ko'?'on':''}" data-dim="ko">🏆 Mata-mata${koStarted?'':' · em breve'}</button>`+
+  `</div>`;
+  box.innerHTML = dim + (accDim==='ko'? accKOHTML() : accGroupsHTML());
+}
+
 // ---- eventos ----
 groupsGrid.addEventListener('click',e=>{
   const b=e.target.closest('[data-inc]'); if(!b) return;
@@ -375,10 +530,21 @@ document.getElementById('koBody').addEventListener('click',e=>{
   renderAll();
 });
 document.getElementById('followSel').addEventListener('change',e=>{ state.follow=e.target.value; renderKO(); saveSoon(); });
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO');
-function setTab(t){ state.tab=t; tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko');
-  document.getElementById('secGroups').classList.toggle('hidden',t!=='groups'); document.getElementById('secKO').classList.toggle('hidden',t!=='ko'); saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko');
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), ta=document.getElementById('tabAcc');
+function setTab(t){ state.tab=t;
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); ta.classList.toggle('on',t==='acc');
+  document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
+  document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
+  document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
+  if(t==='acc') renderAccuracy();
+  saveSoon(); }
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); ta.onclick=()=>setTab('acc');
+document.getElementById('accBox').addEventListener('click',e=>{
+  const d=e.target.closest('[data-dim]');
+  if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }
+  const b=e.target.closest('[data-r]');
+  if(b){ accRound = b.dataset.r==='all'?'all':+b.dataset.r; renderAccuracy(); }
+});
 document.getElementById('btnPreset').onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); };
 
 // ---- persistência ----
