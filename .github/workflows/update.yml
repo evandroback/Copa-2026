@@ -1,7 +1,7 @@
 name: atualiza-copa
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '*/20 * * * *'
   workflow_dispatch:
   push:
     branches: [ main ]
