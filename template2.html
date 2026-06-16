@@ -93,6 +93,14 @@ h1 .yr{color:var(--gold)}
 .gm .tag{font-size:8px;font-weight:800;font-family:Archivo;border-radius:3px;padding:1px 4px;flex:none}
 .gm .tag.fim{color:var(--live);background:rgba(54,196,107,.13)}
 .gm .tag.pal{color:var(--mut);background:rgba(255,255,255,.05)}
+/* linha discreta data/estadio/pais nos jogos */
+.gm-wrap{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.gm-wrap:last-child{border-bottom:0}
+.gm-meta{display:flex;align-items:center;gap:5px;flex-wrap:wrap;font-size:9.5px;color:var(--mut2);letter-spacing:.02em;padding:1px 3px 2px}
+.gm-meta .sep{opacity:.45}
+.gm-meta .vflag{font-size:11px}
+.match-meta{font-size:9px;color:var(--mut2);letter-spacing:.02em;padding:4px 10px 5px;border-top:1px solid rgba(255,255,255,.05);display:flex;gap:4px;flex-wrap:wrap;align-items:center}
+.match-meta .sep{opacity:.45}.match-meta .vflag{font-size:10px}
 
 /* KO bracket (reuso) */
 .korow{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:12px}
@@ -183,6 +191,32 @@ footer b{color:var(--mut)}
 .acphteam.miss{color:var(--copa);background:rgba(232,51,74,.12)}
 .acphnote{font-size:11.5px;color:var(--mut2);margin-top:10px;line-height:1.5}
 .accempty{font-size:13.5px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:18px 16px;text-align:center}
+/* ===== Curiosidades ===== */
+.cu-hero{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
+@media(min-width:560px){.cu-hero{grid-template-columns:repeat(4,1fr)}}
+.cu-herocard{background:linear-gradient(165deg,rgba(244,194,75,.16),rgba(232,51,74,.07),var(--surf2));border:1px solid rgba(244,194,75,.30);border-radius:15px;padding:14px 13px;position:relative;overflow:hidden}
+.cu-herocard::before{content:"";position:absolute;inset:0;background:radial-gradient(220px 120px at 82% -12%,rgba(244,194,75,.20),transparent 70%);pointer-events:none}
+.cu-hico{font-size:23px;line-height:1;margin-bottom:8px}
+.cu-hlab{font-family:Archivo;font-weight:800;font-size:8.5px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.cu-hval{font-family:Archivo;font-weight:900;font-size:16px;line-height:1.08;color:var(--txt);letter-spacing:-.01em}
+.cu-hdet{font-size:10.5px;color:var(--mut);margin-top:4px;line-height:1.3}
+.cu-sec{margin-bottom:20px}
+.cu-sectitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt);margin:0 2px 12px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
+.cu-note{font-family:Inter;font-weight:500;font-size:10.5px;color:var(--mut2);letter-spacing:0;text-align:right;flex:none}
+.cu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+.cu-item{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:11px 12px;display:flex;flex-direction:column}
+.cu-item:hover{border-color:var(--line2)}
+.cu-ico{font-size:17px;line-height:1;margin-bottom:7px}
+.cu-lab{font-family:Archivo;font-weight:700;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--mut);margin-bottom:6px}
+.cu-val{font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt);line-height:1.14}
+.cu-det{font-size:11px;color:var(--mut);margin-top:3px;line-height:1.3}
+.cu-rows{display:flex;flex-direction:column;gap:1px;margin-top:1px}
+.cu-row{display:flex;align-items:center;gap:7px;font-size:12px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.045)}
+.cu-row:last-child{border-bottom:0}
+.cu-rk{font-family:Archivo;font-weight:800;font-size:10px;color:var(--gold);width:13px;flex:none;text-align:center}
+.cu-rn{flex:1;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cu-rs{font-size:10px;color:var(--mut2);flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cu-rv{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);flex:none;min-width:16px;text-align:right}
 </style>
 </head>
 <body>
@@ -198,6 +232,8 @@ footer b{color:var(--mut)}
       <button class="tab on" id="tabGroups">Grupos</button>
       <button class="tab" id="tabKO">Chaveamento</button>
       <button class="tab" id="tabAcc">📊 Acertos</button>
+      <button class="tab" id="tabCurio">✨ Curiosidades</button>
+      <button class="tab" id="tabBrasil">🇧🇷 Brasil</button>
     </div>
     <div class="spacer"></div>
     <button class="btn gold" id="btnPreset">🎯 Restaurar palpite</button>
@@ -226,6 +262,16 @@ footer b{color:var(--mut)}
     <div id="accBox"></div>
   </section>
 
+  <section class="panel hidden" id="secCurio">
+    <div class="hint">Recordes e fatos da Copa, calculados a partir dos <span class="real">jogos já disputados</span> e dos dados oficiais de elencos e sedes. Tudo se atualiza sozinho conforme a Copa avança.</div>
+    <div id="curioBox"></div>
+  </section>
+
+  <section class="panel hidden" id="secBrasil">
+    <div class="hint">A história do Brasil nas Copas — títulos, recordes, artilheiros e jogos marcantes (números <b>até a Copa de 2022</b>, conferidos em fontes). A <span class="real">campanha de 2026</span> fica na última seção e se atualiza sozinha.</div>
+    <div id="brasilBox"></div>
+  </section>
+
   <footer>
     <b>Resultados reais já fixados (__ASOF__):</b> __REALLIST__. Os jogos ainda não realizados usam meu palpite (favorito por força). Desempate entre 3ºs colocados: pontos → saldo → gols (oficial). Dentro do grupo, o critério fino de confronto direto é aproximado por força. Terceiros alocados no mata-mata pela tabela oficial da FIFA (Anexo C, 495 combinações).
   </footer>
@@ -236,6 +282,8 @@ const DATA = /*__DATA__*/;
 const THIRD_ALLOC = /*__ALLOC__*/;
 const F=DATA.F, GR=DATA.GR, NAME=DATA.NAME, FLAG=DATA.FLAG, GAMES0=DATA.GAMES;
 const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
+const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
+const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const LETTERS=Object.keys(GR);
 const clone=x=>JSON.parse(JSON.stringify(x));
 const canon=m=>m.g+':'+[m.h,m.a].slice().sort().join('-');
@@ -345,11 +393,12 @@ function gmHTML(m,idx){
           `<span class="step"><button data-inc="${idx}:a:1" aria-label="+">▲</button><button data-inc="${idx}:a:-1" aria-label="−">▼</button></span>`+
           `<span class="tag pal">palpite</span>`;
   }
-  return `<div class="gm ${real?'real':'pred'}">
+  const meta = (m.dt||m.vn||m.co) ? `<div class="gm-meta">${m.dt?`<span>${m.dt}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
+  return `<div class="gm-wrap"><div class="gm ${real?'real':'pred'}">
     <span class="side"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
     <span class="score">${score}</span>
     <span class="side away"><span class="fl">${FLAG[m.a]}</span><span class="ab">${m.a}</span></span>
-  </div>`;
+  </div>${meta}</div>`;
 }
 
 // ---- render bracket ----
@@ -374,7 +423,9 @@ function slotHTML(id,side){
 }
 function matchHTML(id){
   const r=RES[id]||{}, foll=state.follow&&((r.a&&r.a.code===state.follow)||(r.b&&r.b.code===state.follow)), o=thirdOrigin(id);
-  return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}</div></div>`;
+  const v=VENUE_KO[id]||null;
+  const meta = v && (v.dt||v.vn||v.co) ? `<div class="match-meta">${v.dt?`<span>${v.dt}</span>`:''}${v.vn?`<span class="sep">·</span><span>${v.vn}</span>`:''}${v.co?`<span class="sep">·</span><span class="vflag">${v.cf||''}</span><span>${v.co}</span>`:''}</div>` : '';
+  return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div></div>`;
 }
 function renderKO(){
   const body=document.getElementById('koBody'), finals=document.getElementById('finalsBox');
@@ -406,6 +457,33 @@ function buildFollow(){
   sel.innerHTML=opts;
 }
 function renderAll(){ recompute(); renderGroups(); renderKO(); saveSoon(); }
+
+// ---- curiosidades ----
+function curioItemHTML(it){
+  let body;
+  if(it.rows){
+    body=`<div class="cu-rows">`+it.rows.map((r,i)=>
+      `<div class="cu-row"><span class="cu-rk">${i+1}</span><span class="cu-rn">${r.n}</span>${r.s?`<span class="cu-rs">${r.s}</span>`:''}<span class="cu-rv">${r.v}</span></div>`).join('')+`</div>`;
+  }else{
+    body=`<div class="cu-val">${it.value}</div>`+(it.detail?`<div class="cu-det">${it.detail}</div>`:'');
+  }
+  return `<div class="cu-item"><div class="cu-ico">${it.ico||'•'}</div><div class="cu-lab">${it.label}</div>${body}</div>`;
+}
+function renderBlocks(data, boxId){
+  const box=document.getElementById(boxId); if(!box) return;
+  let h='';
+  if(data.hero&&data.hero.length){
+    h+=`<div class="cu-hero">`+data.hero.map(c=>
+      `<div class="cu-herocard"><div class="cu-hico">${c.ico||'⭐'}</div><div class="cu-hlab">${c.label}</div><div class="cu-hval">${c.value}</div>${c.detail?`<div class="cu-hdet">${c.detail}</div>`:''}</div>`).join('')+`</div>`;
+  }
+  for(const s of (data.sections||[])){
+    h+=`<div class="cu-sec"><div class="cu-sectitle"><span>${s.ico||''} ${s.title}</span>${s.note?`<span class="cu-note">${s.note}</span>`:''}</div>`+
+       `<div class="cu-grid">`+(s.items||[]).map(curioItemHTML).join('')+`</div></div>`;
+  }
+  box.innerHTML = h || `<div class="accempty">As curiosidades vão aparecendo conforme os jogos acontecem.</div>`;
+}
+function renderCurios(){ renderBlocks(CURIOS,'curioBox'); }
+function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
 
 // ---- assertividade do palpite original ----
 function predScore(a,b){
@@ -530,15 +608,19 @@ document.getElementById('koBody').addEventListener('click',e=>{
   renderAll();
 });
 document.getElementById('followSel').addEventListener('change',e=>{ state.follow=e.target.value; renderKO(); saveSoon(); });
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), ta=document.getElementById('tabAcc');
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), ta=document.getElementById('tabAcc'), tc=document.getElementById('tabCurio'), tb=document.getElementById('tabBrasil');
 function setTab(t){ state.tab=t;
-  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); ta.classList.toggle('on',t==='acc');
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); ta.classList.toggle('on',t==='acc'); tc.classList.toggle('on',t==='curio'); tb.classList.toggle('on',t==='brasil');
   document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
   document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
+  document.getElementById('secCurio').classList.toggle('hidden',t!=='curio');
+  document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
   if(t==='acc') renderAccuracy();
+  if(t==='curio') renderCurios();
+  if(t==='brasil') renderBrasil();
   saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); ta.onclick=()=>setTab('acc');
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); ta.onclick=()=>setTab('acc'); tc.onclick=()=>setTab('curio'); tb.onclick=()=>setTab('brasil');
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
   if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }

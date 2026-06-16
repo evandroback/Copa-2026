@@ -30,6 +30,42 @@ OF_NAMES = {"Mexico":"MEX","South Africa":"RSA","South Korea":"KOR","Czech Repub
   "Ghana":"GHA","Iran":"IRN","Iraq":"IRQ","Jordan":"JOR","New Zealand":"NZL","Norway":"NOR",
   "Panama":"PAN","Portugal":"POR","Senegal":"SEN","Uzbekistan":"UZB"}
 OF_KO = {"Round of 32":"R32","Round of 16":"R16","Quarter-final":"QF","Semi-final":"SF","Final":"F"}
+# arquivos extras do mesmo repo openfootball (dominio publico, sem chave)
+OF_SQUADS   = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.squads.json"
+OF_STADIUMS = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.stadiums.json"
+OF_TEAMS    = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.teams.json"
+COUNTRY = {"us":"EUA","mx":"México","ca":"Canadá"}
+CFLAG   = {"us":"🇺🇸","mx":"🇲🇽","ca":"🇨🇦"}
+_DOW = ["seg","ter","qua","qui","sex","sáb","dom"]          # datetime.weekday(): 0=segunda
+_MON = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
+def fmt_date_pt(iso):
+    try:
+        y,m,d=map(int,iso.split("-")); wd=datetime.date(y,m,d).weekday()
+        return f"{_DOW[wd]}, {d:02d}/{_MON[m-1]}"
+    except Exception:
+        return ""
+def parse_min(s):
+    import re
+    nums=re.findall(r'\d+', str(s))
+    if not nums: return None
+    v=int(nums[0])
+    if len(nums)>1: v+=int(nums[1])   # 45+5 -> 50
+    return v
+def age_on(iso, ref=datetime.date(2026,6,11)):
+    try:
+        y,m,d=map(int,iso.split("-")); return (ref-datetime.date(y,m,d)).days/365.25
+    except Exception:
+        return None
+def fetch_json(url):
+    if requests is None: return None
+    try:
+        r=requests.get(url,timeout=30); r.raise_for_status(); return r.json()
+    except Exception as e:
+        print("[aviso] falha ao buscar", url.rsplit('/',1)[-1], ":", e); return None
+def aslist(d, key):
+    if isinstance(d, list): return d
+    if isinstance(d, dict): return d.get(key) or d.get("data") or []
+    return []
 
 # ---------- dados estaticos ----------
 F = {"ESP":92,"FRA":90,"ENG":88,"ARG":86,"POR":82,"BRA":81,"GER":78,"NED":75,"CRO":71,"NOR":70,
@@ -147,6 +183,9 @@ def ko_phase(round_str):
 # matchday (rodada) por confronto — preenchido pela API; no seed, tudo rodada 1
 ROUNDS={}
 KO_REAL=[]   # jogos reais do mata-mata: {"ph","h","a","gh","ga","w"}
+GOALS=[]     # gols dos jogos encerrados: {"c"(code),"who","min"(int),"pen","og"}
+META_GRP={}  # frozenset({c1,c2}) -> {"dt"(iso),"gr"(cidade)}  (todos os 72 jogos de grupo)
+META_KO={}   # num(73..104) -> {"dt"(iso),"gr"(cidade)}        (todos os 32 do mata-mata)
 def parse_round(s):
     import re
     m=re.search(r'(\d+)', s or '')
@@ -169,18 +208,30 @@ def fetch_results():
         print("[aviso] falha ao buscar openfootball:", e, "— usando seed"); return {}
     out={}; grp_games=[]; ko_n=0; bad=set()
     for m in data.get("matches", []):
-        ft=(m.get("score") or {}).get("ft")
-        if not ft: continue                          # so jogos com placar final
+        date=m.get("date",""); ground=m.get("ground","")
+        grp=(m.get("group") or "")
         t1=OF_NAMES.get((m.get("team1") or "").strip())
         t2=OF_NAMES.get((m.get("team2") or "").strip())
+        # --- metadados de sede/data de TODOS os jogos (mesmo os ainda não jogados) ---
+        if grp.startswith("Group") and t1 and t2:
+            META_GRP[frozenset((t1,t2))]={"dt":date,"gr":ground}
+        elif m.get("num"):
+            META_KO[int(m["num"])]={"dt":date,"gr":ground}
+        # --- placar e gols só dos jogos encerrados ---
+        ft=(m.get("score") or {}).get("ft")
+        if not ft: continue
         if not t1 or not t2:                          # placeholders (1A, W73...) ou nome novo
             n1,n2=m.get("team1",""),m.get("team2","")
             if n1 and n2 and not any(c.isdigit() for c in n1+n2) and "/" not in n1+n2:
                 bad.add((n1,n2))
             continue
-        if (m.get("group") or "").startswith("Group"):
+        for side,code in ((m.get("goals1"),t1),(m.get("goals2"),t2)):
+            for gg in (side or []):
+                GOALS.append({"c":code,"who":gg.get("name",""),"min":parse_min(gg.get("minute","")),
+                              "pen":bool(gg.get("penalty")),"og":bool(gg.get("owngoal")),"g":f"{t1}-{t2}"})
+        if grp.startswith("Group"):
             out[(t1,t2)]=(int(ft[0]),int(ft[1]))
-            grp_games.append((m.get("group",""), m.get("date",""), m.get("time",""), t1, t2))
+            grp_games.append((grp,date,m.get("time",""),t1,t2))
         else:
             ph=OF_KO.get((m.get("round") or "").strip())
             if not ph: continue                       # 3o lugar ou rodada desconhecida
@@ -194,8 +245,204 @@ def fetch_results():
         lst.sort()
         for i,(d,t,t1,t2) in enumerate(lst): ROUNDS[(t1,t2)] = i//2 + 1
     if bad: print("[aviso] selecoes nao reconhecidas (ajustar OF_NAMES):", sorted(bad))
-    print(f"[ok] openfootball: {len(out)} jogos de grupo + {ko_n} de mata-mata encerrados")
+    print(f"[ok] openfootball: {len(out)} jogos de grupo + {ko_n} de mata-mata; {len(GOALS)} gols")
     return out
+
+# ---------- curiosidades (pre-computadas no Python; o HTML so exibe) ----------
+def venue_of(city, sbc):
+    s=sbc.get(city)
+    if not s: return {"vn":city,"cc":"","co":"","cap":None}
+    cc=s.get("cc","")
+    return {"vn":s.get("name",city),"cc":cc,"co":COUNTRY.get(cc,""),"cap":s.get("capacity")}
+
+def compute_curios(games, squads, stadiums, teams):
+    from collections import Counter, defaultdict
+    flag=lambda c: FLAG.get(c,""); nm=lambda c: NAME.get(c,c)
+    tpt=lambda e: NAME.get(OF_NAMES.get((e or '').strip(),''), e)   # nome ingles do squad -> pt
+    fpt=lambda e: FLAG.get(OF_NAMES.get((e or '').strip(),''),"")
+    realg=[g for g in games if g["r"]]
+    C={"games_real":len(realg),"hero":[],"sections":[]}
+
+    # ===== GOLS & JOGOS =====
+    gi=[]
+    if GOALS:
+        sc=Counter(g["who"] for g in GOALS if g["who"] and not g["og"])
+        tof={}
+        for g in GOALS:
+            if g["who"] and not g["og"]: tof.setdefault(g["who"],g["c"])
+        top=sc.most_common(6)
+        if top:
+            gi.append({"ico":"👟","label":"Artilheiros","rows":[{"n":w,"v":str(n),"s":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in top]})
+            C["hero"].append({"ico":"👟","label":"Artilheiro","value":top[0][0],"detail":f"{top[0][1]} gol(s) · {flag(tof.get(top[0][0],''))} {nm(tof.get(top[0][0],''))}"})
+        perpg=defaultdict(Counter)
+        for g in GOALS:
+            if g["who"] and not g["og"]: perpg[g["g"]][g["who"]]+=1
+        hats=[(w,n) for _,cc in perpg.items() for w,n in cc.items() if n>=3]
+        gi.append({"ico":"🎩","label":"Hat-tricks","rows":[{"n":w,"v":f"{n} gols","s":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in hats]} if hats else {"ico":"🎩","label":"Hat-tricks","value":"nenhum ainda"})
+        pens=[g for g in GOALS if g["pen"]]
+        if pens: gi.append({"ico":"🎯","label":"Gols de pênalti","value":str(len(pens)),"detail":", ".join(g["who"] for g in pens[:5])})
+        ogs=[g for g in GOALS if g["og"]]
+        if ogs: gi.append({"ico":"🙃","label":"Gols contra","rows":[{"n":g["who"],"v":"contra","s":flag(g["c"])+" "+nm(g["c"])} for g in ogs]})
+        timed=[g for g in GOALS if g["min"] is not None]
+        if timed:
+            fa=min(timed,key=lambda g:g["min"]); la=max(timed,key=lambda g:g["min"])
+            gi.append({"ico":"⚡","label":"Gol mais rápido","value":f"{fa['min']}'","detail":f"{fa['who']} · {flag(fa['c'])} {nm(fa['c'])}"})
+            gi.append({"ico":"🕘","label":"Gol mais tardio","value":f"{la['min']}'","detail":f"{la['who']} · {flag(la['c'])} {nm(la['c'])}"})
+            h1=sum(1 for g in timed if g["min"]<=45)
+            gi.append({"ico":"⏱️","label":"Gols por tempo","value":f"{h1} no 1ºT · {len(timed)-h1} no 2ºT"})
+    if realg:
+        bigd=max(realg,key=lambda m:abs(m["gh"]-m["ga"])); most=max(realg,key=lambda m:m["gh"]+m["ga"])
+        gi.append({"ico":"💥","label":"Maior goleada","value":f"{max(bigd['gh'],bigd['ga'])}–{min(bigd['gh'],bigd['ga'])}","detail":f"{flag(bigd['h'])} {nm(bigd['h'])} x {nm(bigd['a'])} {flag(bigd['a'])}"})
+        C["hero"].append({"ico":"💥","label":"Maior goleada","value":f"{max(bigd['gh'],bigd['ga'])}–{min(bigd['gh'],bigd['ga'])}","detail":f"{nm(bigd['h'])} x {nm(bigd['a'])}"})
+        gi.append({"ico":"🥅","label":"Jogo com mais gols","value":f"{most['gh']+most['ga']} gols","detail":f"{flag(most['h'])} {nm(most['h'])} {most['gh']}–{most['ga']} {nm(most['a'])} {flag(most['a'])}"})
+        gf=Counter(); gax=Counter()
+        for m in realg: gf[m["h"]]+=m["gh"]; gf[m["a"]]+=m["ga"]; gax[m["h"]]+=m["ga"]; gax[m["a"]]+=m["gh"]
+        if gf:
+            mk=gf.most_common(1)[0]; ms=gax.most_common(1)[0]
+            gi.append({"ico":"🔥","label":"Ataque mais positivo","value":f"{mk[1]} gols","detail":f"{flag(mk[0])} {nm(mk[0])}"})
+            gi.append({"ico":"🧤","label":"Defesa mais vazada","value":f"{ms[1]} sofridos","detail":f"{flag(ms[0])} {nm(ms[0])}"})
+        pc=Counter((max(m["gh"],m["ga"]),min(m["gh"],m["ga"])) for m in realg).most_common(1)[0]
+        gi.append({"ico":"📊","label":"Placar mais comum","value":f"{pc[0][0]}–{pc[0][1]}","detail":f"{pc[1]}x até agora"})
+        dr=sum(1 for m in realg if m["gh"]==m["ga"])
+        gi.append({"ico":"🤝","label":"Empates","value":f"{dr} de {len(realg)}","detail":f"{round(100*dr/len(realg))}% dos jogos"})
+        tot=sum(m["gh"]+m["ga"] for m in realg)
+        gi.append({"ico":"📈","label":"Média de gols","value":f"{tot/len(realg):.2f}/jogo","detail":f"{tot} gols em {len(realg)} jogos"})
+    if gi:
+        C["sections"].append({"ico":"⚽","title":"Gols & Jogos","note":f"baseado em {len(realg)} jogo(s) já disputado(s)","items":gi})
+
+    # ===== ELENCOS =====
+    if squads:
+        pls=[]
+        for t in squads:
+            for p in t.get("players",[]):
+                p2=dict(p); p2["_t"]=t.get("name",""); pls.append(p2)
+        ei=[]
+        ages=[(age_on(p.get("date_of_birth","")),p) for p in pls]; ages=[(a,p) for a,p in ages if a]
+        if ages:
+            ages.sort(key=lambda x:x[0]); yo=ages[0]; ol=ages[-1]
+            C["hero"].append({"ico":"👶","label":"Mais novo da Copa","value":f"{yo[0]:.0f} anos","detail":f"{yo[1]['name']} · {fpt(yo[1]['_t'])} {tpt(yo[1]['_t'])}"})
+            C["hero"].append({"ico":"🧓","label":"Mais veterano","value":f"{ol[0]:.0f} anos","detail":f"{ol[1]['name']} · {fpt(ol[1]['_t'])} {tpt(ol[1]['_t'])}"})
+            ei.append({"ico":"👶","label":"Jogador mais novo","value":f"{yo[1]['name']} ({yo[0]:.0f})","detail":f"{fpt(yo[1]['_t'])} {tpt(yo[1]['_t'])}"})
+            ei.append({"ico":"🧓","label":"Jogador mais veterano","value":f"{ol[1]['name']} ({ol[0]:.0f})","detail":f"{fpt(ol[1]['_t'])} {tpt(ol[1]['_t'])}"})
+            byteam=defaultdict(list)
+            for a,p in ages: byteam[p["_t"]].append(a)
+            avg=sorted((sum(v)/len(v),t) for t,v in byteam.items() if len(v)>=11)
+            if avg:
+                yt=avg[0]; ot=avg[-1]
+                ei.append({"ico":"🐣","label":"Elenco mais jovem","value":f"{fpt(yt[1])} {tpt(yt[1])}","detail":f"média {yt[0]:.1f} anos"})
+                ei.append({"ico":"🦉","label":"Elenco mais veterano","value":f"{fpt(ot[1])} {tpt(ot[1])}","detail":f"média {ot[0]:.1f} anos"})
+        clubs=Counter(p["club"]["name"] for p in pls if p.get("club"))
+        if clubs: ei.append({"ico":"🏟️","label":"Clube que mais cede jogadores","rows":[{"n":c,"v":str(n),"s":""} for c,n in clubs.most_common(5)]})
+        ccs=Counter(p["club"]["country"] for p in pls if p.get("club") and p["club"].get("country"))
+        LCC={"ENG":"Inglaterra","GER":"Alemanha","ESP":"Espanha","ITA":"Itália","FRA":"França","NED":"Holanda","POR":"Portugal","USA":"EUA","SAU":"Ar. Saudita","TUR":"Turquia","MEX":"México","BEL":"Bélgica","BRA":"Brasil","SCO":"Escócia","KSA":"Ar. Saudita"}
+        if ccs: ei.append({"ico":"🌐","label":"Onde os convocados atuam","rows":[{"n":LCC.get(c,c),"v":str(n),"s":"jogadores"} for c,n in ccs.most_common(5)]})
+        pos=Counter(p.get("pos") for p in pls); POSN=[("GK","goleiros"),("DF","zagueiros"),("MF","meias"),("FW","atacantes")]
+        if pos: ei.append({"ico":"📋","label":"Por posição","value":" · ".join(f"{pos.get(k,0)} {v}" for k,v in POSN)})
+        ei.append({"ico":"👥","label":"Total de convocados","value":str(len(pls)),"detail":f"{len(squads)} seleções"})
+        if ei: C["sections"].append({"ico":"👥","title":"Elencos","items":ei})
+
+    # ===== SEDES =====
+    if stadiums:
+        si=[]; sd=sorted(stadiums,key=lambda s:s.get("capacity",0)); big=sd[-1]; sm=sd[0]
+        fmtn=lambda n: f"{n:,}".replace(",",".")
+        si.append({"ico":"🏟️","label":"Maior estádio","value":fmtn(big.get('capacity',0))+" lugares","detail":f"{big.get('name')} · {big.get('city')}"})
+        si.append({"ico":"🏕️","label":"Menor estádio","value":fmtn(sm.get('capacity',0))+" lugares","detail":f"{sm.get('name')} · {sm.get('city')}"})
+        bycc=Counter(s.get("cc") for s in stadiums)
+        si.append({"ico":"🗺️","label":"Sedes por país","value":" · ".join(f"{n} {COUNTRY.get(c,c)}" for c,n in bycc.most_common())})
+        capt=sum(s.get("capacity",0) for s in stadiums)
+        si.append({"ico":"🪑","label":"Capacidade somada","value":fmtn(capt)+" lugares","detail":f"{len(stadiums)} estádios · média {fmtn(capt//len(stadiums))}"})
+        C["sections"].append({"ico":"🏟️","title":"Sedes","items":si})
+
+    # ===== CONFEDERAÇÕES =====
+    if teams:
+        ci=[]; conf=Counter(t.get("confed") for t in teams if t.get("confed"))
+        CONFN={"UEFA":"Europa","CONMEBOL":"América do Sul","CONCACAF":"Am. Norte/Central","CAF":"África","AFC":"Ásia","OFC":"Oceania"}
+        if conf: ci.append({"ico":"🌍","label":"Seleções por confederação","rows":[{"n":CONFN.get(c,c),"v":str(n),"s":c} for c,n in conf.most_common()]})
+        cont=Counter(t.get("continent") for t in teams if t.get("continent"))
+        CONTN={"Europe":"Europa","Africa":"África","Asia":"Ásia","North America":"Am. do Norte","South America":"Am. do Sul","Oceania":"Oceania"}
+        if cont: ci.append({"ico":"🧭","label":"Por continente","value":" · ".join(f"{n} {CONTN.get(c,c)}" for c,n in cont.most_common())})
+        if ci: C["sections"].append({"ico":"🌍","title":"Confederações","items":ci})
+
+    return C
+
+# ---------- Brasil nas Copas (historico curado + verificado; 2026 vem do openfootball) ----------
+def compute_brasil(games):
+    flag=lambda c: FLAG.get(c,""); nm=lambda c: NAME.get(c,c)
+    B={"hero":[],"sections":[]}
+    B["hero"]=[
+        {"ico":"🏆","label":"Pentacampeão","value":"5 títulos","detail":"1958 · 1962 · 1970 · 1994 · 2002"},
+        {"ico":"⭐","label":"Presença 100%","value":"23 Copas","detail":"única seleção em todas as edições"},
+        {"ico":"👑","label":"Pelé","value":"Tricampeão","detail":"único jogador com 3 títulos mundiais"},
+        {"ico":"👟","label":"Ronaldo","value":"15 gols","detail":"maior artilheiro do Brasil em Copas"},
+    ]
+    # Títulos & campanhas
+    B["sections"].append({"ico":"🏆","title":"Títulos & campanhas","items":[
+        {"ico":"🏆","label":"Os 5 títulos mundiais","rows":[
+            {"n":"1958 · Suécia","s":"final vs Suécia","v":"5–2"},
+            {"n":"1962 · Chile","s":"final vs Tchecoslováquia","v":"3–1"},
+            {"n":"1970 · México","s":"final vs Itália","v":"4–1"},
+            {"n":"1994 · EUA","s":"final vs Itália (pên.)","v":"3–2"},
+            {"n":"2002 · Coreia/Japão","s":"final vs Alemanha","v":"2–0"}]},
+        {"ico":"🥈","label":"Vice-campeão","value":"2 vezes","detail":"1950 (Uruguai) e 1998 (França)"},
+        {"ico":"🎯","label":"Finais disputadas","value":"7 finais","detail":"5 títulos · 2 vices"},
+        {"ico":"🌟","label":"Melhor campanha","value":"México 1970","detail":"6 jogos, 6 vitórias, 19 gols"},
+        {"ico":"💯","label":"Campanhas perfeitas","value":"2 (1970 e 2002)","detail":"único país a vencer todos os jogos duas vezes"},
+        {"ico":"🏅","label":"Entre os 5 primeiros","value":"15 vezes","detail":"em 22 edições — recorde da competição"}]})
+    # Recordes & números
+    B["sections"].append({"ico":"🥇","title":"Recordes & números","note":"até a Copa de 2022","items":[
+        {"ico":"📊","label":"Jogos em Copas","value":"114 jogos","detail":"76 V · 19 E · 19 D"},
+        {"ico":"⚽","label":"Gols","value":"237 a favor","detail":"108 sofridos · saldo +129"},
+        {"ico":"👑","label":"Maior vencedor","value":"76 vitórias","detail":"mais que qualquer seleção na história"},
+        {"ico":"🔥","label":"Maiores sequências","value":"11 vitórias","detail":"e 13 jogos invicto — recordes do torneio"},
+        {"ico":"⭐","label":"Participações","value":"23 (todas)","detail":"única sempre presente desde 1930"}]})
+    # Artilheiros
+    B["sections"].append({"ico":"👟","title":"Maiores artilheiros em Copas","note":"até a Copa de 2022","items":[
+        {"ico":"👟","label":"Gols em Copas do Mundo","rows":[
+            {"n":"Ronaldo","s":"1998·2002·2006","v":"15"},
+            {"n":"Pelé","s":"1958–1970","v":"12"},
+            {"n":"Ademir","s":"1950","v":"9"},
+            {"n":"Vavá","s":"1958·1962","v":"9"},
+            {"n":"Jairzinho","s":"1970·1974","v":"9"},
+            {"n":"Leônidas","s":"1938","v":"8"},
+            {"n":"Neymar","s":"2014·2018·2022","v":"8"},
+            {"n":"Rivaldo","s":"1998·2002","v":"8"}]}]})
+    # Craques & feitos
+    B["sections"].append({"ico":"⭐","title":"Craques & feitos","items":[
+        {"ico":"🅰️","label":"Recordista de jogos","value":"Cafu — 20","detail":"único com 3 finais seguidas (94·98·02)"},
+        {"ico":"👑","label":"Pelé","value":"Campeão aos 17","detail":"o mais jovem a vencer uma Copa (1958)"},
+        {"ico":"🎯","label":"Jairzinho","value":"Marcou em todos","detail":"gol em cada jogo do título de 1970"},
+        {"ico":"💥","label":"Ademir","value":"4 gols num jogo","detail":"no 7–1 sobre a Suécia (1950)"},
+        {"ico":"🧠","label":"Zagallo","value":"Tetracampeão","detail":"jogador (58·62), técnico (70), coord. (94)"}]})
+    # Jogos para a história
+    B["sections"].append({"ico":"🎭","title":"Jogos para a história","items":[
+        {"ico":"💥","label":"Maior goleada","value":"7–1 vs Suécia","detail":"Copa de 1950, no Maracanã"},
+        {"ico":"💔","label":"Pior derrota","value":"1–7 vs Alemanha","detail":"semifinal de 2014, no Mineirão"},
+        {"ico":"😱","label":"Maracanaço","value":"1950","detail":"perdeu o título em casa para o Uruguai (2–1)"},
+        {"ico":"🎉","label":"Tetra de 1994","value":"24 anos depois","detail":"1ª final decidida nos pênaltis"},
+        {"ico":"🏆","label":"Penta de 2002","value":"7 vitórias em 7","detail":"final 2–0, dois gols de Ronaldo"}]})
+    # Técnicos campeões
+    B["sections"].append({"ico":"👔","title":"Técnicos campeões","items":[
+        {"ico":"👔","label":"Quem levantou a taça","rows":[
+            {"n":"Vicente Feola","s":"Suécia","v":"1958"},
+            {"n":"Aymoré Moreira","s":"Chile","v":"1962"},
+            {"n":"Mário Zagallo","s":"México","v":"1970"},
+            {"n":"C. A. Parreira","s":"EUA","v":"1994"},
+            {"n":"Felipão","s":"Coreia/Japão","v":"2002"}]}]})
+    # Brasil na Copa 2026 (dinamico — vem do openfootball)
+    br=[g for g in games if g["h"]=="BRA" or g["a"]=="BRA"]
+    j2026=[]
+    for g in br:
+        opp = g["a"] if g["h"]=="BRA" else g["h"]
+        gb,go = (g["gh"],g["ga"]) if g["h"]=="BRA" else (g["ga"],g["gh"])
+        if g["r"]:
+            res="✓ V" if gb>go else "✗ D" if gb<go else "= E"
+            j2026.append({"n":f"{flag(opp)} {nm(opp)}","s":g.get("dt",""),"v":f"{gb}–{go} {res}"})
+        else:
+            j2026.append({"n":f"{flag(opp)} {nm(opp)}","s":(g.get("dt","") or "a definir"),"v":"a jogar"})
+    sec26=[{"ico":"🇧🇷","label":"Onde está","value":"Grupo C","detail":"com Marrocos, Escócia e Haiti · téc. Carlo Ancelotti"}]
+    if j2026: sec26.append({"ico":"📅","label":"Jogos do Brasil em 2026","rows":j2026})
+    B["sections"].append({"ico":"🇧🇷","title":"Brasil na Copa 2026","note":"atualiza sozinho","items":sec26})
+    return B
 
 # ---------- montar / calcular ----------
 def build():
@@ -207,7 +454,9 @@ def build():
             elif (b,a) in real: H,A=b,a; gh,ga=real[(b,a)]; rr=True
             else: H,A,s=pred_score(a,b); gh,ga=s; rr=False
             rd=ROUNDS.get((H,A)) or ROUNDS.get((A,H))
-            games.append({"g":g,"h":H,"a":A,"gh":gh,"ga":ga,"r":rr,"rd":rd})
+            meta=META_GRP.get(frozenset((H,A))) or {}
+            games.append({"g":g,"h":H,"a":A,"gh":gh,"ga":ga,"r":rr,"rd":rd,
+                          "dt":fmt_date_pt(meta.get("dt","")),"gr":meta.get("gr","")})
     return games
 
 def standings(games):
@@ -229,6 +478,22 @@ def main():
     games=build()
     tab=standings(games)
     real_n=sum(1 for m in games if m["r"])
+    # --- arquivos extras do openfootball (sede / elencos / seleções) ---
+    stadiums=aslist(fetch_json(OF_STADIUMS),"stadiums")
+    squads  =aslist(fetch_json(OF_SQUADS),  "squads")
+    teams   =aslist(fetch_json(OF_TEAMS),   "teams")
+    sbc={s["city"]:s for s in stadiums} if stadiums else {}
+    # enriquecer cada jogo de grupo com estádio + país
+    for m in games:
+        v=venue_of(m.get("gr",""), sbc)
+        m["vn"]=v["vn"]; m["co"]=v["co"]; m["cf"]=CFLAG.get(v["cc"],"")
+    # sede/data dos jogos do mata-mata (indexados pelo número 73..104)
+    VENUE_KO={}
+    for num,meta in META_KO.items():
+        v=venue_of(meta.get("gr",""), sbc)
+        VENUE_KO[str(num)]={"dt":fmt_date_pt(meta.get("dt","")),"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
+    CURIOS=compute_curios(games, squads, stadiums, teams)
+    BRASIL=compute_brasil(games)
     # REALLIST p/ rodape
     rg=[m for m in games if m["r"]]; rg.sort(key=lambda m:m["g"])
     reallist=" · ".join(f"{NAME[m['h']]} {m['gh']}–{m['ga']} {NAME[m['a']]}" for m in rg) or "(nenhum ainda)"
@@ -237,14 +502,15 @@ def main():
     # injetar no template
     ALLOC=json.load(open(os.path.join(HERE,"third_alloc.json"),encoding="utf-8"))
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
-          "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL}
+          "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
+          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))
              .replace("__REALLIST__",reallist).replace("__ASOF__",asof))
     os.makedirs(os.path.join(HERE,"site"),exist_ok=True)
     open(os.path.join(HERE,"site","index.html"),"w",encoding="utf-8").write(html)
-    print(f"[ok] site/index.html gerado — {real_n} jogos reais — atualizado {asof}")
+    print(f"[ok] site gerado — {real_n} jogos reais — {len(CURIOS.get('sections',[]))} seções de curiosidades — {asof}")
 
 if __name__=="__main__":
     main()
