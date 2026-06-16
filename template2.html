@@ -32,10 +32,12 @@ h1 .yr{color:var(--gold)}
 .sub{color:var(--mut);font-size:13.5px;max-width:66ch}
 .sub b{color:var(--txt);font-weight:600}
 .sub .real{color:var(--live);font-weight:700}
+.sub .asof{display:inline-block;color:var(--mut2);font-size:11.5px;margin-left:8px;padding-left:8px;border-left:1px solid var(--line2)}
 
-.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:18px 0 4px;position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 70%,transparent);padding:8px 0}
-.tabs{display:flex;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
-.tab{font-family:Archivo;font-weight:700;font-size:13px;color:var(--mut);background:none;border:0;padding:9px 15px;border-radius:9px;cursor:pointer;transition:.15s}
+.bar{display:flex;gap:8px;align-items:center;margin:14px 0 4px;position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 82%,transparent);padding:8px 0}
+.tabs{display:flex;gap:3px;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:4px;overflow-x:auto;flex:0 1 auto;min-width:0;max-width:100%;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;scroll-snap-align:center;font-family:Archivo;font-weight:700;font-size:13px;color:var(--mut);background:none;border:0;padding:9px 15px;border-radius:9px;cursor:pointer;transition:.15s;white-space:nowrap}
 .tab.on{background:linear-gradient(180deg,var(--surf2),#0f211a);color:var(--txt);box-shadow:inset 0 0 0 1px var(--line2)}
 .tab:hover:not(.on){color:var(--txt)}
 .spacer{flex:1 1 auto}
@@ -43,6 +45,8 @@ h1 .yr{color:var(--gold)}
 .btn:hover{border-color:var(--gold);color:var(--gold)}
 .btn.gold{background:linear-gradient(180deg,#f6cb5e,#dfa833);color:#241a05;border-color:#f6cb5e}
 .btn.gold:hover{filter:brightness(1.06);color:#241a05}
+/* barra de ação contextual (Grupos e Chaveamento) */
+.panel-actions{display:flex;justify-content:flex-end;margin-bottom:11px}
 
 .panel{margin-top:16px}
 .hint{font-size:13px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:11px 14px;margin-bottom:14px}
@@ -87,7 +91,7 @@ h1 .yr{color:var(--gold)}
 .gm.real .sc-fixed{color:var(--live)}
 .gm .vs{color:var(--mut2);font-size:10px}
 .gm .step{display:flex;flex-direction:column;gap:1px}
-.gm .step button{width:18px;height:14px;line-height:1;font-size:9px;border:1px solid var(--line2);background:#14241e;color:var(--mut);border-radius:3px;cursor:pointer;padding:0;display:grid;place-items:center}
+.gm .step button{width:24px;height:18px;line-height:1;font-size:10px;border:1px solid var(--line2);background:#14241e;color:var(--mut);border-radius:4px;cursor:pointer;padding:0;display:grid;place-items:center}
 .gm .step button:hover{color:var(--gold);border-color:var(--gold)}
 .gm .scv{font-family:Archivo;font-weight:800;font-size:14px;min-width:16px;text-align:center}
 .gm .tag{font-size:8px;font-weight:800;font-family:Archivo;border-radius:3px;padding:1px 4px;flex:none}
@@ -116,7 +120,7 @@ h1 .yr{color:var(--gold)}
 .matchwrap{display:flex;flex-direction:column;justify-content:center;flex:1 0 auto;position:relative}
 .match{background:var(--surf);border:1px solid var(--line);border-radius:11px;overflow:hidden;position:relative;transition:.15s}
 .match.followed{border-color:rgba(232,51,74,.7);box-shadow:0 0 0 1px rgba(232,51,74,.35)}
-.mnum{position:absolute;top:-7px;left:9px;font-family:Archivo;font-weight:700;font-size:9px;letter-spacing:.05em;color:var(--mut2);background:var(--bg);padding:0 5px;border-radius:4px}
+.mnum{display:block;font-family:Archivo;font-weight:700;font-size:9px;letter-spacing:.09em;text-transform:uppercase;color:var(--mut2);padding:6px 11px 2px}
 .slot{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;min-height:38px;transition:.12s;border-bottom:1px solid rgba(255,255,255,.06)}
 .slot:last-child{border-bottom:0}.slot.empty{cursor:default}
 .slot:not(.empty):hover{background:rgba(244,194,75,.08)}
@@ -217,34 +221,37 @@ footer b{color:var(--mut)}
 .cu-rn{flex:1;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rs{font-size:10px;color:var(--mut2);flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rv{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);flex:none;min-width:16px;text-align:right}
+/* ===== acessibilidade (piso de qualidade) ===== */
+.tab:focus-visible,.btn:focus-visible,.accdb:focus-visible,.accrt:focus-visible,.slot:not(.empty):focus-visible,.gm .step button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
     <div class="eyebrow">EUA · México · Canadá — 11 jun a 19 jul 2026</div>
-    <h1>Copa 2026 · <span class="yr">Real + Palpite</span></h1>
-    <p class="sub"><span class="real">Resultados reais</span> dos jogos já encerrados ficam fixos (travados). Os demais vêm com <b>meu palpite</b> (favorito vence — base: projeções Opta + ranking FIFA jun/2026) e são <b>editáveis</b>. Classificação, melhores 3ºs e mata-mata recalculam sozinhos. <b>Atualizado em __ASOF__.</b></p>
+    <h1>Copa 2026 <span class="yr">Real + Palpite</span></h1>
+    <p class="sub">Jogos encerrados entram <span class="real">travados</span>; o resto é meu palpite, que você edita — e tudo recalcula sozinho.<span class="asof">Atualizado __ASOF__</span></p>
   </header>
 
   <div class="bar">
     <div class="tabs">
       <button class="tab on" id="tabGroups">Grupos</button>
       <button class="tab" id="tabKO">Chaveamento</button>
-      <button class="tab" id="tabAcc">📊 Acertos</button>
-      <button class="tab" id="tabCurio">✨ Curiosidades</button>
-      <button class="tab" id="tabBrasil">🇧🇷 Brasil</button>
+      <button class="tab" id="tabAcc">Acertos</button>
+      <button class="tab" id="tabCurio">Curiosidades</button>
+      <button class="tab" id="tabBrasil">Brasil</button>
     </div>
-    <div class="spacer"></div>
-    <button class="btn gold" id="btnPreset">🎯 Restaurar palpite</button>
   </div>
 
   <section class="panel" id="secGroups">
-    <div class="hint">Jogos com <span class="real">FIM</span> são resultados reais (travados). Nos jogos de <b>palpite</b>, use os botões <b>+</b>/<b>−</b> para mudar o placar — tudo recalcula na hora.</div>
+    <div class="panel-actions"><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
+    <div class="hint"><span class="real">FIM</span> = resultado real, travado. Nos jogos de palpite, ajuste o placar nos botões <b>+</b>/<b>−</b> — tudo recalcula na hora.</div>
     <div class="gridg" id="groupsGrid"></div>
   </section>
 
   <section class="panel hidden" id="secKO">
+    <div class="panel-actions"><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
     <div class="korow">
       <div class="follow">Seguir seleção: <select id="followSel"></select></div>
       <div class="legend">
@@ -258,7 +265,7 @@ footer b{color:var(--mut)}
   </section>
 
   <section class="panel hidden" id="secAcc">
-    <div class="hint">Comparo <b>meu palpite original</b> (favorito por força, definido antes da Copa começar) com os <span class="real">resultados reais</span> dos jogos já encerrados. Atualiza sozinho conforme novos jogos terminam. <b>Critério:</b> acertar o resultado — quem venceu. Como o palpite sempre cravava um vencedor, jogo que terminou <b>empatado</b> conta como não-acerto.</div>
+    <div class="hint">Quanto meu <b>palpite original</b> (feito antes da Copa) vem acertando dos <span class="real">jogos já encerrados</span>. Critério: quem venceu — empate conta como erro, já que o palpite sempre cravava um vencedor.</div>
     <div id="accBox"></div>
   </section>
 
@@ -616,6 +623,8 @@ function setTab(t){ state.tab=t;
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
   document.getElementById('secCurio').classList.toggle('hidden',t!=='curio');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
+  const _act={groups:tg,ko:tk,acc:ta,curio:tc,brasil:tb}[t];
+  if(_act&&_act.scrollIntoView) _act.scrollIntoView({inline:'center',block:'nearest'});
   if(t==='acc') renderAccuracy();
   if(t==='curio') renderCurios();
   if(t==='brasil') renderBrasil();
@@ -627,7 +636,7 @@ document.getElementById('accBox').addEventListener('click',e=>{
   const b=e.target.closest('[data-r]');
   if(b){ accRound = b.dataset.r==='all'?'all':+b.dataset.r; renderAccuracy(); }
 });
-document.getElementById('btnPreset').onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); };
+document.querySelectorAll('.btn-restore').forEach(b=>b.onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); });
 
 // ---- persistência ----
 let saveT=null;
