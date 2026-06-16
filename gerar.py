@@ -18,8 +18,18 @@ except Exception:
     TZ = None
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-LEAGUE, SEASON = 1, 2026          # API-Football: World Cup = id 1
-API_URL = "https://v3.football.api-sports.io/fixtures"
+# fonte de resultados: openfootball (dominio publico, sem chave) — atualizada algumas vezes ao dia
+OF_URL = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json"
+OF_NAMES = {"Mexico":"MEX","South Africa":"RSA","South Korea":"KOR","Czech Republic":"CZE",
+  "Canada":"CAN","Bosnia & Herzegovina":"BIH","Qatar":"QAT","Switzerland":"SUI",
+  "Brazil":"BRA","Morocco":"MAR","Haiti":"HAI","Scotland":"SCO","USA":"USA","Paraguay":"PAR",
+  "Australia":"AUS","Turkey":"TUR","Germany":"GER","Curaçao":"CUW","Ivory Coast":"CIV","Ecuador":"ECU",
+  "Netherlands":"NED","Japan":"JPN","Sweden":"SWE","Tunisia":"TUN","Belgium":"BEL","Egypt":"EGY",
+  "Spain":"ESP","Cape Verde":"CPV","Saudi Arabia":"KSA","Uruguay":"URU","Algeria":"ALG","Argentina":"ARG",
+  "Austria":"AUT","Colombia":"COL","Croatia":"CRO","DR Congo":"COD","England":"ENG","France":"FRA",
+  "Ghana":"GHA","Iran":"IRN","Iraq":"IRQ","Jordan":"JOR","New Zealand":"NZL","Norway":"NOR",
+  "Panama":"PAN","Portugal":"POR","Senegal":"SEN","Uzbekistan":"UZB"}
+OF_KO = {"Round of 32":"R32","Round of 16":"R16","Quarter-final":"QF","Semi-final":"SF","Final":"F"}
 
 # ---------- dados estaticos ----------
 F = {"ESP":92,"FRA":90,"ENG":88,"ARG":86,"POR":82,"BRA":81,"GER":78,"NED":75,"CRO":71,"NOR":70,
@@ -150,43 +160,46 @@ def load_seed():
     for k in SEED: ROUNDS.setdefault(k,1)   # os 8 jogos do seed sao da rodada 1
     return dict(SEED)
 
-def fetch_api():
-    key=os.environ.get("API_KEY","").strip()
-    if not key or requests is None:
-        print("[aviso] sem API_KEY ou sem 'requests' — usando seed local"); return {}
+def fetch_results():
+    if requests is None:
+        print("[aviso] sem 'requests' — usando seed local"); return {}
     try:
-        r=requests.get(API_URL, params={"league":LEAGUE,"season":SEASON},
-                       headers={"x-apisports-key":key}, timeout=30)
-        r.raise_for_status(); data=r.json()
+        r=requests.get(OF_URL, timeout=30); r.raise_for_status(); data=r.json()
     except Exception as e:
-        print("[aviso] falha ao consultar a API:", e, "— usando seed"); return {}
-    out={}; bad=[]
-    for it in data.get("response", []):
-        st=((it.get("fixture") or {}).get("status") or {}).get("short","")
-        if st not in ("FT","AET","PEN"): continue          # so jogos encerrados
-        th=(it.get("teams",{}).get("home") or {}).get("name")
-        ta=(it.get("teams",{}).get("away") or {}).get("name")
-        gh=(it.get("goals") or {}).get("home"); ga=(it.get("goals") or {}).get("away")
-        ch, ca = code_from_name(th), code_from_name(ta)
-        if not ch or not ca: bad.append((th,ta)); continue
-        if gh is None or ga is None: continue
-        rnd=(it.get("league") or {}).get("round")
-        ph=ko_phase(rnd)
-        if ph:
-            hw=((it.get("teams",{}).get("home") or {}).get("winner"))
-            aw=((it.get("teams",{}).get("away") or {}).get("winner"))
-            w = ch if hw else (ca if aw else (ch if gh>ga else ca if ga>gh else None))
-            KO_REAL.append({"ph":ph,"h":ch,"a":ca,"gh":int(gh),"ga":int(ga),"w":w})
+        print("[aviso] falha ao buscar openfootball:", e, "— usando seed"); return {}
+    out={}; grp_games=[]; ko_n=0; bad=set()
+    for m in data.get("matches", []):
+        ft=(m.get("score") or {}).get("ft")
+        if not ft: continue                          # so jogos com placar final
+        t1=OF_NAMES.get((m.get("team1") or "").strip())
+        t2=OF_NAMES.get((m.get("team2") or "").strip())
+        if not t1 or not t2:                          # placeholders (1A, W73...) ou nome novo
+            n1,n2=m.get("team1",""),m.get("team2","")
+            if n1 and n2 and not any(c.isdigit() for c in n1+n2) and "/" not in n1+n2:
+                bad.add((n1,n2))
             continue
-        out[(ch,ca)]=(int(gh),int(ga))
-        ROUNDS[(ch,ca)]=parse_round(rnd)
-    if bad: print("[aviso] selecoes nao reconhecidas (ajustar ALIASES):", bad)
-    print(f"[ok] API retornou {len(out)} jogos encerrados")
+        if (m.get("group") or "").startswith("Group"):
+            out[(t1,t2)]=(int(ft[0]),int(ft[1]))
+            grp_games.append((m.get("group",""), m.get("date",""), m.get("time",""), t1, t2))
+        else:
+            ph=OF_KO.get((m.get("round") or "").strip())
+            if not ph: continue                       # 3o lugar ou rodada desconhecida
+            w = t1 if ft[0]>ft[1] else t2 if ft[1]>ft[0] else None
+            KO_REAL.append({"ph":ph,"h":t1,"a":t2,"gh":int(ft[0]),"ga":int(ft[1]),"w":w}); ko_n+=1
+    # rodada do grupo = ordem cronologica dos jogos JA encerrados de cada grupo (2 por rodada)
+    from collections import defaultdict
+    bg=defaultdict(list)
+    for g,date,time,t1,t2 in grp_games: bg[g].append((date,time,t1,t2))
+    for g,lst in bg.items():
+        lst.sort()
+        for i,(d,t,t1,t2) in enumerate(lst): ROUNDS[(t1,t2)] = i//2 + 1
+    if bad: print("[aviso] selecoes nao reconhecidas (ajustar OF_NAMES):", sorted(bad))
+    print(f"[ok] openfootball: {len(out)} jogos de grupo + {ko_n} de mata-mata encerrados")
     return out
 
 # ---------- montar / calcular ----------
 def build():
-    real=load_seed(); real.update(fetch_api())     # API tem prioridade sobre o seed
+    real=load_seed(); real.update(fetch_results())   # openfootball tem prioridade sobre o seed
     games=[]
     for g,ts in GR.items():
         for a,b in itertools.combinations(ts,2):
