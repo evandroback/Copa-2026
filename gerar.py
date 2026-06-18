@@ -44,6 +44,20 @@ def fmt_date_pt(iso):
         return f"{_DOW[wd]}, {d:02d}/{_MON[m-1]}"
     except Exception:
         return ""
+def fmt_when_brt(date_iso, time_str):
+    """Converte data+hora local da sede ('16:00 UTC-7') para o fuso de Brasília (UTC-3).
+       Retorna (data_pt, hora_pt). Jogos noturnos nos EUA viram madrugada/dia seguinte aqui."""
+    import re
+    if not date_iso: return "", ""
+    m=re.match(r'\s*(\d{1,2}):(\d{2})\s*UTC([+-]?\d+)', time_str or '')
+    if not m:
+        return fmt_date_pt(date_iso), ""        # sem horário: mostra só a data local
+    hh,mm,off=int(m.group(1)),int(m.group(2)),int(m.group(3))
+    y,mo,d=map(int,date_iso.split('-'))
+    brt=datetime.datetime(y,mo,d,hh,mm)-datetime.timedelta(hours=off)-datetime.timedelta(hours=3)
+    data=f"{_DOW[brt.weekday()]}, {brt.day:02d}/{_MON[brt.month-1]}"
+    hora=f"{brt.hour}h"+(f"{brt.minute:02d}" if brt.minute else "")
+    return data, hora
 def parse_min(s):
     import re
     nums=re.findall(r'\d+', str(s))
@@ -214,9 +228,9 @@ def fetch_results():
         t2=OF_NAMES.get((m.get("team2") or "").strip())
         # --- metadados de sede/data de TODOS os jogos (mesmo os ainda não jogados) ---
         if grp.startswith("Group") and t1 and t2:
-            META_GRP[frozenset((t1,t2))]={"dt":date,"gr":ground}
+            META_GRP[frozenset((t1,t2))]={"dt":date,"tm":m.get("time",""),"gr":ground}
         elif m.get("num"):
-            META_KO[int(m["num"])]={"dt":date,"gr":ground}
+            META_KO[int(m["num"])]={"dt":date,"tm":m.get("time",""),"gr":ground}
         # --- placar e gols só dos jogos encerrados ---
         ft=(m.get("score") or {}).get("ft")
         if not ft: continue
@@ -455,8 +469,9 @@ def build():
             else: H,A,s=pred_score(a,b); gh,ga=s; rr=False
             rd=ROUNDS.get((H,A)) or ROUNDS.get((A,H))
             meta=META_GRP.get(frozenset((H,A))) or {}
+            _d,_h=fmt_when_brt(meta.get("dt",""),meta.get("tm",""))
             games.append({"g":g,"h":H,"a":A,"gh":gh,"ga":ga,"r":rr,"rd":rd,
-                          "dt":fmt_date_pt(meta.get("dt","")),"gr":meta.get("gr","")})
+                          "dt":_d,"hr":_h,"gr":meta.get("gr","")})
     return games
 
 def standings(games):
@@ -491,7 +506,8 @@ def main():
     VENUE_KO={}
     for num,meta in META_KO.items():
         v=venue_of(meta.get("gr",""), sbc)
-        VENUE_KO[str(num)]={"dt":fmt_date_pt(meta.get("dt","")),"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
+        _d,_h=fmt_when_brt(meta.get("dt",""),meta.get("tm",""))
+        VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
     CURIOS=compute_curios(games, squads, stadiums, teams)
     BRASIL=compute_brasil(games)
     # REALLIST p/ rodape

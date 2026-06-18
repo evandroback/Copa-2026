@@ -400,7 +400,8 @@ function gmHTML(m,idx){
           `<span class="step"><button data-inc="${idx}:a:1" aria-label="+">▲</button><button data-inc="${idx}:a:-1" aria-label="−">▼</button></span>`+
           `<span class="tag pal">palpite</span>`;
   }
-  const meta = (m.dt||m.vn||m.co) ? `<div class="gm-meta">${m.dt?`<span>${m.dt}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
+  const _w = m.dt ? (m.dt + (m.hr?` · ${m.hr}`:'')) : '';
+  const meta = (_w||m.vn||m.co) ? `<div class="gm-meta">${_w?`<span>${_w}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
   return `<div class="gm-wrap"><div class="gm ${real?'real':'pred'}">
     <span class="side"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
     <span class="score">${score}</span>
@@ -431,7 +432,8 @@ function slotHTML(id,side){
 function matchHTML(id){
   const r=RES[id]||{}, foll=state.follow&&((r.a&&r.a.code===state.follow)||(r.b&&r.b.code===state.follow)), o=thirdOrigin(id);
   const v=VENUE_KO[id]||null;
-  const meta = v && (v.dt||v.vn||v.co) ? `<div class="match-meta">${v.dt?`<span>${v.dt}</span>`:''}${v.vn?`<span class="sep">·</span><span>${v.vn}</span>`:''}${v.co?`<span class="sep">·</span><span class="vflag">${v.cf||''}</span><span>${v.co}</span>`:''}</div>` : '';
+  const _w = v && v.dt ? (v.dt + (v.hr?` · ${v.hr}`:'')) : '';
+  const meta = v && (_w||v.vn||v.co) ? `<div class="match-meta">${_w?`<span>${_w}</span>`:''}${v.vn?`<span class="sep">·</span><span>${v.vn}</span>`:''}${v.co?`<span class="sep">·</span><span class="vflag">${v.cf||''}</span><span>${v.co}</span>`:''}</div>` : '';
   return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div></div>`;
 }
 function renderKO(){
