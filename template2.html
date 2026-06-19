@@ -279,6 +279,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .h2h-sc b{font-family:Archivo;font-weight:900}
 .h2h-sc i{color:var(--mut);font-style:normal;font-size:11px}
 .h2h-ph{font-size:10px;color:var(--mut);text-align:right}
+.h2h-sech{font-family:Archivo;font-weight:800;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--mut);margin:16px 0 9px}
+.h2h-comp{display:flex;flex-wrap:wrap;gap:6px}
+.h2h-chip{font-size:11.5px;color:var(--mut);background:var(--surf2);border:1px solid var(--line2);border-radius:20px;padding:4px 11px}
+.h2h-chip b{font-family:Archivo;font-weight:900;color:var(--txt)}
+.h2h-note{font-size:12.5px;color:var(--mut2);background:var(--surf2);border:1px solid var(--line2);border-radius:9px;padding:11px 13px}
 </style>
 </head>
 <body>
@@ -356,7 +361,8 @@ const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
 const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
-const H2H=DATA.H2H||{};
+const ALL=DATA.ALL||{};
+const CATS=['Copa do Mundo','Eliminatórias','Copa América','Eurocopa','Copa Africana','Copa da Ásia','Copa Ouro','Confederações','Liga das Nações','Amistosos','Outros torneios'];
 const FASE_PT={G:'Fase de grupos',R32:'16-avos',R16:'Oitavas',QF:'Quartas de final',SF:'Semifinal',F:'Final','3P':'Disputa do 3º'};
 const LETTERS=Object.keys(GR);
 const clone=x=>JSON.parse(JSON.stringify(x));
@@ -580,38 +586,53 @@ function closeProfile(){
 function openH2H(a,b){
   if(!a||!b||a===b) return;
   const [x,y]=[a,b].slice().sort();
-  const arr=H2H[x+'-'+y]||[];
-  let va=0,vb=0,em=0,ga=0,gb=0;
-  const rows=arr.map(c=>{
-    const yr=c[0],fc=c[1],gx=c[2],gy=c[3],pen=c[4];
-    let pa,pb,penAB;
-    if(a===x){ pa=gx; pb=gy; penAB=pen; }
-    else { pa=gy; pb=gx; penAB=pen?pen.split('-').reverse().join('-'):''; }
-    ga+=pa; gb+=pb;
-    let win;
-    if(penAB){ const p=penAB.split('-').map(Number); win=p[0]>p[1]?'a':'b'; }
-    else win = pa>pb?'a':(pb>pa?'b':'e');
-    if(win==='a')va++; else if(win==='b')vb++; else em++;
-    return {yr,fase:FASE_PT[fc]||fc,pa,pb,penAB,win};
-  });
+  const games=ALL[x+'-'+y]||[];
   const flA=FLAG[a],flB=FLAG[b],nmA=NAME[a],nmB=NAME[b];
   document.getElementById('proFlag').textContent=flA+flB;
   document.getElementById('proName').textContent=nmA+' × '+nmB;
-  document.getElementById('proSub').textContent = arr.length? `Confronto em Copas · ${arr.length} jogo${arr.length>1?'s':''}` : 'Confronto inédito em Copas';
   let h='';
-  if(!arr.length){
-    h=`<div class="h2h-empty">🤝 <b>${nmA}</b> e <b>${nmB}</b> nunca se enfrentaram em uma Copa do Mundo. Se cruzarem em 2026, será a estreia do duelo.</div>`;
+  if(!games.length){
+    document.getElementById('proSub').textContent='Confronto inédito';
+    h=`<div class="h2h-empty">🤝 <b>${nmA}</b> e <b>${nmB}</b> nunca se enfrentaram — em nenhuma competição. Se cruzarem em 2026, será a estreia absoluta do duelo.</div>`;
   }else{
+    let va=0,vb=0,em=0,ga=0,gb=0; const comp={}; const rows=[];
+    games.forEach(g=>{
+      const yr=g[0],ci=g[1],gx=g[2],gy=g[3];
+      let pa,pb,fase='',penAB='';
+      if(a===x){ pa=gx; pb=gy; } else { pa=gy; pb=gx; }
+      if(g.length>4){
+        fase=FASE_PT[g[4]]||g[4];
+        const pen=g[5];
+        penAB = pen ? (a===x?pen:pen.split('-').reverse().join('-')) : '';
+      }
+      ga+=pa; gb+=pb;
+      let win;
+      if(penAB){ const p=penAB.split('-').map(Number); win=p[0]>p[1]?'a':'b'; }
+      else win = pa>pb?'a':(pb>pa?'b':'e');
+      if(win==='a')va++; else if(win==='b')vb++; else em++;
+      comp[ci]=(comp[ci]||0)+1;
+      rows.push({yr,ci,fase,pa,pb,penAB,win});
+    });
+    document.getElementById('proSub').textContent=`${games.length} ${games.length>1?'jogos':'jogo'} na história`;
+    // resumo geral (todas as competições)
     h+=`<div class="h2h-sum">`+
       `<div class="h2h-sb wa"><div class="h2h-sv">${va}</div><div class="h2h-sl">${flA} venceu</div></div>`+
       `<div class="h2h-sb"><div class="h2h-sv">${em}</div><div class="h2h-sl">empates</div></div>`+
       `<div class="h2h-sb wb"><div class="h2h-sv">${vb}</div><div class="h2h-sl">${flB} venceu</div></div>`+
       `<div class="h2h-sb"><div class="h2h-sv">${ga}–${gb}</div><div class="h2h-sl">gols</div></div></div>`;
-    h+=`<div class="h2h-list">`+rows.map(r=>
-      `<div class="h2h-row ${r.win==='a'?'wa':r.win==='b'?'wb':'we'}">`+
-      `<span class="h2h-yr">${r.yr}</span>`+
-      `<span class="h2h-sc">${flA} <b>${r.pa}–${r.pb}</b> ${flB}${r.penAB?` <i>(${r.penAB} pen)</i>`:''}</span>`+
-      `<span class="h2h-ph">${r.fase}</span></div>`).join('')+`</div>`;
+    // por competição
+    const compArr=Object.keys(comp).map(k=>[+k,comp[k]]).sort((p,q)=>q[1]-p[1]);
+    h+=`<div class="h2h-sech">Por competição</div><div class="h2h-comp">`+
+      compArr.map(c=>`<span class="h2h-chip"><b>${c[1]}</b> ${CATS[c[0]]}</span>`).join('')+`</div>`;
+    // todos os confrontos
+    h+=`<div class="h2h-sech">Todos os confrontos · ${games.length}</div><div class="h2h-list">`+
+      rows.map(r=>{
+        const ctxt = (r.ci===0 && r.fase) ? `Copa · ${r.fase}` : CATS[r.ci];
+        return `<div class="h2h-row ${r.win==='a'?'wa':r.win==='b'?'wb':'we'}">`+
+          `<span class="h2h-yr">${r.yr}</span>`+
+          `<span class="h2h-sc">${flA} <b>${r.pa}–${r.pb}</b> ${flB}${r.penAB?` <i>(${r.penAB} pen)</i>`:''}</span>`+
+          `<span class="h2h-ph">${ctxt}</span></div>`;
+      }).join('')+`</div>`;
   }
   document.getElementById('proBody').innerHTML=h;
   document.getElementById('proModal').classList.remove('hidden');
