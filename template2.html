@@ -251,6 +251,21 @@ footer b{color:var(--mut)}
 .prob-bar{height:9px;background:var(--surf2);border-radius:5px;overflow:hidden}
 .prob-fill{display:block;height:100%;background:linear-gradient(90deg,#e0a93a,var(--gold));border-radius:5px}
 .prob-pct{font-family:Archivo;font-weight:900;font-size:14px;color:var(--gold);text-align:right}
+/* ===== banner placar ao vivo (experimental) ===== */
+.livebar{background:linear-gradient(180deg,rgba(54,196,107,.13),rgba(54,196,107,.05));border:1px solid rgba(54,196,107,.38);border-radius:14px;padding:11px 14px;margin-bottom:13px}
+.livebar.hidden{display:none}
+.livebar.diag-fail{background:linear-gradient(180deg,rgba(232,51,74,.1),rgba(232,51,74,.04));border-color:rgba(232,51,74,.4)}
+.lb-head{display:flex;align-items:center;gap:7px;font-family:Archivo;font-weight:800;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--live);margin-bottom:8px}
+.lb-dot{width:8px;height:8px;border-radius:50%;background:var(--live);box-shadow:0 0 0 0 rgba(54,196,107,.6);animation:lbpulse 1.4s infinite}
+@keyframes lbpulse{0%{box-shadow:0 0 0 0 rgba(54,196,107,.5)}70%{box-shadow:0 0 0 7px rgba(54,196,107,0)}100%{box-shadow:0 0 0 0 rgba(54,196,107,0)}}
+.lb-game{display:flex;align-items:center;gap:11px;padding:7px 0;border-top:1px solid rgba(255,255,255,.06)}
+.lb-game:first-of-type{border-top:0}
+.lb-status{font-family:Archivo;font-weight:800;font-size:10.5px;min-width:44px;text-align:center;padding:3px 0;border-radius:6px}
+.lb-status.live{color:#06120c;background:var(--live)}
+.lb-status.pre{color:var(--mut);background:var(--surf2)}
+.lb-status.post{color:var(--mut);background:var(--surf2)}
+.lb-match{font-family:Archivo;font-weight:700;font-size:14px;color:var(--txt);line-height:1.2}
+.lb-match .sc{font-weight:900;color:var(--gold);padding:0 5px}
 /* ===== acessibilidade (piso de qualidade) ===== */
 .tab:focus-visible,.btn:focus-visible,.accdb:focus-visible,.accrt:focus-visible,.slot:not(.empty):focus-visible,.gm .step button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -308,6 +323,8 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     <h1>Copa 2026 <span class="yr">Real + Palpite</span></h1>
     <p class="sub">Jogos encerrados entram <span class="real">travados</span>; o resto é meu palpite, que você edita — e tudo recalcula sozinho.<span class="asof">Atualizado __ASOF__</span></p>
   </header>
+
+  <div id="liveBar" class="livebar hidden"></div>
 
   <div class="bar">
     <div class="tabs">
@@ -850,6 +867,56 @@ async function loadSaved(){ try{ if(window.storage&&window.storage.get){ const r
     state.edits=ne;
     if(s.manual)state.manual=s.manual; if(typeof s.follow==='string')state.follow=s.follow; if(s.tab)state.tab=s.tab;
   } } }catch(e){} }
+
+// ---- placar ao vivo (fonte pública ESPN; com plano B via proxy e diagnóstico) ----
+function _ymd(){ const d=new Date(); return ''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
+const ESPN_URL='https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates='+_ymd();
+async function _try(url){
+  const r=await fetch(url,{cache:'no-store',headers:{'Accept':'application/json'}});
+  if(!r||!r.ok) throw new Error('http'+(r&&r.status));
+  return await r.json();
+}
+function _parse(j){
+  const evs=(j&&j.events)||[];
+  return evs.map(ev=>{
+    const c=(ev.competitions&&ev.competitions[0])||{}; const cs=c.competitors||[];
+    const home=cs.find(x=>x.homeAway==='home')||cs[0]||{};
+    const away=cs.find(x=>x.homeAway==='away')||cs[1]||{};
+    const st=(ev.status&&ev.status.type)||{};
+    return { state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'',
+      hn:(home.team&&(home.team.shortDisplayName||home.team.displayName||home.team.abbreviation))||'?',
+      an:(away.team&&(away.team.shortDisplayName||away.team.displayName||away.team.abbreviation))||'?',
+      hs:(home.score!=null?home.score:''), as:(away.score!=null?away.score:'') };
+  });
+}
+async function fetchLive(){
+  // 1) direto
+  try{ return {ok:true,src:'direto',games:_parse(await _try(ESPN_URL))}; }catch(e){}
+  // 2) plano B: proxy CORS público
+  try{ return {ok:true,src:'proxy',games:_parse(await _try('https://api.allorigins.win/raw?url='+encodeURIComponent(ESPN_URL)))}; }catch(e){}
+  return {ok:false,src:'',games:[]};
+}
+function _gm(g){
+  let cls='pre',lab=(g.short||'—');
+  if(g.state==='in'){ cls='live'; lab=(g.detail||g.short||'•'); }
+  else if(g.state==='post'){ cls='post'; lab='FIM'; }
+  const sc=(g.state==='pre')?'<span class="sc">×</span>':'<span class="sc">'+g.hs+' - '+g.as+'</span>';
+  return '<div class="lb-game"><span class="lb-status '+cls+'">'+lab+'</span><span class="lb-match"><b>'+g.hn+'</b> '+sc+' <b>'+g.an+'</b></span></div>';
+}
+function renderLiveBar(res){
+  const bar=document.getElementById('liveBar'); if(!bar) return;
+  if(!res){ bar.className='livebar hidden'; bar.innerHTML=''; return; }
+  if(!res.ok){ bar.className='livebar diag-fail'; bar.innerHTML='<div class="lb-head" style="color:var(--copa)">⚠ não consegui conectar na fonte de placar ao vivo</div>'; return; }
+  const games=res.games||[];
+  const live=games.filter(g=>g.state==='in');
+  const show=(live.length?live:games).slice(0,6);
+  if(!show.length){ bar.className='livebar'; bar.innerHTML='<div class="lb-head" style="color:var(--mut2)">✓ fonte ao vivo conectada ('+res.src+') · nenhum jogo hoje</div>'; return; }
+  const head=live.length ? '<div class="lb-head"><span class="lb-dot"></span>Ao vivo agora</div>'
+    : '<div class="lb-head" style="color:var(--mut2)">Jogos de hoje · fonte conectada ✓ ('+res.src+')</div>';
+  bar.className='livebar'; bar.innerHTML=head+show.map(_gm).join('');
+}
+async function tickLive(){ try{ renderLiveBar(await fetchLive()); }catch(e){} }
+tickLive(); setInterval(tickLive, 30000);
 
 (async function(){ await loadSaved(); buildFollow(); renderAll(); setTab(state.tab||'groups'); })();
 </script>
