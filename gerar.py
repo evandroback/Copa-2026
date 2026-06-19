@@ -572,10 +572,12 @@ def _koslot(spec,pg,alloc,RES):
     if "lose" in spec:
         r=RES.get(spec["lose"]); return (r["b"] if r["a"]==r["w"] else r["a"]) if r else None
 
-def monte_carlo(games, alloc_map, n=5000):
+def monte_carlo(games, alloc_map, n=8000):
+    random.seed(42)   # estabilidade: mesmas %s entre builds; só mudam quando entra resultado novo
     realres={}
     for m in games:
         if m.get("r"): realres[frozenset((m["h"],m["a"]))]=(m["h"],m["gh"],m["a"],m["ga"])
+    real_ko={frozenset((k["h"],k["a"])):k["w"] for k in KO_REAL if k.get("w")}
     reach={c:{"g":0,"s":0,"f":0,"t":0} for c in NAME}
     for _ in range(n):
         pg={}; thirds=[]
@@ -597,7 +599,10 @@ def monte_carlo(games, alloc_map, n=5000):
         RES={}
         for i in sorted(KO):
             a=_koslot(KO[i]["a"],pg,alloc,RES); b=_koslot(KO[i]["b"],pg,alloc,RES)
-            w = b if not a else a if not b else (a if random.random()<_adv(ELO.get(a,1500),ELO.get(b,1500)) else b)
+            if not a: w=b
+            elif not b: w=a
+            elif frozenset((a,b)) in real_ko: w=real_ko[frozenset((a,b))]
+            else: w = a if random.random()<_adv(ELO.get(a,1500),ELO.get(b,1500)) else b
             RES[i]={"a":a,"b":b,"w":w}
         for i in range(73,89):
             for s in ("a","b"):
@@ -682,7 +687,7 @@ def main():
     asof=now.strftime("%d/%m/%Y %H:%M")+(" (Brasília)" if TZ else " UTC")
     # injetar no template
     ALLOC=json.load(open(os.path.join(HERE,"third_alloc.json"),encoding="utf-8"))
-    PROB=monte_carlo(games, ALLOC, n=5000)
+    PROB=monte_carlo(games, ALLOC, n=8000)
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
           "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB}
