@@ -236,6 +236,21 @@ footer b{color:var(--mut)}
 .cu-rn{flex:1;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rs{font-size:10px;color:var(--mut2);flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rv{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);flex:none;min-width:16px;text-align:right}
+/* ===== aba Favoritos (probabilidades) ===== */
+.prob-list{display:flex;flex-direction:column}
+.prob-row{display:grid;grid-template-columns:24px 26px 1fr 70px 42px;align-items:center;gap:9px;padding:9px 5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
+.prob-row:last-child{border-bottom:0}
+.prob-row:hover{background:rgba(255,255,255,.025)}
+.prob-rk{font-family:Archivo;font-weight:800;font-size:12px;color:var(--mut2);text-align:center}
+.prob-rk.top{color:var(--mut)}
+.prob-rk.gold{color:var(--gold)}
+.prob-fl{font-size:21px;line-height:1}
+.prob-id{min-width:0;display:flex;flex-direction:column;gap:1px}
+.prob-nm{font-family:Archivo;font-weight:700;font-size:14px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prob-sub{font-size:9.5px;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prob-bar{height:9px;background:var(--surf2);border-radius:5px;overflow:hidden}
+.prob-fill{display:block;height:100%;background:linear-gradient(90deg,#e0a93a,var(--gold));border-radius:5px}
+.prob-pct{font-family:Archivo;font-weight:900;font-size:14px;color:var(--gold);text-align:right}
 /* ===== acessibilidade (piso de qualidade) ===== */
 .tab:focus-visible,.btn:focus-visible,.accdb:focus-visible,.accrt:focus-visible,.slot:not(.empty):focus-visible,.gm .step button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -298,6 +313,7 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     <div class="tabs">
       <button class="tab on" id="tabGroups">Grupos</button>
       <button class="tab" id="tabKO">Chaveamento</button>
+      <button class="tab" id="tabProb">Favoritos</button>
       <button class="tab" id="tabAcc">Acertos</button>
       <button class="tab" id="tabCurio">Curiosidades</button>
       <button class="tab" id="tabBrasil">Brasil</button>
@@ -322,6 +338,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     </div>
     <div id="koBody"></div>
     <div class="finals" id="finalsBox"></div>
+  </section>
+
+  <section class="panel hidden" id="secProb">
+    <div class="hint">Chance de cada seleção <b>chegar longe</b>, por uma simulação da Copa rodada <b>5 mil vezes</b> a partir da <b>força real (Elo)</b> calculada de ~49 mil jogos oficiais. <b>Não é palpite nem garantia</b> — é probabilidade, e se move conforme os resultados saem. Os jogos de 2026 já disputados já entram na conta. <b>Toque numa seleção</b> para ver a história dela.</div>
+    <div id="probBox"></div>
   </section>
 
   <section class="panel hidden" id="secAcc">
@@ -361,6 +382,7 @@ const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
 const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
+const PROB=DATA.PROB||{};
 const ALL=DATA.ALL||{};
 const CATS=['Copa do Mundo','Eliminatórias','Copa América','Eurocopa','Copa Africana','Copa da Ásia','Copa Ouro','Confederações','Liga das Nações','Amistosos','Outros torneios'];
 const FASE_PT={G:'Fase de grupos',R32:'16-avos',R16:'Oitavas',QF:'Quartas de final',SF:'Semifinal',F:'Final','3P':'Disputa do 3º'};
@@ -567,6 +589,24 @@ function renderBlocks(data, boxId){
 }
 function renderCurios(){ renderBlocks(CURIOS,'curioBox'); }
 function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
+function renderProb(){
+  const box=document.getElementById('probBox'); if(!box) return;
+  const rank=Object.keys(PROB).sort((a,b)=> (PROB[b].t-PROB[a].t) || (PROB[b].elo-PROB[a].elo) );
+  if(!rank.length){ box.innerHTML='<div class="hint">Projeção indisponível.</div>'; return; }
+  const maxT=Math.max.apply(null,rank.map(c=>PROB[c].t).concat([1]));
+  box.innerHTML='<div class="prob-list">'+rank.map((c,i)=>{
+    const p=PROB[c], w=Math.max(3, p.t/maxT*100);
+    const medal = i===0?'prob-rk gold':(i<3?'prob-rk top':'prob-rk');
+    return '<div class="prob-row proteam" data-pro="'+c+'">'
+      +'<span class="'+medal+'">'+(i+1)+'</span>'
+      +'<span class="prob-fl">'+(FLAG[c]||'')+'</span>'
+      +'<span class="prob-id"><span class="prob-nm">'+NAME[c]+'</span>'
+      +'<span class="prob-sub">final '+p.f+'% · semi '+p.s+'% · oitavas '+p.g+'% · Elo '+p.elo+'</span></span>'
+      +'<span class="prob-bar"><span class="prob-fill" style="width:'+w+'%"></span></span>'
+      +'<span class="prob-pct">'+p.t+'%</span>'
+      +'</div>';
+  }).join('')+'</div>';
+}
 
 // ---- modal de perfil de país ----
 function openProfile(code){
@@ -770,21 +810,23 @@ document.getElementById('koBody').addEventListener('click',e=>{
   renderAll();
 });
 document.getElementById('followSel').addEventListener('change',e=>{ state.follow=e.target.value; renderKO(); saveSoon(); });
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), ta=document.getElementById('tabAcc'), tc=document.getElementById('tabCurio'), tb=document.getElementById('tabBrasil');
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), ta=document.getElementById('tabAcc'), tc=document.getElementById('tabCurio'), tb=document.getElementById('tabBrasil');
 function setTab(t){ state.tab=t;
-  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); ta.classList.toggle('on',t==='acc'); tc.classList.toggle('on',t==='curio'); tb.classList.toggle('on',t==='brasil');
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); ta.classList.toggle('on',t==='acc'); tc.classList.toggle('on',t==='curio'); tb.classList.toggle('on',t==='brasil');
   document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
   document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
+  document.getElementById('secProb').classList.toggle('hidden',t!=='prob');
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
   document.getElementById('secCurio').classList.toggle('hidden',t!=='curio');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
-  const _act={groups:tg,ko:tk,acc:ta,curio:tc,brasil:tb}[t];
+  const _act={groups:tg,ko:tk,prob:tp,acc:ta,curio:tc,brasil:tb}[t];
   if(_act&&_act.scrollIntoView) _act.scrollIntoView({inline:'center',block:'nearest'});
+  if(t==='prob') renderProb();
   if(t==='acc') renderAccuracy();
   if(t==='curio') renderCurios();
   if(t==='brasil') renderBrasil();
   saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); ta.onclick=()=>setTab('acc'); tc.onclick=()=>setTab('curio'); tb.onclick=()=>setTab('brasil');
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); ta.onclick=()=>setTab('acc'); tc.onclick=()=>setTab('curio'); tb.onclick=()=>setTab('brasil');
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
   if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }
