@@ -259,6 +259,26 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .proflag{font-size:40px;line-height:1}
 .proname{font-family:Archivo;font-weight:900;font-size:22px;color:var(--txt);line-height:1.05}
 .prosub{font-family:Archivo;font-weight:700;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-top:4px}
+/* ===== confronto direto (head-to-head) ===== */
+.h2h-btn{display:flex;width:fit-content;align-items:center;gap:4px;margin:7px auto 0;padding:3px 11px;font-family:Inter;font-size:10.5px;font-weight:600;color:var(--mut);background:var(--surf2);border:1px solid var(--line2);border-radius:20px;cursor:pointer;transition:.12s}
+.h2h-btn:hover{color:var(--gold);border-color:var(--gold)}
+.h2h-empty{font-size:14px;line-height:1.55;color:var(--mut);background:var(--surf2);border:1px solid var(--line2);border-radius:12px;padding:16px}
+.h2h-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:14px}
+.h2h-sb{background:var(--surf2);border:1px solid var(--line2);border-radius:11px;padding:10px 5px;text-align:center}
+.h2h-sb.wa{border-color:rgba(54,196,107,.45)}
+.h2h-sb.wb{border-color:rgba(232,51,74,.45)}
+.h2h-sv{font-family:Archivo;font-weight:900;font-size:18px;color:var(--txt)}
+.h2h-sl{font-size:9px;color:var(--mut2);margin-top:3px;line-height:1.2}
+.h2h-list{display:flex;flex-direction:column;gap:6px}
+.h2h-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px;background:var(--surf2);border:1px solid var(--line2);border-left-width:3px;border-radius:9px;padding:8px 11px}
+.h2h-row.wa{border-left-color:var(--live)}
+.h2h-row.wb{border-left-color:var(--copa)}
+.h2h-row.we{border-left-color:var(--mut2)}
+.h2h-yr{font-family:Archivo;font-weight:800;font-size:13px;color:var(--gold)}
+.h2h-sc{font-size:13px;color:var(--txt)}
+.h2h-sc b{font-family:Archivo;font-weight:900}
+.h2h-sc i{color:var(--mut);font-style:normal;font-size:11px}
+.h2h-ph{font-size:10px;color:var(--mut);text-align:right}
 </style>
 </head>
 <body>
@@ -336,6 +356,8 @@ const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
 const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
+const H2H=DATA.H2H||{};
+const FASE_PT={G:'Fase de grupos',R32:'16-avos',R16:'Oitavas',QF:'Quartas de final',SF:'Semifinal',F:'Final','3P':'Disputa do 3º'};
 const LETTERS=Object.keys(GR);
 const clone=x=>JSON.parse(JSON.stringify(x));
 const canon=m=>m.g+':'+[m.h,m.a].slice().sort().join('-');
@@ -451,7 +473,7 @@ function gmHTML(m,idx){
     <span class="side proteam" data-pro="${m.h}"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
     <span class="score">${score}</span>
     <span class="side away proteam" data-pro="${m.a}"><span class="fl">${FLAG[m.a]}</span><span class="ab">${m.a}</span></span>
-  </div>${meta}</div>`;
+  </div>${meta}<button class="h2h-btn" data-h2h="${m.h}:${m.a}">🆚 retrospecto</button></div>`;
 }
 
 // ---- render bracket ----
@@ -479,7 +501,8 @@ function matchHTML(id){
   const v=VENUE_KO[id]||null;
   const _w = v && v.dt ? (v.dt + (v.hr?` · ${v.hr}`:'')) : '';
   const meta = v && (_w||v.vn||v.co) ? `<div class="match-meta">${_w?`<span>${_w}</span>`:''}${v.vn?`<span class="sep">·</span><span>${v.vn}</span>`:''}${v.co?`<span class="sep">·</span><span class="vflag">${v.cf||''}</span><span>${v.co}</span>`:''}</div>` : '';
-  return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div></div>`;
+  const h2hbtn = (r.a&&r.b&&r.a.code&&r.b.code) ? `<button class="h2h-btn" data-h2h="${r.a.code}:${r.b.code}">🆚 retrospecto</button>` : '';
+  return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div>${h2hbtn}</div>`;
 }
 function renderKO(){
   const body=document.getElementById('koBody'), finals=document.getElementById('finalsBox');
@@ -553,7 +576,50 @@ function closeProfile(){
   document.getElementById('proModal').classList.add('hidden');
   document.body.style.overflow='';
 }
+// ---- modal de confronto direto (head-to-head) ----
+function openH2H(a,b){
+  if(!a||!b||a===b) return;
+  const [x,y]=[a,b].slice().sort();
+  const arr=H2H[x+'-'+y]||[];
+  let va=0,vb=0,em=0,ga=0,gb=0;
+  const rows=arr.map(c=>{
+    const yr=c[0],fc=c[1],gx=c[2],gy=c[3],pen=c[4];
+    let pa,pb,penAB;
+    if(a===x){ pa=gx; pb=gy; penAB=pen; }
+    else { pa=gy; pb=gx; penAB=pen?pen.split('-').reverse().join('-'):''; }
+    ga+=pa; gb+=pb;
+    let win;
+    if(penAB){ const p=penAB.split('-').map(Number); win=p[0]>p[1]?'a':'b'; }
+    else win = pa>pb?'a':(pb>pa?'b':'e');
+    if(win==='a')va++; else if(win==='b')vb++; else em++;
+    return {yr,fase:FASE_PT[fc]||fc,pa,pb,penAB,win};
+  });
+  const flA=FLAG[a],flB=FLAG[b],nmA=NAME[a],nmB=NAME[b];
+  document.getElementById('proFlag').textContent=flA+flB;
+  document.getElementById('proName').textContent=nmA+' × '+nmB;
+  document.getElementById('proSub').textContent = arr.length? `Confronto em Copas · ${arr.length} jogo${arr.length>1?'s':''}` : 'Confronto inédito em Copas';
+  let h='';
+  if(!arr.length){
+    h=`<div class="h2h-empty">🤝 <b>${nmA}</b> e <b>${nmB}</b> nunca se enfrentaram em uma Copa do Mundo. Se cruzarem em 2026, será a estreia do duelo.</div>`;
+  }else{
+    h+=`<div class="h2h-sum">`+
+      `<div class="h2h-sb wa"><div class="h2h-sv">${va}</div><div class="h2h-sl">${flA} venceu</div></div>`+
+      `<div class="h2h-sb"><div class="h2h-sv">${em}</div><div class="h2h-sl">empates</div></div>`+
+      `<div class="h2h-sb wb"><div class="h2h-sv">${vb}</div><div class="h2h-sl">${flB} venceu</div></div>`+
+      `<div class="h2h-sb"><div class="h2h-sv">${ga}–${gb}</div><div class="h2h-sl">gols</div></div></div>`;
+    h+=`<div class="h2h-list">`+rows.map(r=>
+      `<div class="h2h-row ${r.win==='a'?'wa':r.win==='b'?'wb':'we'}">`+
+      `<span class="h2h-yr">${r.yr}</span>`+
+      `<span class="h2h-sc">${flA} <b>${r.pa}–${r.pb}</b> ${flB}${r.penAB?` <i>(${r.penAB} pen)</i>`:''}</span>`+
+      `<span class="h2h-ph">${r.fase}</span></div>`).join('')+`</div>`;
+  }
+  document.getElementById('proBody').innerHTML=h;
+  document.getElementById('proModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
 document.addEventListener('click',e=>{
+  const hh=e.target.closest('[data-h2h]');
+  if(hh){ const p=hh.getAttribute('data-h2h').split(':'); openH2H(p[0],p[1]); return; }
   const pl=e.target.closest('[data-pro]');
   if(pl){ openProfile(pl.getAttribute('data-pro')); return; }
   if(e.target.closest('[data-close]')) closeProfile();
