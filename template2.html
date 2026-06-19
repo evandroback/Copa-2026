@@ -61,7 +61,7 @@ h1 .yr{color:var(--gold)}
 .btn.gold{background:linear-gradient(180deg,#f6cb5e,#dfa833);color:#241a05;border-color:#f6cb5e}
 .btn.gold:hover{filter:brightness(1.06);color:#241a05}
 /* barra de ação contextual (Grupos e Chaveamento) */
-.panel-actions{display:flex;justify-content:flex-end;margin-bottom:11px}
+.panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:11px}
 
 .panel{margin-top:16px}
 .hint{font-size:13px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:11px 14px;margin-bottom:14px}
@@ -321,13 +321,13 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
   </div>
 
   <section class="panel" id="secGroups">
-    <div class="panel-actions"><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
+    <div class="panel-actions"><button class="btn btn-blank">🧹 Zerar o que falta</button><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
     <div class="hint"><span class="real">FIM</span> = resultado real, travado. Nos jogos de palpite, ajuste o placar nos botões <b>+</b>/<b>−</b> — tudo recalcula na hora. <b>Toque em qualquer seleção</b> para ver a história dela nas Copas.</div>
     <div class="gridg" id="groupsGrid"></div>
   </section>
 
   <section class="panel hidden" id="secKO">
-    <div class="panel-actions"><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
+    <div class="panel-actions"><button class="btn btn-blank">🧹 Zerar o que falta</button><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
     <div class="korow">
       <div class="follow">Seguir seleção: <select id="followSel"></select></div>
       <div class="legend">
@@ -833,7 +833,11 @@ document.getElementById('accBox').addEventListener('click',e=>{
   const b=e.target.closest('[data-r]');
   if(b){ accRound = b.dataset.r==='all'?'all':+b.dataset.r; renderAccuracy(); }
 });
-document.querySelectorAll('.btn-restore').forEach(b=>b.onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); });
+document.querySelectorAll('.btn-restore').forEach(b=>b.onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); saveSoon(); });
+document.querySelectorAll('.btn-blank').forEach(b=>b.onclick=()=>{
+  state.games.forEach(m=>{ if(!m.r){ m.gh=0; m.ga=0; state.edits[canon(m)]={[m.h]:0,[m.a]:0}; } });
+  state.manual={}; renderAll(); saveSoon();
+});
 
 // ---- persistência ----
 let saveT=null;
