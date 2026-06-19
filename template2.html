@@ -3,7 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Copa do Mundo 2026 · Simulador (resultados reais + palpite)</title>
+<title>Copa do Mundo 2026 — Simulador, Tabela e Chaveamento | Real + Palpite</title>
+<meta name="description" content="Simulador interativo da Copa do Mundo 2026: resultados reais atualizados, tabela dos 12 grupos, chaveamento do mata-mata, palpites que você edita, curiosidades e a história do Brasil nas Copas. Horários de Brasília.">
+<meta name="keywords" content="Copa do Mundo 2026, simulador Copa 2026, tabela Copa 2026, chaveamento Copa do Mundo 2026, grupos Copa 2026, palpite Copa, jogos Copa 2026, Brasil na Copa do Mundo">
+<meta name="robots" content="index, follow">
+<meta name="author" content="evandroback">
+<link rel="canonical" href="https://evandroback.github.io/Copa-2026/">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:url" content="https://evandroback.github.io/Copa-2026/">
+<meta property="og:title" content="Copa do Mundo 2026 — Simulador, Tabela e Chaveamento">
+<meta property="og:description" content="Resultados reais + seus palpites, tabela dos grupos, chaveamento, curiosidades e a história do Brasil nas Copas. Atualiza sozinho.">
+<meta property="og:site_name" content="Copa 2026 · Real + Palpite">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Copa do Mundo 2026 — Simulador, Tabela e Chaveamento">
+<meta name="twitter:description" content="Resultados reais + seus palpites, tabela, chaveamento, curiosidades e a história do Brasil nas Copas.">
+<meta name="theme-color" content="#0a1411">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -224,6 +239,25 @@ footer b{color:var(--mut)}
 /* ===== acessibilidade (piso de qualidade) ===== */
 .tab:focus-visible,.btn:focus-visible,.accdb:focus-visible,.accrt:focus-visible,.slot:not(.empty):focus-visible,.gm .step button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+/* ===== país clicável + modal de perfil ===== */
+.proteam{cursor:pointer;border-radius:5px;transition:.12s}
+.proteam:hover{color:var(--gold)}
+td.l .proteam{display:inline-flex;align-items:center;gap:4px}
+td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--gold);text-underline-offset:2px}
+.gm .side.proteam:hover .ab{color:var(--gold)}
+.promodal{position:fixed;inset:0;z-index:100;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:560px){.promodal{align-items:center}}
+.probackdrop{position:absolute;inset:0;background:rgba(3,8,6,.74);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)}
+.procard{position:relative;width:100%;max-width:520px;max-height:88vh;overflow-y:auto;background:var(--surf);border:1px solid var(--line2);border-radius:20px 20px 0 0;padding:18px 16px 26px;box-shadow:0 -12px 44px rgba(0,0,0,.55);animation:proUp .22s ease}
+@media(min-width:560px){.procard{border-radius:18px;animation:proIn .18s ease}}
+@keyframes proUp{from{transform:translateY(40px);opacity:.6}to{transform:translateY(0);opacity:1}}
+@keyframes proIn{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.proclose{position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid var(--line2);background:var(--surf2);color:var(--mut);font-size:13px;cursor:pointer;display:grid;place-items:center;z-index:2}
+.proclose:hover{color:var(--txt);border-color:var(--gold)}
+.prohead{display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-right:36px}
+.proflag{font-size:40px;line-height:1}
+.proname{font-family:Archivo;font-weight:900;font-size:22px;color:var(--txt);line-height:1.05}
+.prosub{font-family:Archivo;font-weight:700;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-top:4px}
 </style>
 </head>
 <body>
@@ -246,7 +280,7 @@ footer b{color:var(--mut)}
 
   <section class="panel" id="secGroups">
     <div class="panel-actions"><button class="btn gold btn-restore">↺ Restaurar meu palpite</button></div>
-    <div class="hint"><span class="real">FIM</span> = resultado real, travado. Nos jogos de palpite, ajuste o placar nos botões <b>+</b>/<b>−</b> — tudo recalcula na hora.</div>
+    <div class="hint"><span class="real">FIM</span> = resultado real, travado. Nos jogos de palpite, ajuste o placar nos botões <b>+</b>/<b>−</b> — tudo recalcula na hora. <b>Toque em qualquer seleção</b> para ver a história dela nas Copas.</div>
     <div class="gridg" id="groupsGrid"></div>
   </section>
 
@@ -284,6 +318,15 @@ footer b{color:var(--mut)}
   </footer>
 </div>
 
+<div class="promodal hidden" id="proModal">
+  <div class="probackdrop" data-close></div>
+  <div class="procard">
+    <button class="proclose" data-close aria-label="Fechar">✕</button>
+    <div class="prohead"><span class="proflag" id="proFlag"></span><div><div class="proname" id="proName"></div><div class="prosub" id="proSub"></div></div></div>
+    <div id="proBody"></div>
+  </div>
+</div>
+
 <script>
 const DATA = /*__DATA__*/;
 const THIRD_ALLOC = /*__ALLOC__*/;
@@ -291,6 +334,7 @@ const F=DATA.F, GR=DATA.GR, NAME=DATA.NAME, FLAG=DATA.FLAG, GAMES0=DATA.GAMES;
 const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
 const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
+const PROFILES=DATA.PROFILES||{};
 const LETTERS=Object.keys(GR);
 const clone=x=>JSON.parse(JSON.stringify(x));
 const canon=m=>m.g+':'+[m.h,m.a].slice().sort().join('-');
@@ -375,7 +419,7 @@ function renderGroups(){
       const s=st[t], sg=s.GF-s.GA, j=s.W+s.D+s.L;
       const adv=(i===2 && thirds.includes(g));
       h+=`<tr class="q${i+1}${adv?' adv':''}"><td class="pos">${i+1}</td>
-        <td class="l"><span class="fl">${FLAG[t]}</span> <span class="nm">${NAME[t]}</span>${adv?'<span class="adv-badge">3º ✓</span>':''}</td>
+        <td class="l"><span class="proteam" data-pro="${t}"><span class="fl">${FLAG[t]}</span> <span class="nm">${NAME[t]}</span></span>${adv?'<span class="adv-badge">3º ✓</span>':''}</td>
         <td class="pts">${s.P}</td><td>${j}</td><td>${sg>0?'+':''}${sg}</td><td>${s.GF}</td></tr>`;
     });
     h+=`</tbody></table>`;
@@ -403,9 +447,9 @@ function gmHTML(m,idx){
   const _w = m.dt ? (m.dt + (m.hr?` · ${m.hr}`:'')) : '';
   const meta = (_w||m.vn||m.co) ? `<div class="gm-meta">${_w?`<span>${_w}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
   return `<div class="gm-wrap"><div class="gm ${real?'real':'pred'}">
-    <span class="side"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
+    <span class="side proteam" data-pro="${m.h}"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
     <span class="score">${score}</span>
-    <span class="side away"><span class="fl">${FLAG[m.a]}</span><span class="ab">${m.a}</span></span>
+    <span class="side away proteam" data-pro="${m.a}"><span class="fl">${FLAG[m.a]}</span><span class="ab">${m.a}</span></span>
   </div>${meta}</div>`;
 }
 
@@ -493,6 +537,27 @@ function renderBlocks(data, boxId){
 }
 function renderCurios(){ renderBlocks(CURIOS,'curioBox'); }
 function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
+
+// ---- modal de perfil de país ----
+function openProfile(code){
+  const p=PROFILES[code]; if(!p) return;
+  document.getElementById('proFlag').textContent=p.fl||'';
+  document.getElementById('proName').textContent=p.nm||'';
+  document.getElementById('proSub').textContent=p.sub||'';
+  renderBlocks({sections:p.sections||[]},'proBody');
+  document.getElementById('proModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+}
+function closeProfile(){
+  document.getElementById('proModal').classList.add('hidden');
+  document.body.style.overflow='';
+}
+document.addEventListener('click',e=>{
+  const pl=e.target.closest('[data-pro]');
+  if(pl){ openProfile(pl.getAttribute('data-pro')); return; }
+  if(e.target.closest('[data-close]')) closeProfile();
+});
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeProfile(); });
 
 // ---- assertividade do palpite original ----
 function predScore(a,b){

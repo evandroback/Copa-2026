@@ -36,6 +36,8 @@ OF_STADIUMS = "https://raw.githubusercontent.com/openfootball/worldcup.json/mast
 OF_TEAMS    = "https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.teams.json"
 COUNTRY = {"us":"EUA","mx":"México","ca":"Canadá"}
 CFLAG   = {"us":"🇺🇸","mx":"🇲🇽","ca":"🇨🇦"}
+# historico das Copas 1930-2022 (calculado uma vez, fixo) — por codigo de selecao
+HIST = {"ALG":{"p":4,"t":[],"v":[],"sf":0,"j":13,"w":3,"dr":4,"l":6,"gf":12,"ga":17,"fr":1982,"bl":2},"ARG":{"p":18,"t":[1978,1986,2022],"v":[1930,1990,2014],"sf":5,"j":88,"w":44,"dr":21,"l":23,"gf":147,"ga":99,"fr":1930,"bl":5},"AUS":{"p":6,"t":[],"v":[],"sf":0,"j":20,"w":4,"dr":4,"l":12,"gf":17,"ga":37,"fr":1974,"bl":2},"AUT":{"p":7,"t":[],"v":[],"sf":2,"j":29,"w":11,"dr":5,"l":13,"gf":41,"ga":46,"fr":1934,"bl":4},"BEL":{"p":14,"t":[],"v":[],"sf":2,"j":51,"w":19,"dr":14,"l":18,"gf":64,"ga":68,"fr":1930,"bl":4},"BIH":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":1,"dr":0,"l":2,"gf":4,"ga":4,"fr":2014,"bl":0},"BRA":{"p":22,"t":[1958,1962,1970,1994,2002],"v":[1950,1998],"sf":8,"j":114,"w":75,"dr":20,"l":19,"gf":234,"ga":106,"fr":1930,"bl":5},"CAN":{"p":2,"t":[],"v":[],"sf":0,"j":6,"w":0,"dr":0,"l":6,"gf":2,"ga":12,"fr":1986,"bl":0},"CPV":{"p":0,"t":[],"v":[],"sf":0,"j":0,"w":0,"dr":0,"l":0,"gf":0,"ga":0,"fr":None,"bl":0},"COL":{"p":6,"t":[],"v":[],"sf":0,"j":22,"w":9,"dr":4,"l":9,"gf":31,"ga":28,"fr":1962,"bl":3},"CRO":{"p":6,"t":[],"v":[2018],"sf":3,"j":30,"w":12,"dr":9,"l":9,"gf":40,"ga":31,"fr":1998,"bl":5},"CUW":{"p":0,"t":[],"v":[],"sf":0,"j":0,"w":0,"dr":0,"l":0,"gf":0,"ga":0,"fr":None,"bl":0},"CZE":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":1,"dr":0,"l":2,"gf":3,"ga":4,"fr":2006,"bl":0},"COD":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":0,"dr":0,"l":3,"gf":0,"ga":14,"fr":1974,"bl":0},"ECU":{"p":4,"t":[],"v":[],"sf":0,"j":13,"w":5,"dr":2,"l":6,"gf":14,"ga":14,"fr":2002,"bl":2},"EGY":{"p":3,"t":[],"v":[],"sf":0,"j":7,"w":0,"dr":2,"l":5,"gf":5,"ga":12,"fr":1934,"bl":0},"ENG":{"p":16,"t":[1966],"v":[],"sf":3,"j":74,"w":29,"dr":27,"l":18,"gf":99,"ga":65,"fr":1950,"bl":5},"FRA":{"p":16,"t":[1998,2018],"v":[2006,2022],"sf":7,"j":73,"w":37,"dr":17,"l":19,"gf":129,"ga":80,"fr":1930,"bl":5},"GER":{"p":20,"t":[1954,1974,1990,2014],"v":[1966,1982,1986,2002],"sf":12,"j":112,"w":65,"dr":27,"l":20,"gf":224,"ga":120,"fr":1934,"bl":5},"GHA":{"p":4,"t":[],"v":[],"sf":0,"j":15,"w":4,"dr":4,"l":7,"gf":17,"ga":23,"fr":2006,"bl":3},"HAI":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":0,"dr":0,"l":3,"gf":2,"ga":14,"fr":1974,"bl":0},"IRN":{"p":6,"t":[],"v":[],"sf":0,"j":18,"w":3,"dr":4,"l":11,"gf":13,"ga":31,"fr":1978,"bl":0},"IRQ":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":0,"dr":0,"l":3,"gf":1,"ga":4,"fr":1986,"bl":0},"CIV":{"p":3,"t":[],"v":[],"sf":0,"j":9,"w":3,"dr":1,"l":5,"gf":13,"ga":14,"fr":2006,"bl":0},"JPN":{"p":7,"t":[],"v":[],"sf":0,"j":25,"w":7,"dr":6,"l":12,"gf":25,"ga":33,"fr":1998,"bl":2},"JOR":{"p":0,"t":[],"v":[],"sf":0,"j":0,"w":0,"dr":0,"l":0,"gf":0,"ga":0,"fr":None,"bl":0},"MEX":{"p":17,"t":[],"v":[],"sf":0,"j":60,"w":17,"dr":16,"l":27,"gf":62,"ga":100,"fr":1930,"bl":3},"MAR":{"p":6,"t":[],"v":[],"sf":1,"j":23,"w":5,"dr":7,"l":11,"gf":20,"ga":27,"fr":1970,"bl":4},"NED":{"p":11,"t":[],"v":[1974,1978,2010],"sf":3,"j":55,"w":30,"dr":17,"l":8,"gf":96,"ga":46,"fr":1934,"bl":5},"NZL":{"p":2,"t":[],"v":[],"sf":0,"j":6,"w":0,"dr":3,"l":3,"gf":4,"ga":14,"fr":1982,"bl":0},"NOR":{"p":3,"t":[],"v":[],"sf":0,"j":8,"w":2,"dr":4,"l":2,"gf":7,"ga":7,"fr":1938,"bl":2},"PAN":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":0,"dr":0,"l":3,"gf":2,"ga":11,"fr":2018,"bl":0},"PAR":{"p":8,"t":[],"v":[],"sf":0,"j":27,"w":7,"dr":11,"l":9,"gf":30,"ga":37,"fr":1930,"bl":3},"POR":{"p":8,"t":[],"v":[],"sf":2,"j":35,"w":17,"dr":6,"l":12,"gf":61,"ga":41,"fr":1966,"bl":4},"QAT":{"p":1,"t":[],"v":[],"sf":0,"j":3,"w":0,"dr":0,"l":3,"gf":1,"ga":7,"fr":2022,"bl":0},"KSA":{"p":6,"t":[],"v":[],"sf":0,"j":19,"w":4,"dr":2,"l":13,"gf":14,"ga":44,"fr":1994,"bl":2},"SCO":{"p":8,"t":[],"v":[],"sf":0,"j":23,"w":4,"dr":7,"l":12,"gf":25,"ga":41,"fr":1954,"bl":0},"SEN":{"p":3,"t":[],"v":[],"sf":0,"j":12,"w":4,"dr":5,"l":3,"gf":15,"ga":16,"fr":2002,"bl":3},"RSA":{"p":3,"t":[],"v":[],"sf":0,"j":9,"w":2,"dr":4,"l":3,"gf":11,"ga":16,"fr":1998,"bl":0},"KOR":{"p":11,"t":[],"v":[],"sf":1,"j":38,"w":6,"dr":11,"l":21,"gf":38,"ga":78,"fr":1954,"bl":4},"ESP":{"p":16,"t":[2010],"v":[],"sf":1,"j":67,"w":30,"dr":19,"l":18,"gf":107,"ga":74,"fr":1934,"bl":5},"SWE":{"p":12,"t":[],"v":[1958],"sf":3,"j":51,"w":19,"dr":14,"l":18,"gf":79,"ga":71,"fr":1934,"bl":5},"SUI":{"p":12,"t":[],"v":[],"sf":0,"j":41,"w":14,"dr":9,"l":18,"gf":55,"ga":72,"fr":1934,"bl":3},"TUN":{"p":6,"t":[],"v":[],"sf":0,"j":18,"w":3,"dr":5,"l":10,"gf":14,"ga":26,"fr":1978,"bl":0},"TUR":{"p":2,"t":[],"v":[],"sf":1,"j":10,"w":4,"dr":2,"l":4,"gf":19,"ga":17,"fr":1954,"bl":4},"USA":{"p":11,"t":[],"v":[],"sf":1,"j":37,"w":9,"dr":10,"l":18,"gf":39,"ga":63,"fr":1930,"bl":4},"URU":{"p":14,"t":[1930,1950],"v":[],"sf":4,"j":59,"w":24,"dr":15,"l":20,"gf":88,"ga":74,"fr":1930,"bl":5},"UZB":{"p":0,"t":[],"v":[],"sf":0,"j":0,"w":0,"dr":0,"l":0,"gf":0,"ga":0,"fr":None,"bl":0}}
 _DOW = ["seg","ter","qua","qui","sex","sáb","dom"]          # datetime.weekday(): 0=segunda
 _MON = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"]
 def fmt_date_pt(iso):
@@ -458,6 +460,79 @@ def compute_brasil(games):
     B["sections"].append({"ico":"🇧🇷","title":"Brasil na Copa 2026","note":"atualiza sozinho","items":sec26})
     return B
 
+# ---------- perfil de cada seleção (histórico fixo + Copa 2026 dinâmica) ----------
+def _titulo_pt(n):
+    return {5:"Pentacampeão",4:"Tetracampeão",3:"Tricampeão",2:"Bicampeão",1:"Campeão mundial"}.get(n,"")
+def _best_pt(h):
+    if h["t"]: return {5:"Pentacampeão",4:"Tetracampeão",3:"Tricampeão",2:"Bicampeão",1:"Campeão"}.get(len(h["t"]),"Campeão")
+    if h["v"]: return "Vice-campeão"
+    if h["sf"]: return "Semifinalista (3º/4º)"
+    return {3:"Quartas de final",2:"Oitavas de final",1:"16-avos de final"}.get(h["bl"],"Fase de grupos")
+
+def compute_profiles(games, squads):
+    from collections import Counter, defaultdict
+    flag=lambda c: FLAG.get(c,""); nm=lambda c: NAME.get(c,c)
+    sct=defaultdict(Counter)
+    for g in GOALS:
+        if g["who"] and not g["og"]: sct[g["c"]][g["who"]]+=1
+    sqc=defaultdict(list)
+    for t in (squads or []):
+        c=OF_NAMES.get((t.get("name") or "").strip())
+        if c:
+            for pl in t.get("players",[]): sqc[c].append(pl)
+    grp_of={c:gl for gl,cs in GR.items() for c in cs}
+    gby=defaultdict(list)
+    for m in games: gby[m["h"]].append(m); gby[m["a"]].append(m)
+    PRO={}
+    for code in NAME:
+        h=HIST.get(code) or {"p":0,"t":[],"v":[],"sf":0,"j":0,"w":0,"dr":0,"l":0,"gf":0,"ga":0,"fr":None,"bl":0}
+        if h["p"]==0: sub=f"Estreante · Grupo {grp_of.get(code,'?')}"
+        elif h["t"]: sub=f"{_titulo_pt(len(h['t']))} · {h['p']} Copas"
+        else: sub=f"{_best_pt(h)} · {h['p']} Copas"
+        secs=[]
+        # história
+        hi=[]
+        if h["p"]==0:
+            hi.append({"ico":"🌟","label":"Estreante","value":"1ª Copa da história","detail":"2026 é a estreia desta seleção em Copas"})
+        else:
+            if h["t"]: hi.append({"ico":"🏆","label":"Títulos mundiais","value":f"{len(h['t'])}× campeão","detail":", ".join(map(str,h['t']))})
+            if h["v"]: hi.append({"ico":"🥈","label":"Vice-campeão","value":f"{len(h['v'])}×","detail":", ".join(map(str,h['v']))})
+            hi.append({"ico":"📅","label":"Participações","value":f"{h['p']} Copas","detail":f"desde {h['fr']}"})
+            if not h["t"]: hi.append({"ico":"🎯","label":"Melhor campanha","value":_best_pt(h)})
+            if h["sf"]: hi.append({"ico":"🥉","label":"Semifinais","value":f"{h['sf']}×","detail":"entre os 4 melhores"})
+            hi.append({"ico":"📊","label":"Balanço em Copas","value":f"{h['j']} jogos","detail":f"{h['w']}V · {h['dr']}E · {h['l']}D"})
+            hi.append({"ico":"⚽","label":"Gols","value":f"{h['gf']} feitos","detail":f"{h['ga']} sofridos · saldo {h['gf']-h['ga']:+d}"})
+        secs.append({"ico":"🏆","title":"Na história das Copas","items":hi})
+        # Copa 2026
+        c2=[{"ico":"📍","label":"Onde está em 2026","value":f"Grupo {grp_of.get(code,'?')}"}]
+        rows=[]
+        for m in gby.get(code,[]):
+            opp=m["a"] if m["h"]==code else m["h"]
+            gb,go=(m["gh"],m["ga"]) if m["h"]==code else (m["ga"],m["gh"])
+            if m["r"]:
+                res="✓" if gb>go else "✗" if gb<go else "="
+                rows.append({"n":f"{flag(opp)} {nm(opp)}","s":m.get("dt",""),"v":f"{gb}–{go} {res}"})
+            else:
+                rows.append({"n":f"{flag(opp)} {nm(opp)}","s":(m.get('dt','') or 'a definir'),"v":"a jogar"})
+        if rows: c2.append({"ico":"📅","label":"Jogos na fase de grupos","rows":rows})
+        if sct.get(code):
+            w,q=sct[code].most_common(1)[0]
+            c2.append({"ico":"👟","label":"Artilheiro em 2026","value":w,"detail":f"{q} gol(s)"})
+        pls=sqc.get(code,[])
+        if pls:
+            ages=[(age_on(p.get("date_of_birth","")),p) for p in pls]; ages=[(a,p) for a,p in ages if a]
+            if ages:
+                ages.sort(key=lambda x:x[0])
+                c2.append({"ico":"👶","label":"Mais novo do elenco","value":ages[0][1]["name"],"detail":f"{ages[0][0]:.0f} anos"})
+                c2.append({"ico":"🧓","label":"Mais veterano","value":ages[-1][1]["name"],"detail":f"{ages[-1][0]:.0f} anos"})
+            clubs=Counter(p["club"]["name"] for p in pls if p.get("club"))
+            if clubs:
+                cl,q=clubs.most_common(1)[0]
+                c2.append({"ico":"🏟️","label":"Clube que mais cede","value":cl,"detail":f"{q} jogador(es)"})
+        secs.append({"ico":"📅","title":"Na Copa 2026","items":c2})
+        PRO[code]={"nm":nm(code),"fl":flag(code),"sub":sub,"sections":secs}
+    return PRO
+
 # ---------- montar / calcular ----------
 def build():
     real=load_seed(); real.update(fetch_results())   # openfootball tem prioridade sobre o seed
@@ -510,6 +585,7 @@ def main():
         VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
     CURIOS=compute_curios(games, squads, stadiums, teams)
     BRASIL=compute_brasil(games)
+    PROFILES=compute_profiles(games, squads)
     # REALLIST p/ rodape
     rg=[m for m in games if m["r"]]; rg.sort(key=lambda m:m["g"])
     reallist=" · ".join(f"{NAME[m['h']]} {m['gh']}–{m['ga']} {NAME[m['a']]}" for m in rg) or "(nenhum ainda)"
@@ -519,13 +595,24 @@ def main():
     ALLOC=json.load(open(os.path.join(HERE,"third_alloc.json"),encoding="utf-8"))
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
-          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL}
+          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"PROFILES":PROFILES}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))
              .replace("__REALLIST__",reallist).replace("__ASOF__",asof))
-    os.makedirs(os.path.join(HERE,"site"),exist_ok=True)
-    open(os.path.join(HERE,"site","index.html"),"w",encoding="utf-8").write(html)
+    site=os.path.join(HERE,"site")
+    os.makedirs(site,exist_ok=True)
+    open(os.path.join(site,"index.html"),"w",encoding="utf-8").write(html)
+    # arquivos de indexação (SEO)
+    open(os.path.join(site,"robots.txt"),"w",encoding="utf-8").write(
+        "User-agent: *\nAllow: /\nSitemap: https://evandroback.github.io/Copa-2026/sitemap.xml\n")
+    today=now.strftime("%Y-%m-%d")
+    open(os.path.join(site,"sitemap.xml"),"w",encoding="utf-8").write(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        '  <url>\n    <loc>https://evandroback.github.io/Copa-2026/</loc>\n'
+        f'    <lastmod>{today}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>1.0</priority>\n'
+        '  </url>\n</urlset>\n')
     print(f"[ok] site gerado — {real_n} jogos reais — {len(CURIOS.get('sections',[]))} seções de curiosidades — {asof}")
 
 if __name__=="__main__":
