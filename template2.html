@@ -112,6 +112,8 @@ h1 .yr{color:var(--gold)}
 .gm .tag{font-size:8px;font-weight:800;font-family:Archivo;border-radius:3px;padding:1px 4px;flex:none}
 .gm .tag.fim{color:var(--live);background:rgba(54,196,107,.13)}
 .gm .tag.pal{color:var(--mut);background:rgba(255,255,255,.05)}
+.gm .scv.blank{color:var(--mut2);opacity:.55}
+.gm .tag.blank{color:var(--mut2);background:rgba(255,255,255,.03);border:1px dashed var(--line2)}
 /* linha discreta data/estadio/pais nos jogos */
 .gm-wrap{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
 .gm-wrap:last-child{border-bottom:0}
@@ -236,6 +238,9 @@ footer b{color:var(--mut)}
 .cu-rn{flex:1;font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rs{font-size:10px;color:var(--mut2);flex:none;max-width:42%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rv{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);flex:none;min-width:16px;text-align:right}
+.cu-rn2{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.cu-rnm{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cu-rnsub{font-size:10px;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ===== aba Favoritos (probabilidades) ===== */
 .prob-list{display:flex;flex-direction:column}
 .prob-row{display:grid;grid-template-columns:24px 26px 1fr 70px 42px;align-items:center;gap:9px;padding:9px 5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
@@ -433,6 +438,7 @@ const PROFILES=DATA.PROFILES||{};
 const PROB=DATA.PROB||{};
 const NUMBERS=DATA.NUMBERS||{sections:[]};
 const VENUES=DATA.VENUES||{geo:[],routes:{}};
+const ENPT=DATA.ENPT||{};
 const ALL=DATA.ALL||{};
 const CATS=['Copa do Mundo','Eliminatórias','Copa América','Eurocopa','Copa Africana','Copa da Ásia','Copa Ouro','Confederações','Liga das Nações','Amistosos','Outros torneios'];
 const FASE_PT={G:'Fase de grupos',R32:'16-avos',R16:'Oitavas',QF:'Quartas de final',SF:'Semifinal',F:'Final','3P':'Disputa do 3º'};
@@ -464,7 +470,7 @@ function standings(){
   for(const g of LETTERS){
     const ts=GR[g], st={};
     ts.forEach(t=>st[t]={P:0,W:0,D:0,L:0,GF:0,GA:0});
-    for(const m of state.games){ if(m.g!==g) continue;
+    for(const m of state.games){ if(m.g!==g) continue; if(m.blank) continue;
       st[m.h].GF+=m.gh; st[m.h].GA+=m.ga; st[m.a].GF+=m.ga; st[m.a].GA+=m.gh;
       if(m.gh>m.ga){st[m.h].P+=3;st[m.h].W++;st[m.a].L++;}
       else if(m.gh<m.ga){st[m.a].P+=3;st[m.a].W++;st[m.h].L++;}
@@ -540,10 +546,11 @@ function gmHTML(m,idx){
   if(real){
     score=`<span class="sc-fixed">${m.gh}</span><span class="vs">×</span><span class="sc-fixed">${m.ga}</span><span class="tag fim">FIM</span>`;
   }else{
+    const bl=m.blank;
     score=`<span class="step"><button data-inc="${idx}:h:1" aria-label="+">▲</button><button data-inc="${idx}:h:-1" aria-label="−">▼</button></span>`+
-          `<span class="scv">${m.gh}</span><span class="vs">×</span><span class="scv">${m.ga}</span>`+
+          `<span class="scv${bl?' blank':''}">${bl?'·':m.gh}</span><span class="vs">×</span><span class="scv${bl?' blank':''}">${bl?'·':m.ga}</span>`+
           `<span class="step"><button data-inc="${idx}:a:1" aria-label="+">▲</button><button data-inc="${idx}:a:-1" aria-label="−">▼</button></span>`+
-          `<span class="tag pal">palpite</span>`;
+          `<span class="tag ${bl?'blank':'pal'}">${bl?'em branco':'palpite'}</span>`;
   }
   const _w = m.dt ? (m.dt + (m.hr?` · ${m.hr}`:'')) : '';
   const meta = (_w||m.vn||m.co) ? `<div class="gm-meta">${_w?`<span>${_w}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
@@ -639,8 +646,12 @@ function renderAll(){ recompute(); renderGroups(); renderKO(); saveSoon(); }
 function curioItemHTML(it){
   let body;
   if(it.rows){
-    body=`<div class="cu-rows">`+it.rows.map((r,i)=>
-      `<div class="cu-row"><span class="cu-rk">${i+1}</span><span class="cu-rn">${r.n}</span>${r.s?`<span class="cu-rs">${r.s}</span>`:''}<span class="cu-rv">${r.v}</span></div>`).join('')+`</div>`;
+    body=`<div class="cu-rows">`+it.rows.map((r,i)=>{
+      const main = r.sub
+        ? `<span class="cu-rn2"><span class="cu-rnm">${r.n}</span><span class="cu-rnsub">${r.sub}</span></span>`
+        : `<span class="cu-rn">${r.n}</span>${r.s?`<span class="cu-rs">${r.s}</span>`:''}`;
+      return `<div class="cu-row"><span class="cu-rk">${i+1}</span>${main}<span class="cu-rv">${r.v}</span></div>`;
+    }).join('')+`</div>`;
   }else{
     body=`<div class="cu-val">${it.value}</div>`+(it.detail?`<div class="cu-det">${it.detail}</div>`:'');
   }
@@ -872,8 +883,9 @@ groupsGrid.addEventListener('click',e=>{
   const b=e.target.closest('[data-inc]'); if(!b) return;
   const [idx,side,d]=b.dataset.inc.split(':'); const m=state.games[+idx];
   if(!m||m.r) return;
-  if(side==='h') m.gh=Math.max(0,Math.min(19,m.gh+(+d)));
-  else m.ga=Math.max(0,Math.min(19,m.ga+(+d)));
+  if(side==='h') m.gh=Math.max(0,Math.min(19,(m.blank?0:m.gh)+(+d)));
+  else m.ga=Math.max(0,Math.min(19,(m.blank?0:m.ga)+(+d)));
+  m.blank=false;
   state.edits[canon(m)]={[m.h]:m.gh,[m.a]:m.ga};
   renderAll();
 });
@@ -886,14 +898,14 @@ document.getElementById('koBody').addEventListener('click',e=>{
 document.getElementById('followSel').addEventListener('change',e=>{ state.follow=e.target.value; renderKO(); saveSoon(); });
 function renderNumbers(){ renderBlocks(NUMBERS,'numbersBox'); }
 
-function _vproj(geo,W,H,pad){
-  const lats=geo.map(g=>g.lat),lngs=geo.map(g=>g.lng);
+function _mkproj(ref,W,H,pad){
+  const lats=ref.map(p=>p[1]),lngs=ref.map(p=>p[0]);
   const minLa=Math.min(...lats),maxLa=Math.max(...lats),minLo=Math.min(...lngs),maxLo=Math.max(...lngs);
   const kx=Math.cos((minLa+maxLa)/2*Math.PI/180);
   const gw=(maxLo-minLo)*kx,gh=(maxLa-minLa);
   const sc=Math.min((W-2*pad)/gw,(H-2*pad)/gh);
   const ox=pad+((W-2*pad)-gw*sc)/2, oy=pad+((H-2*pad)-gh*sc)/2;
-  return g=>[ox+((g.lng-minLo)*kx)*sc, oy+((maxLa-g.lat))*sc];
+  return (lng,lat)=>[ox+((lng-minLo)*kx)*sc, oy+((maxLa-lat))*sc];
 }
 let venuesInit=false;
 function renderVenues(){
@@ -914,26 +926,36 @@ function renderVenues(){
     '<div class="vr-sec">🏠 Quem menos roda</div>'+rank.slice(-5).reverse().map(row).join('');
 }
 function drawVenues(code){
-  const geo=VENUES.geo||[],routes=VENUES.routes||{};
-  const W=720,H=560,pad=46,proj=_vproj(geo,W,H,pad);
+  const geo=VENUES.geo||[],routes=VENUES.routes||{},cont=VENUES.contours||{};
+  const W=720,H=640,pad=14;
+  // enquadrar pela área das sedes + margem (evita vão vazio do norte do Canadá)
+  const clat=geo.map(g=>g.lat),clng=geo.map(g=>g.lng);
+  const bbox=[[Math.min(...clng)-5,Math.min(...clat)-3.5],[Math.max(...clng)+5,Math.max(...clat)+4]];
+  const proj=_mkproj(bbox,W,H,pad);
   const ccColor={us:'#4a90d9',mx:'#3bbf6f',ca:'#e8537a'};
+  const ccFill={us:'rgba(74,144,217,.10)',mx:'rgba(59,191,111,.11)',ca:'rgba(232,83,122,.10)'};
+  let paths='';
+  Object.entries(cont).forEach(([cc,rings])=>rings.forEach(r=>{
+    const d=r.map((p,i)=>{const a=proj(p[0],p[1]);return (i?'L':'M')+a[0].toFixed(1)+' '+a[1].toFixed(1);}).join('')+'Z';
+    paths+=`<path d="${d}" fill="${ccFill[cc]||'rgba(255,255,255,.05)'}" stroke="rgba(255,255,255,.14)" stroke-width="1"/>`;
+  }));
   const route=code?routes[code]:null, rc=route?route.cities:[];
   const byCity={}; geo.forEach(g=>byCity[g.city]=g);
   let lines='';
   if(rc.length>1){
     for(let i=1;i<rc.length;i++){
       const a=byCity[rc[i-1]],b=byCity[rc[i]]; if(!a||!b)continue;
-      const [x1,y1]=proj(a),[x2,y2]=proj(b);
-      lines+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#f4c24b" stroke-width="2.5" stroke-dasharray="6 4" opacity=".85"/>`;
+      const [x1,y1]=proj(a.lng,a.lat),[x2,y2]=proj(b.lng,b.lat);
+      lines+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#f4c24b" stroke-width="2.5" stroke-dasharray="6 4" opacity=".9"/>`;
     }
   }
   let pts='';
   geo.forEach(g=>{
-    const [x,y]=proj(g), on=!code||rc.includes(g.city), big=rc.includes(g.city);
-    pts+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big?7:5}" fill="${on?(ccColor[g.cc]||'#888'):'#2a3a33'}" stroke="${big?'#fff':'none'}" stroke-width="${big?1.5:0}" opacity="${on?1:.45}"/>`;
-    if(on) pts+=`<text x="${x.toFixed(1)}" y="${(y-11).toFixed(1)}" text-anchor="middle" class="vm-lab">${g.city.split(' (')[0]}</text>`;
+    const [x,y]=proj(g.lng,g.lat), on=!code||rc.includes(g.city), big=rc.includes(g.city);
+    pts+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big?7:5}" fill="${on?(ccColor[g.cc]||'#888'):'#2a3a33'}" stroke="${big?'#fff':'rgba(0,0,0,.35)'}" stroke-width="${big?1.5:.5}" opacity="${on?1:.5}"/>`;
+    if(on) pts+=`<text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="middle" class="vm-lab">${g.city.split(' (')[0]}</text>`;
   });
-  document.getElementById('venueMap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="vmap">${lines}${pts}</svg>`;
+  document.getElementById('venueMap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="vmap">${paths}${lines}${pts}</svg>`;
   const info=document.getElementById('venueInfo');
   if(code&&route){
     info.innerHTML='<div class="vinfo"><div class="vinfo-h">'+FLAG[code]+' '+NAME[code]+' na fase de grupos</div>'+
@@ -973,7 +995,7 @@ document.getElementById('accBox').addEventListener('click',e=>{
 });
 document.querySelectorAll('.btn-restore').forEach(b=>b.onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); saveSoon(); });
 document.querySelectorAll('.btn-blank').forEach(b=>b.onclick=()=>{
-  state.games.forEach(m=>{ if(!m.r){ m.gh=0; m.ga=0; state.edits[canon(m)]={[m.h]:0,[m.a]:0}; } });
+  state.games.forEach(m=>{ if(!m.r){ m.gh=0; m.ga=0; m.blank=true; state.edits[canon(m)]={blank:1}; } });
   state.manual={}; renderAll(); saveSoon();
 });
 
@@ -984,7 +1006,7 @@ async function doSave(){ try{ if(window.storage&&window.storage.set) await windo
 async function loadSaved(){ try{ if(window.storage&&window.storage.get){ const r=await window.storage.get('wc2026:g2',false);
   if(r&&r.value){ const s=JSON.parse(r.value);
     const ne={};
-    if(s.edits) for(const k in s.edits){ const v=s.edits[k]; const p=k.split(':'); const kc=p[0]+':'+(p[1]||'').split('-').sort().join('-'); const m=state.games.find(x=>!x.r&&canon(x)===kc); if(m&&v[m.h]!=null&&v[m.a]!=null){ m.gh=v[m.h]; m.ga=v[m.a]; ne[kc]=v; } }
+    if(s.edits) for(const k in s.edits){ const v=s.edits[k]; const p=k.split(':'); const kc=p[0]+':'+(p[1]||'').split('-').sort().join('-'); const m=state.games.find(x=>!x.r&&canon(x)===kc); if(m){ if(v.blank){ m.blank=true; m.gh=0; m.ga=0; ne[kc]=v; } else if(v[m.h]!=null&&v[m.a]!=null){ m.gh=v[m.h]; m.ga=v[m.a]; m.blank=false; ne[kc]=v; } } }
     state.edits=ne;
     if(s.manual)state.manual=s.manual; if(typeof s.follow==='string')state.follow=s.follow; if(s.tab)state.tab=s.tab;
   } } }catch(e){} }
@@ -999,14 +1021,16 @@ async function _try(url){
 }
 function _parse(j){
   const evs=(j&&j.events)||[];
+  const tr=n=>{ const e=ENPT[n]; return e?{nm:e.pt,fl:e.fl}:{nm:n,fl:''}; };
   return evs.map(ev=>{
     const c=(ev.competitions&&ev.competitions[0])||{}; const cs=c.competitors||[];
     const home=cs.find(x=>x.homeAway==='home')||cs[0]||{};
     const away=cs.find(x=>x.homeAway==='away')||cs[1]||{};
     const st=(ev.status&&ev.status.type)||{};
+    const H=tr((home.team&&(home.team.displayName||home.team.shortDisplayName||home.team.abbreviation))||'?');
+    const A=tr((away.team&&(away.team.displayName||away.team.shortDisplayName||away.team.abbreviation))||'?');
     return { state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'',
-      hn:(home.team&&(home.team.shortDisplayName||home.team.displayName||home.team.abbreviation))||'?',
-      an:(away.team&&(away.team.shortDisplayName||away.team.displayName||away.team.abbreviation))||'?',
+      hn:H.nm, hfl:H.fl, an:A.nm, afl:A.fl,
       hs:(home.score!=null?home.score:''), as:(away.score!=null?away.score:'') };
   });
 }
@@ -1022,7 +1046,8 @@ function _gm(g){
   if(g.state==='in'){ cls='live'; lab=(g.detail||g.short||'•'); }
   else if(g.state==='post'){ cls='post'; lab='FIM'; }
   const sc=(g.state==='pre')?'<span class="sc">×</span>':'<span class="sc">'+g.hs+' - '+g.as+'</span>';
-  return '<div class="lb-game"><span class="lb-status '+cls+'">'+lab+'</span><span class="lb-match"><b>'+g.hn+'</b> '+sc+' <b>'+g.an+'</b></span></div>';
+  const h=(g.hfl?g.hfl+' ':'')+g.hn, a=g.an+(g.afl?' '+g.afl:'');
+  return '<div class="lb-game"><span class="lb-status '+cls+'">'+lab+'</span><span class="lb-match"><b>'+h+'</b> '+sc+' <b>'+a+'</b></span></div>';
 }
 function renderLiveBar(res){
   const bar=document.getElementById('liveBar'); if(!bar) return;

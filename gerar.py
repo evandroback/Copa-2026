@@ -292,17 +292,17 @@ def compute_curios(games, squads, stadiums, teams):
             if g["who"] and not g["og"]: tof.setdefault(g["who"],g["c"])
         top=sc.most_common(6)
         if top:
-            gi.append({"ico":"👟","label":"Artilheiros","rows":[{"n":w,"v":str(n),"s":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in top]})
+            gi.append({"ico":"👟","label":"Artilheiros","rows":[{"n":w,"v":str(n),"sub":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in top]})
             C["hero"].append({"ico":"👟","label":"Artilheiro","value":top[0][0],"detail":f"{top[0][1]} gol(s) · {flag(tof.get(top[0][0],''))} {nm(tof.get(top[0][0],''))}"})
         perpg=defaultdict(Counter)
         for g in GOALS:
             if g["who"] and not g["og"]: perpg[g["g"]][g["who"]]+=1
         hats=[(w,n) for _,cc in perpg.items() for w,n in cc.items() if n>=3]
-        gi.append({"ico":"🎩","label":"Hat-tricks","rows":[{"n":w,"v":f"{n} gols","s":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in hats]} if hats else {"ico":"🎩","label":"Hat-tricks","value":"nenhum ainda"})
+        gi.append({"ico":"🎩","label":"Hat-tricks","rows":[{"n":w,"v":f"{n} gols","sub":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in hats]} if hats else {"ico":"🎩","label":"Hat-tricks","value":"nenhum ainda"})
         pens=[g for g in GOALS if g["pen"]]
         if pens: gi.append({"ico":"🎯","label":"Gols de pênalti","value":str(len(pens)),"detail":", ".join(g["who"] for g in pens[:5])})
         ogs=[g for g in GOALS if g["og"]]
-        if ogs: gi.append({"ico":"🙃","label":"Gols contra","rows":[{"n":g["who"],"v":"contra","s":flag(g["c"])+" "+nm(g["c"])} for g in ogs]})
+        if ogs: gi.append({"ico":"🙃","label":"Gols contra","rows":[{"n":g["who"],"v":"contra","sub":flag(g["c"])+" "+nm(g["c"])} for g in ogs]})
         timed=[g for g in GOALS if g["min"] is not None]
         if timed:
             fa=min(timed,key=lambda g:g["min"]); la=max(timed,key=lambda g:g["min"])
@@ -553,6 +553,8 @@ def compute_profiles(games, squads):
         PRO[code]={"nm":nm(code),"fl":flag(code),"sub":sub,"sections":secs}
     return PRO
 
+CONTOURS = {"us":[[[-94.82,49.39],[-94.33,48.67],[-91.64,48.14],[-88.38,48.3],[-84.14,46.51],[-82.55,45.35],[-82.14,43.57],[-83.12,42.08],[-82.69,41.68],[-78.94,42.86],[-79.17,43.47],[-78.72,43.63],[-76.82,43.63],[-74.87,45.0],[-71.51,45.01],[-69.24,47.45],[-67.79,47.07],[-67.79,45.7],[-66.96,44.81],[-70.12,43.68],[-70.83,42.34],[-69.97,41.64],[-73.71,40.93],[-71.94,40.93],[-73.95,40.75],[-74.91,38.94],[-75.53,39.5],[-75.06,38.4],[-75.94,37.22],[-75.72,37.94],[-76.35,39.15],[-76.33,38.08],[-76.99,38.24],[-76.3,37.92],[-75.73,35.55],[-81.34,31.44],[-80.06,26.88],[-80.68,25.08],[-82.71,27.5],[-82.93,29.1],[-84.1,30.09],[-85.11,29.64],[-86.4,30.4],[-89.18,30.32],[-89.59,30.16],[-89.41,29.16],[-93.23,29.78],[-94.69,29.48],[-97.14,27.83],[-97.14,25.87],[-97.53,25.84],[-99.02,26.37],[-100.96,29.38],[-102.48,29.76],[-103.11,28.97],[-103.94,29.27],[-106.51,31.75],[-111.02,31.33],[-114.72,32.72],[-117.13,32.54],[-118.52,34.03],[-120.62,34.61],[-124.4,40.31],[-124.53,42.77],[-123.9,45.52],[-124.69,48.18],[-123.12,48.04],[-122.59,47.1],[-122.84,49],[-95.16,49],[-94.82,49.39]]],"ca":[[[-63.66,46.55],[-62.01,46.44],[-62.87,45.97],[-64.39,46.73],[-64.01,47.04],[-63.66,46.55]],[[-123.51,48.51],[-125.66,48.83],[-128.06,49.99],[-128.36,50.77],[-125.76,50.3],[-123.51,48.51]],[[-90.55,69.5],[-90.55,68.47],[-89.22,69.26],[-88.02,68.62],[-88.32,67.87],[-87.35,67.2],[-85.58,68.78],[-85.52,69.88],[-82.62,69.66],[-81.28,69.16],[-81.96,68.13],[-81.26,67.6],[-81.39,67.11],[-83.34,66.41],[-85.77,66.56],[-87.32,64.78],[-89.91,64.03],[-90.7,63.61],[-90.77,62.96],[-93.16,62.02],[-94.24,60.9],[-94.68,58.95],[-93.22,58.78],[-92.3,57.09],[-90.9,57.28],[-85.01,55.3],[-82.27,55.15],[-82.13,53.28],[-79.91,51.21],[-78.6,52.56],[-79.83,54.67],[-78.23,55.14],[-76.54,56.53],[-77.3,58.05],[-78.52,58.8],[-77.34,59.85],[-78.11,62.32],[-73.84,62.44],[-71.37,61.14],[-69.59,61.06],[-69.29,58.96],[-67.65,58.21],[-66.2,58.77],[-64.58,60.34],[-61.4,56.97],[-61.8,56.34],[-57.33,54.63],[-56.94,53.78],[-55.76,53.27],[-55.68,52.15],[-60.03,50.24],[-66.4,50.23],[-71.1,46.82],[-68.65,48.3],[-65.06,49.23],[-64.17,48.74],[-65.12,48.07],[-64.47,46.24],[-61.52,45.88],[-60.52,47.01],[-59.8,45.92],[-65.36,43.55],[-66.12,43.62],[-66.16,44.47],[-64.43,45.29],[-67.14,45.14],[-67.79,45.7],[-67.79,47.07],[-69.24,47.45],[-71.51,45.01],[-74.87,45.0],[-76.82,43.63],[-78.72,43.63],[-79.17,43.47],[-78.94,42.86],[-82.69,41.68],[-83.12,42.08],[-82.14,43.57],[-82.55,45.35],[-88.38,48.3],[-91.64,48.14],[-94.33,48.67],[-94.82,49.39],[-95.16,49],[-122.97,49.0],[-127.44,50.83],[-127.85,52.33],[-129.13,52.76],[-129.31,53.56],[-130.51,54.29],[-130.01,55.92],[-131.71,56.55],[-135.48,59.79],[-137.45,58.91],[-139.04,60],[-141.0,60.31],[-140.99,69.71],[-136.5,68.9],[-129.79,70.19],[-129.11,69.78],[-128.14,70.48],[-125.76,69.48],[-124.42,70.16],[-124.29,69.4],[-121.47,69.8],[-115.25,68.91],[-113.9,68.4],[-115.3,67.9],[-113.5,67.69],[-109.95,67.98],[-108.88,67.38],[-107.79,67.89],[-108.81,68.31],[-108.17,68.65],[-106.15,68.8],[-101.45,67.65],[-98.44,67.78],[-98.56,68.4],[-97.67,68.58],[-96.12,68.24],[-96.13,67.29],[-95.49,68.09],[-94.69,68.06],[-94.23,69.07],[-96.47,70.09],[-96.39,71.19],[-95.21,71.92],[-92.88,71.32],[-91.52,70.19],[-92.41,69.7],[-90.55,69.5]]],"mx":[[[-97.14,25.87],[-97.7,21.9],[-95.9,18.83],[-94.43,18.14],[-90.77,19.28],[-90.28,21.0],[-86.81,21.33],[-87.84,18.26],[-91.0,17.82],[-91.0,17.25],[-91.45,17.25],[-90.46,16.07],[-91.75,16.07],[-92.23,14.54],[-93.88,15.94],[-96.56,15.65],[-104.99,19.32],[-105.73,20.43],[-105.27,21.42],[-106.03,22.77],[-109.26,25.58],[-109.29,26.44],[-110.64,27.86],[-112.23,28.95],[-113.15,31.17],[-114.78,31.8],[-114.67,30.16],[-111.62,26.66],[-110.66,24.3],[-109.41,23.36],[-110.03,22.82],[-112.18,24.74],[-112.3,26.01],[-115.06,27.72],[-114.16,28.57],[-115.52,29.56],[-117.13,32.54],[-114.72,32.72],[-111.02,31.33],[-106.51,31.75],[-103.94,29.27],[-103.11,28.97],[-102.48,29.76],[-100.96,29.38],[-99.02,26.37],[-97.14,25.87]]]}
+
 def compute_venues(stadiums, games):
     import re, math
     def pc(s):
@@ -587,7 +589,7 @@ def compute_venues(stadiums, games):
         cities=[c for _,c in lst]
         km=sum(dist(GEO[cities[i-1]],GEO[cities[i]]) for i in range(1,len(cities)))
         ROUTES[code]={"cities":cities,"km":km}
-    return {"geo":list(GEO.values()),"routes":ROUTES}
+    return {"geo":list(GEO.values()),"routes":ROUTES,"contours":CONTOURS}
 
 def compute_numbers(games):
     from collections import Counter, defaultdict
@@ -634,7 +636,7 @@ def compute_numbers(games):
     if top_art:
         N["sections"].append({"ico":"👟","title":"Artilheiros","note":f"{ng} jogos disputados","items":[
             {"ico":"👟","label":"Goleadores da Copa 2026","rows":[
-                {"n":who,"s":f"{flag(c)} {nm(c)}"+(f" · {pens[(who,c)]} pên." if pens[(who,c)] else ""),"v":str(n)} for (who,c),n in top_art]}]})
+                {"n":who,"sub":f"{flag(c)} {nm(c)}"+(f" · {pens[(who,c)]} pên." if pens[(who,c)] else ""),"v":str(n)} for (who,c),n in top_art]}]})
     if gl:
         N["sections"].append({"ico":"🔥","title":"Maiores goleadas","items":[
             {"ico":"🔥","label":"Maiores diferenças de gols","rows":[
@@ -643,12 +645,12 @@ def compute_numbers(games):
                 {"n":f"{flag(m['h'])} {nm(m['h'])} {m['gh']}–{m['ga']} {nm(m['a'])} {flag(m['a'])}","s":"","v":str(m['gh']+m['ga'])} for m in most_goals_game[:5] if (m['gh']+m['ga'])>=3]}]})
     N["sections"].append({"ico":"🎯","title":"Ataque & defesa","items":[
         {"ico":"⚔️","label":"Melhores ataques (gols feitos)","rows":[
-            {"n":f"{flag(c)} {nm(c)}","s":f"{jg[c]} jogos","v":str(v)} for c,v in atk[:6]]},
+            {"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in atk[:6]]},
         {"ico":"🛡️","label":"Defesas menos vazadas (gols sofridos)","rows":[
-            {"n":f"{flag(c)} {nm(c)}","s":f"{jg[c]} jogos","v":str(v)} for c,v in defe[:6]]}]})
+            {"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in defe[:6]]}]})
     N["sections"].append({"ico":"📈","title":"Aproveitamento","note":"% dos pontos possíveis","items":[
         {"ico":"📈","label":"Melhor aproveitamento","rows":[
-            {"n":f"{flag(c)} {nm(c)}","s":f"{pts[c]} pts · {jg[c]} jogos","v":f"{round(p*100)}%"} for c,p in apr[:8]]}]})
+            {"n":f"{flag(c)} {nm(c)}","sub":f"{pts[c]} pts · {jg[c]} jogos","v":f"{round(p*100)}%"} for c,p in apr[:8]]}]})
     return N
 
 # ---------- projeção de probabilidades (Monte Carlo sobre o Elo) ----------
@@ -788,9 +790,17 @@ def main():
     # injetar no template
     ALLOC=json.load(open(os.path.join(HERE,"third_alloc.json"),encoding="utf-8"))
     PROB=monte_carlo(games, ALLOC, n=8000)
+    ESPN_ALIAS={"Türkiye":"Turkey","United States":"USA","Korea Republic":"South Korea",
+                "IR Iran":"Iran","Côte d'Ivoire":"Ivory Coast","Czechia":"Czech Republic",
+                "Cape Verde":"Cabo Verde","Curacao":"Curaçao","Bosnia and Herzegovina":"Bosnia & Herzegovina"}
+    ENPT={}
+    for eng,code in OF_NAMES.items(): ENPT[eng]={"pt":NAME.get(code,eng),"fl":FLAG.get(code,"")}
+    for al,eng in ESPN_ALIAS.items():
+        c=OF_NAMES.get(eng)
+        if c: ENPT[al]={"pt":NAME.get(c,al),"fl":FLAG.get(c,"")}
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
-          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":NUMBERS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB}
+          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":NUMBERS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))
