@@ -553,6 +553,104 @@ def compute_profiles(games, squads):
         PRO[code]={"nm":nm(code),"fl":flag(code),"sub":sub,"sections":secs}
     return PRO
 
+def compute_venues(stadiums, games):
+    import re, math
+    def pc(s):
+        out=[]
+        for m in re.finditer(r'(\d+\.\d+)°\s*([NSEW])', s):
+            v=float(m.group(1));  out.append(round(-v if m.group(2) in 'SW' else v,4))
+        if len(out)>=2: return out[:2]
+        out=[]
+        for m in re.finditer(r'(\d+)°(\d+)\x27([\d.]+)"?\s*([NSEW])', s):
+            v=int(m.group(1))+int(m.group(2))/60+float(m.group(3))/3600
+            out.append(round(-v if m.group(4) in 'SW' else v,4))
+        return out[:2]
+    GEO={}
+    for s in (stadiums or []):
+        c=pc(s.get("coords",""))
+        if len(c)==2:
+            GEO[s["city"]]={"city":s["city"],"name":s.get("name",""),"cc":s.get("cc",""),
+                            "cap":s.get("capacity",0),"lat":c[0],"lng":c[1]}
+    def dist(a,b):
+        R=6371.0; la1,lo1,la2,lo2=map(math.radians,[a["lat"],a["lng"],b["lat"],b["lng"]])
+        h=math.sin((la2-la1)/2)**2+math.cos(la1)*math.cos(la2)*math.sin((lo2-lo1)/2)**2
+        return int(round(2*R*math.asin(math.sqrt(h))))
+    from collections import defaultdict
+    bycode=defaultdict(list)
+    for fs,meta in META_GRP.items():
+        city=meta.get("gr"); dt=meta.get("dt","")
+        if city not in GEO: continue
+        for code in fs: bycode[code].append((dt,city))
+    ROUTES={}
+    for code,lst in bycode.items():
+        lst.sort()
+        cities=[c for _,c in lst]
+        km=sum(dist(GEO[cities[i-1]],GEO[cities[i]]) for i in range(1,len(cities)))
+        ROUTES[code]={"cities":cities,"km":km}
+    return {"geo":list(GEO.values()),"routes":ROUTES}
+
+def compute_numbers(games):
+    from collections import Counter, defaultdict
+    flag=lambda c: FLAG.get(c,""); nm=lambda c: NAME.get(c,c)
+    real=[m for m in games if m.get("r")]
+    N={"hero":[],"sections":[]}
+    if not real:
+        N["sections"].append({"ico":"⏳","title":"Aguardando a bola rolar","items":[
+            {"ico":"⚽","label":"A Copa ainda não começou","value":"—","detail":"os números aparecem sozinhos conforme os jogos são disputados"}]})
+        return N
+    ng=len(real)
+    gols=sum(m["gh"]+m["ga"] for m in real)
+    media=gols/ng
+    # artilheiros (gol contra não conta)
+    art=Counter(); pens=Counter()
+    for g in GOALS:
+        who=(g.get("who") or "").strip()
+        if not who or g.get("og"): continue
+        art[(who,g["c"])]+=1
+        if g.get("pen"): pens[(who,g["c"])]+=1
+    top_art=art.most_common(12)
+    # por seleção
+    gf=defaultdict(int); ga=defaultdict(int); pts=defaultdict(int); jg=defaultdict(int)
+    for m in real:
+        h,a,x,y=m["h"],m["a"],m["gh"],m["ga"]
+        gf[h]+=x; ga[h]+=y; gf[a]+=y; ga[a]+=x; jg[h]+=1; jg[a]+=1
+        if x>y: pts[h]+=3
+        elif y>x: pts[a]+=3
+        else: pts[h]+=1; pts[a]+=1
+    gl=[m for m in sorted(real,key=lambda m:-(abs(m["gh"]-m["ga"]))) if abs(m["gh"]-m["ga"])>0]
+    most_goals_game=sorted(real,key=lambda m:-(m["gh"]+m["ga"]))
+    atk=sorted(gf.items(),key=lambda kv:-kv[1])
+    defe=sorted(ga.items(),key=lambda kv:(kv[1],-jg[kv[0]]))
+    apr=sorted(((c,pts[c]/(jg[c]*3)) for c in jg),key=lambda kv:-kv[1])
+    # HERO
+    N["hero"]=[{"ico":"⚽","label":"Gols na Copa","value":str(gols),"detail":f"em {ng} jogos disputados"},
+               {"ico":"📊","label":"Média de gols","value":f"{media:.2f}".replace(".",","),"detail":"por jogo"}]
+    if top_art:
+        (who,c),n=top_art[0]
+        N["hero"].append({"ico":"👟","label":"Artilheiro","value":f"{n} gols","detail":f"{who} {flag(c)}"})
+    if gl:
+        m=gl[0]; N["hero"].append({"ico":"🔥","label":"Maior goleada","value":f"{m['gh']}–{m['ga']}","detail":f"{flag(m['h'])} {nm(m['h'])} × {nm(m['a'])} {flag(m['a'])}"})
+    # SECTIONS
+    if top_art:
+        N["sections"].append({"ico":"👟","title":"Artilheiros","note":f"{ng} jogos disputados","items":[
+            {"ico":"👟","label":"Goleadores da Copa 2026","rows":[
+                {"n":who,"s":f"{flag(c)} {nm(c)}"+(f" · {pens[(who,c)]} pên." if pens[(who,c)] else ""),"v":str(n)} for (who,c),n in top_art]}]})
+    if gl:
+        N["sections"].append({"ico":"🔥","title":"Maiores goleadas","items":[
+            {"ico":"🔥","label":"Maiores diferenças de gols","rows":[
+                {"n":f"{flag(m['h'])} {nm(m['h'])} {m['gh']}–{m['ga']} {nm(m['a'])} {flag(m['a'])}","s":"","v":f"+{abs(m['gh']-m['ga'])}"} for m in gl[:6]]},
+            {"ico":"🎆","label":"Jogos com mais gols","rows":[
+                {"n":f"{flag(m['h'])} {nm(m['h'])} {m['gh']}–{m['ga']} {nm(m['a'])} {flag(m['a'])}","s":"","v":str(m['gh']+m['ga'])} for m in most_goals_game[:5] if (m['gh']+m['ga'])>=3]}]})
+    N["sections"].append({"ico":"🎯","title":"Ataque & defesa","items":[
+        {"ico":"⚔️","label":"Melhores ataques (gols feitos)","rows":[
+            {"n":f"{flag(c)} {nm(c)}","s":f"{jg[c]} jogos","v":str(v)} for c,v in atk[:6]]},
+        {"ico":"🛡️","label":"Defesas menos vazadas (gols sofridos)","rows":[
+            {"n":f"{flag(c)} {nm(c)}","s":f"{jg[c]} jogos","v":str(v)} for c,v in defe[:6]]}]})
+    N["sections"].append({"ico":"📈","title":"Aproveitamento","note":"% dos pontos possíveis","items":[
+        {"ico":"📈","label":"Melhor aproveitamento","rows":[
+            {"n":f"{flag(c)} {nm(c)}","s":f"{pts[c]} pts · {jg[c]} jogos","v":f"{round(p*100)}%"} for c,p in apr[:8]]}]})
+    return N
+
 # ---------- projeção de probabilidades (Monte Carlo sobre o Elo) ----------
 def _poisson(l):
     L=math.exp(-l); k=0; p=1.0
@@ -672,6 +770,8 @@ def main():
         VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
     CURIOS=compute_curios(games, squads, stadiums, teams)
     BRASIL=compute_brasil(games)
+    NUMBERS=compute_numbers(games)
+    VENUES=compute_venues(stadiums, games)
     PROFILES=compute_profiles(games, squads)
     # retrospecto: histórico vai até 2025 (martj42); os jogos de 2026 vêm do openfootball (mesma fonte da tabela do app)
     ALL_FULL={k:list(v) for k,v in ALL.items()}
@@ -690,7 +790,7 @@ def main():
     PROB=monte_carlo(games, ALLOC, n=8000)
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
-          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB}
+          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":NUMBERS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))

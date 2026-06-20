@@ -266,6 +266,22 @@ footer b{color:var(--mut)}
 .lb-status.post{color:var(--mut);background:var(--surf2)}
 .lb-match{font-family:Archivo;font-weight:700;font-size:14px;color:var(--txt);line-height:1.2}
 .lb-match .sc{font-weight:900;color:var(--gold);padding:0 5px}
+/* ===== aba Sedes (mapa) ===== */
+.venue-pick{margin-bottom:12px}
+.venue-pick select{width:100%;padding:11px 13px;font-family:Inter;font-size:14px;font-weight:600;color:var(--txt);background:var(--surf);border:1px solid var(--line2);border-radius:11px;-webkit-appearance:none;appearance:none}
+.vmap{width:100%;height:auto;display:block;background:radial-gradient(ellipse at 50% 42%,rgba(255,255,255,.03),transparent 70%);border:1px solid var(--line);border-radius:14px}
+.vm-lab{font-family:Inter;font-size:9px;font-weight:600;fill:var(--mut)}
+.vinfo{margin:13px 0;padding:13px 14px;background:var(--surf);border:1px solid var(--line2);border-radius:12px;font-size:12.5px;line-height:1.5}
+.vinfo-h{font-family:Archivo;font-weight:800;font-size:14.5px;color:var(--txt);margin-bottom:6px}
+.vinfo-route{color:var(--gold);font-weight:600;margin-bottom:5px;font-size:13px}
+.vinfo-km{color:var(--mut)}
+.vr-sec{font-family:Archivo;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--mut);margin:18px 0 8px}
+.vr-row{display:flex;align-items:center;gap:10px;padding:9px 5px;border-bottom:1px solid rgba(255,255,255,.05);cursor:pointer}
+.vr-row:last-child{border-bottom:0}
+.vr-row:hover{background:rgba(255,255,255,.025)}
+.vr-fl{font-size:20px}
+.vr-nm{flex:1;font-family:Archivo;font-weight:700;font-size:14px;color:var(--txt)}
+.vr-km{font-family:Archivo;font-weight:900;font-size:13px;color:var(--gold)}
 /* ===== acessibilidade (piso de qualidade) ===== */
 .tab:focus-visible,.btn:focus-visible,.accdb:focus-visible,.accrt:focus-visible,.slot:not(.empty):focus-visible,.gm .step button:focus-visible,select:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
@@ -331,9 +347,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
       <button class="tab on" id="tabGroups">Grupos</button>
       <button class="tab" id="tabKO">Chaveamento</button>
       <button class="tab" id="tabProb">Favoritos</button>
+      <button class="tab" id="tabNumbers">Números</button>
       <button class="tab" id="tabAcc">Acertos</button>
       <button class="tab" id="tabCurio">Curiosidades</button>
       <button class="tab" id="tabBrasil">Brasil</button>
+      <button class="tab" id="tabVenues">Sedes</button>
     </div>
   </div>
 
@@ -362,6 +380,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     <div id="probBox"></div>
   </section>
 
+  <section class="panel hidden" id="secNumbers">
+    <div class="hint">Os <b>números reais da Copa 2026</b>, calculados só dos jogos já disputados — artilheiros, gols, goleadas, defesas e aproveitamento. <b>Atualiza sozinho</b> a cada jogo novo.</div>
+    <div id="numbersBox"></div>
+  </section>
+
   <section class="panel hidden" id="secAcc">
     <div class="hint">Quanto meu <b>palpite original</b> (feito antes da Copa) vem acertando dos <span class="real">jogos já encerrados</span>. Critério: quem venceu — empate conta como erro, já que o palpite sempre cravava um vencedor.</div>
     <div id="accBox"></div>
@@ -375,6 +398,14 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
   <section class="panel hidden" id="secBrasil">
     <div class="hint">A história do Brasil nas Copas — títulos, recordes, artilheiros e jogos marcantes (números <b>até a Copa de 2022</b>, conferidos em fontes). A <span class="real">campanha de 2026</span> fica na última seção e se atualiza sozinha.</div>
     <div id="brasilBox"></div>
+  </section>
+
+  <section class="panel hidden" id="secVenues">
+    <div class="hint">Os <b>16 estádios</b> da Copa espalhados por EUA, México e Canadá. <b>Toque numa seleção</b> abaixo para ver onde ela joga na fase de grupos e <b>quanto vai rodar</b> pelo continente.</div>
+    <div class="venue-pick"><select id="venueSel"></select></div>
+    <div id="venueMap"></div>
+    <div id="venueInfo"></div>
+    <div id="venueRank"></div>
   </section>
 
   <footer>
@@ -400,6 +431,8 @@ const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
 const PROB=DATA.PROB||{};
+const NUMBERS=DATA.NUMBERS||{sections:[]};
+const VENUES=DATA.VENUES||{geo:[],routes:{}};
 const ALL=DATA.ALL||{};
 const CATS=['Copa do Mundo','Eliminatórias','Copa América','Eurocopa','Copa Africana','Copa da Ásia','Copa Ouro','Confederações','Liga das Nações','Amistosos','Outros torneios'];
 const FASE_PT={G:'Fase de grupos',R32:'16-avos',R16:'Oitavas',QF:'Quartas de final',SF:'Semifinal',F:'Final','3P':'Disputa do 3º'};
@@ -541,12 +574,34 @@ function slotHTML(id,side){
   if(state.follow && t.code===state.follow) cls+=" foll";
   return `<div class="${cls}" data-pick="${id}:${t.code}"><span class="flag">${t.flag}</span><span class="nm">${t.name}</span></div>`;
 }
+function h2hMiniText(a,b){
+  if(!a||!b||a===b) return '';
+  const [x,y]=[a,b].slice().sort();
+  const games=ALL[x+'-'+y]||[];
+  if(!games.length) return '🤝 1º encontro do duelo';
+  let va=0,vb=0,em=0;
+  games.forEach(g=>{
+    let pa,pb;
+    if(a===x){pa=g[2];pb=g[3];}else{pa=g[3];pb=g[2];}
+    let penAB=(g.length>4&&g[5])?(a===x?g[5]:g[5].split('-').reverse().join('-')):'';
+    let win;
+    if(penAB){const p=penAB.split('-').map(Number);win=p[0]>p[1]?'a':'b';}
+    else win=pa>pb?'a':(pb>pa?'b':'e');
+    if(win==='a')va++;else if(win==='b')vb++;else em++;
+  });
+  const jg=games.length>1?'jogos':'jogo';
+  let lead;
+  if(va>vb) lead=`${NAME[a]} leva ${va}–${vb}`;
+  else if(vb>va) lead=`${NAME[b]} leva ${vb}–${va}`;
+  else lead=`empate ${va}–${vb}`;
+  return `${games.length} ${jg} · ${lead}`;
+}
 function matchHTML(id){
   const r=RES[id]||{}, foll=state.follow&&((r.a&&r.a.code===state.follow)||(r.b&&r.b.code===state.follow)), o=thirdOrigin(id);
   const v=VENUE_KO[id]||null;
   const _w = v && v.dt ? (v.dt + (v.hr?` · ${v.hr}`:'')) : '';
   const meta = v && (_w||v.vn||v.co) ? `<div class="match-meta">${_w?`<span>${_w}</span>`:''}${v.vn?`<span class="sep">·</span><span>${v.vn}</span>`:''}${v.co?`<span class="sep">·</span><span class="vflag">${v.cf||''}</span><span>${v.co}</span>`:''}</div>` : '';
-  const h2hbtn = (r.a&&r.b&&r.a.code&&r.b.code) ? `<button class="h2h-btn" data-h2h="${r.a.code}:${r.b.code}">🆚 retrospecto</button>` : '';
+  const h2hbtn = (r.a&&r.b&&r.a.code&&r.b.code) ? `<button class="h2h-btn" data-h2h="${r.a.code}:${r.b.code}">🆚 ${h2hMiniText(r.a.code,r.b.code)}</button>` : '';
   return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div>${h2hbtn}</div>`;
 }
 function renderKO(){
@@ -700,6 +755,8 @@ document.addEventListener('click',e=>{
   if(hh){ const p=hh.getAttribute('data-h2h').split(':'); openH2H(p[0],p[1]); return; }
   const pl=e.target.closest('[data-pro]');
   if(pl){ openProfile(pl.getAttribute('data-pro')); return; }
+  const vp=e.target.closest('[data-vpick]');
+  if(vp){ const c=vp.getAttribute('data-vpick'); const s=document.getElementById('venueSel'); if(s){ s.value=c; drawVenues(c); } return; }
   if(e.target.closest('[data-close]')) closeProfile();
 });
 document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeProfile(); });
@@ -827,23 +884,87 @@ document.getElementById('koBody').addEventListener('click',e=>{
   renderAll();
 });
 document.getElementById('followSel').addEventListener('change',e=>{ state.follow=e.target.value; renderKO(); saveSoon(); });
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), ta=document.getElementById('tabAcc'), tc=document.getElementById('tabCurio'), tb=document.getElementById('tabBrasil');
+function renderNumbers(){ renderBlocks(NUMBERS,'numbersBox'); }
+
+function _vproj(geo,W,H,pad){
+  const lats=geo.map(g=>g.lat),lngs=geo.map(g=>g.lng);
+  const minLa=Math.min(...lats),maxLa=Math.max(...lats),minLo=Math.min(...lngs),maxLo=Math.max(...lngs);
+  const kx=Math.cos((minLa+maxLa)/2*Math.PI/180);
+  const gw=(maxLo-minLo)*kx,gh=(maxLa-minLa);
+  const sc=Math.min((W-2*pad)/gw,(H-2*pad)/gh);
+  const ox=pad+((W-2*pad)-gw*sc)/2, oy=pad+((H-2*pad)-gh*sc)/2;
+  return g=>[ox+((g.lng-minLo)*kx)*sc, oy+((maxLa-g.lat))*sc];
+}
+let venuesInit=false;
+function renderVenues(){
+  const geo=VENUES.geo||[],routes=VENUES.routes||{};
+  if(!geo.length){ document.getElementById('venueMap').innerHTML='<div class="hint">Sedes indisponíveis.</div>'; return; }
+  const sel=document.getElementById('venueSel');
+  if(!venuesInit){
+    const codes=Object.keys(routes).sort((a,b)=>NAME[a].localeCompare(NAME[b]));
+    sel.innerHTML='<option value="">— mapa geral das 16 sedes —</option>'+codes.map(c=>`<option value="${c}">${FLAG[c]} ${NAME[c]}</option>`).join('');
+    sel.onchange=()=>drawVenues(sel.value);
+    venuesInit=true;
+  }
+  drawVenues(sel.value||'');
+  const rank=Object.keys(routes).sort((a,b)=>routes[b].km-routes[a].km);
+  const row=c=>`<div class="vr-row" data-vpick="${c}"><span class="vr-fl">${FLAG[c]}</span><span class="vr-nm">${NAME[c]}</span><span class="vr-km">${routes[c].km.toLocaleString('pt-BR')} km</span></div>`;
+  document.getElementById('venueRank').innerHTML=
+    '<div class="vr-sec">✈️ Quem mais roda (fase de grupos)</div>'+rank.slice(0,5).map(row).join('')+
+    '<div class="vr-sec">🏠 Quem menos roda</div>'+rank.slice(-5).reverse().map(row).join('');
+}
+function drawVenues(code){
+  const geo=VENUES.geo||[],routes=VENUES.routes||{};
+  const W=720,H=560,pad=46,proj=_vproj(geo,W,H,pad);
+  const ccColor={us:'#4a90d9',mx:'#3bbf6f',ca:'#e8537a'};
+  const route=code?routes[code]:null, rc=route?route.cities:[];
+  const byCity={}; geo.forEach(g=>byCity[g.city]=g);
+  let lines='';
+  if(rc.length>1){
+    for(let i=1;i<rc.length;i++){
+      const a=byCity[rc[i-1]],b=byCity[rc[i]]; if(!a||!b)continue;
+      const [x1,y1]=proj(a),[x2,y2]=proj(b);
+      lines+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#f4c24b" stroke-width="2.5" stroke-dasharray="6 4" opacity=".85"/>`;
+    }
+  }
+  let pts='';
+  geo.forEach(g=>{
+    const [x,y]=proj(g), on=!code||rc.includes(g.city), big=rc.includes(g.city);
+    pts+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big?7:5}" fill="${on?(ccColor[g.cc]||'#888'):'#2a3a33'}" stroke="${big?'#fff':'none'}" stroke-width="${big?1.5:0}" opacity="${on?1:.45}"/>`;
+    if(on) pts+=`<text x="${x.toFixed(1)}" y="${(y-11).toFixed(1)}" text-anchor="middle" class="vm-lab">${g.city.split(' (')[0]}</text>`;
+  });
+  document.getElementById('venueMap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="vmap">${lines}${pts}</svg>`;
+  const info=document.getElementById('venueInfo');
+  if(code&&route){
+    info.innerHTML='<div class="vinfo"><div class="vinfo-h">'+FLAG[code]+' '+NAME[code]+' na fase de grupos</div>'+
+      '<div class="vinfo-route">'+route.cities.map(c=>c.split(' (')[0]).join(' → ')+'</div>'+
+      '<div class="vinfo-km">✈️ '+route.km.toLocaleString('pt-BR')+' km percorridos entre as sedes</div></div>';
+  } else {
+    info.innerHTML='<div class="vinfo" style="text-align:center;color:var(--mut)">🔵 EUA · 🟢 México · 🔴 Canadá<br>escolha uma seleção acima para ver a rota dela</div>';
+  }
+}
+
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), ta=document.getElementById('tabAcc'), tc=document.getElementById('tabCurio'), tb=document.getElementById('tabBrasil'), tv=document.getElementById('tabVenues');
 function setTab(t){ state.tab=t;
-  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); ta.classList.toggle('on',t==='acc'); tc.classList.toggle('on',t==='curio'); tb.classList.toggle('on',t==='brasil');
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); ta.classList.toggle('on',t==='acc'); tc.classList.toggle('on',t==='curio'); tb.classList.toggle('on',t==='brasil'); tv.classList.toggle('on',t==='venues');
   document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
   document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
   document.getElementById('secProb').classList.toggle('hidden',t!=='prob');
+  document.getElementById('secNumbers').classList.toggle('hidden',t!=='numbers');
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
   document.getElementById('secCurio').classList.toggle('hidden',t!=='curio');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
-  const _act={groups:tg,ko:tk,prob:tp,acc:ta,curio:tc,brasil:tb}[t];
+  document.getElementById('secVenues').classList.toggle('hidden',t!=='venues');
+  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,curio:tc,brasil:tb,venues:tv}[t];
   if(_act&&_act.scrollIntoView) _act.scrollIntoView({inline:'center',block:'nearest'});
   if(t==='prob') renderProb();
+  if(t==='numbers') renderNumbers();
   if(t==='acc') renderAccuracy();
   if(t==='curio') renderCurios();
   if(t==='brasil') renderBrasil();
+  if(t==='venues') renderVenues();
   saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); ta.onclick=()=>setTab('acc'); tc.onclick=()=>setTab('curio'); tb.onclick=()=>setTab('brasil');
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); ta.onclick=()=>setTab('acc'); tc.onclick=()=>setTab('curio'); tb.onclick=()=>setTab('brasil'); tv.onclick=()=>setTab('venues');
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
   if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }
