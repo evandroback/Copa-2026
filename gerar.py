@@ -275,7 +275,7 @@ def venue_of(city, sbc):
     cc=s.get("cc","")
     return {"vn":s.get("name",city),"cc":cc,"co":COUNTRY.get(cc,""),"cap":s.get("capacity")}
 
-def compute_curios(games, squads, stadiums, teams):
+def compute_stats(games, squads, stadiums, teams):
     from collections import Counter, defaultdict
     flag=lambda c: FLAG.get(c,""); nm=lambda c: NAME.get(c,c)
     tpt=lambda e: NAME.get(OF_NAMES.get((e or '').strip(),''), e)   # nome ingles do squad -> pt
@@ -283,52 +283,81 @@ def compute_curios(games, squads, stadiums, teams):
     realg=[g for g in games if g["r"]]
     C={"games_real":len(realg),"hero":[],"sections":[]}
 
-    # ===== GOLS & JOGOS =====
-    gi=[]
+    # ===== cálculos base de gols/seleção =====
+    art=Counter(); pens_c=Counter(); tof={}
     if GOALS:
-        sc=Counter(g["who"] for g in GOALS if g["who"] and not g["og"])
-        tof={}
         for g in GOALS:
-            if g["who"] and not g["og"]: tof.setdefault(g["who"],g["c"])
-        top=sc.most_common(6)
-        if top:
-            gi.append({"ico":"👟","label":"Artilheiros","rows":[{"n":w,"v":str(n),"sub":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in top]})
-            C["hero"].append({"ico":"👟","label":"Artilheiro","value":top[0][0],"detail":f"{top[0][1]} gol(s) · {flag(tof.get(top[0][0],''))} {nm(tof.get(top[0][0],''))}"})
+            w=g["who"]
+            if w and not g["og"]:
+                tof.setdefault(w,g["c"]); art[(w,g["c"])]+=1
+                if g["pen"]: pens_c[(w,g["c"])]+=1
+    top_art=art.most_common(12)
+    gf=Counter(); gax=Counter(); pts=Counter(); jg=Counter()
+    for m in realg:
+        h,a,x,y=m["h"],m["a"],m["gh"],m["ga"]
+        gf[h]+=x; gax[h]+=y; gf[a]+=y; gax[a]+=x; jg[h]+=1; jg[a]+=1
+        if x>y: pts[h]+=3
+        elif y>x: pts[a]+=3
+        else: pts[h]+=1; pts[a]+=1
+    atk=sorted(gf.items(),key=lambda kv:-kv[1])
+    defe=sorted(gax.items(),key=lambda kv:(kv[1],-jg[kv[0]]))
+    apr=sorted(((c,pts[c]/(jg[c]*3),pts[c],jg[c]) for c in jg if jg[c]>=2),key=lambda kv:(-kv[1],-kv[2]))
+
+    # ===== HERO (manchetes) =====
+    if realg:
+        tot=sum(m["gh"]+m["ga"] for m in realg); ng=len(realg)
+        C["hero"].append({"ico":"⚽","label":"Gols na Copa","value":str(tot),"detail":f"em {ng} jogos disputados"})
+        C["hero"].append({"ico":"📊","label":"Média de gols","value":f"{tot/ng:.2f}".replace(".",",")+"/jogo","detail":"por jogo"})
+        if top_art:
+            (who,c),n=top_art[0]
+            C["hero"].append({"ico":"👟","label":"Artilheiro","value":f"{n} gols","detail":f"{who} · {flag(c)} {nm(c)}"})
+        bigd=max(realg,key=lambda m:abs(m["gh"]-m["ga"]))
+        C["hero"].append({"ico":"💥","label":"Maior goleada","value":f"{max(bigd['gh'],bigd['ga'])}–{min(bigd['gh'],bigd['ga'])}","detail":f"{nm(bigd['h'])} × {nm(bigd['a'])}"})
+
+    # ===== ARTILHARIA (jogadores) =====
+    ar=[]
+    if top_art:
+        ar.append({"ico":"👟","label":"Artilheiros","rows":[{"n":who,"sub":f"{flag(c)} {nm(c)}"+(f" · {pens_c[(who,c)]} pên." if pens_c[(who,c)] else ""),"v":str(n)} for (who,c),n in top_art]})
+    if GOALS:
         perpg=defaultdict(Counter)
         for g in GOALS:
             if g["who"] and not g["og"]: perpg[g["g"]][g["who"]]+=1
         hats=[(w,n) for _,cc in perpg.items() for w,n in cc.items() if n>=3]
-        gi.append({"ico":"🎩","label":"Hat-tricks","rows":[{"n":w,"v":f"{n} gols","sub":flag(tof.get(w,''))+" "+nm(tof.get(w,''))} for w,n in hats]} if hats else {"ico":"🎩","label":"Hat-tricks","value":"nenhum ainda"})
+        if hats: ar.append({"ico":"🎩","label":"Hat-tricks","rows":[{"n":w,"sub":flag(tof.get(w,''))+" "+nm(tof.get(w,'')),"v":f"{n} gols"} for w,n in hats]})
         pens=[g for g in GOALS if g["pen"]]
-        if pens: gi.append({"ico":"🎯","label":"Gols de pênalti","value":str(len(pens)),"detail":", ".join(g["who"] for g in pens[:5])})
+        if pens: ar.append({"ico":"🎯","label":"Gols de pênalti","value":str(len(pens)),"detail":", ".join(g["who"] for g in pens[:5])})
         ogs=[g for g in GOALS if g["og"]]
-        if ogs: gi.append({"ico":"🙃","label":"Gols contra","rows":[{"n":g["who"],"v":"contra","sub":flag(g["c"])+" "+nm(g["c"])} for g in ogs]})
-        timed=[g for g in GOALS if g["min"] is not None]
+        if ogs: ar.append({"ico":"🙃","label":"Gols contra","rows":[{"n":g["who"],"sub":flag(g["c"])+" "+nm(g["c"]),"v":"contra"} for g in ogs]})
+    if ar: C["sections"].append({"ico":"👟","title":"Artilharia","note":f"{len(realg)} jogos disputados","items":ar})
+
+    # ===== JOGOS & PLACARES =====
+    jp=[]
+    if realg:
+        gl=[m for m in sorted(realg,key=lambda m:-(abs(m["gh"]-m["ga"]))) if abs(m["gh"]-m["ga"])>0]
+        mostg=sorted(realg,key=lambda m:-(m["gh"]+m["ga"]))
+        if gl: jp.append({"ico":"🔥","label":"Maiores goleadas","rows":[{"n":f"{flag(m['h'])} {m['h']} {m['gh']}–{m['ga']} {m['a']} {flag(m['a'])}","s":"","v":f"+{abs(m['gh']-m['ga'])}"} for m in gl[:6]]})
+        jp.append({"ico":"🎆","label":"Jogos com mais gols","rows":[{"n":f"{flag(m['h'])} {m['h']} {m['gh']}–{m['ga']} {m['a']} {flag(m['a'])}","s":"","v":str(m['gh']+m['ga'])} for m in mostg[:6] if (m['gh']+m['ga'])>=3]})
+        timed=[g for g in GOALS if g["min"] is not None] if GOALS else []
         if timed:
             fa=min(timed,key=lambda g:g["min"]); la=max(timed,key=lambda g:g["min"])
-            gi.append({"ico":"⚡","label":"Gol mais rápido","value":f"{fa['min']}'","detail":f"{fa['who']} · {flag(fa['c'])} {nm(fa['c'])}"})
-            gi.append({"ico":"🕘","label":"Gol mais tardio","value":f"{la['min']}'","detail":f"{la['who']} · {flag(la['c'])} {nm(la['c'])}"})
+            jp.append({"ico":"⚡","label":"Gol mais rápido","value":f"{fa['min']}'","detail":f"{fa['who']} · {flag(fa['c'])} {nm(fa['c'])}"})
+            jp.append({"ico":"🕘","label":"Gol mais tardio","value":f"{la['min']}'","detail":f"{la['who']} · {flag(la['c'])} {nm(la['c'])}"})
             h1=sum(1 for g in timed if g["min"]<=45)
-            gi.append({"ico":"⏱️","label":"Gols por tempo","value":f"{h1} no 1ºT · {len(timed)-h1} no 2ºT"})
-    if realg:
-        bigd=max(realg,key=lambda m:abs(m["gh"]-m["ga"])); most=max(realg,key=lambda m:m["gh"]+m["ga"])
-        gi.append({"ico":"💥","label":"Maior goleada","value":f"{max(bigd['gh'],bigd['ga'])}–{min(bigd['gh'],bigd['ga'])}","detail":f"{flag(bigd['h'])} {nm(bigd['h'])} x {nm(bigd['a'])} {flag(bigd['a'])}"})
-        C["hero"].append({"ico":"💥","label":"Maior goleada","value":f"{max(bigd['gh'],bigd['ga'])}–{min(bigd['gh'],bigd['ga'])}","detail":f"{nm(bigd['h'])} x {nm(bigd['a'])}"})
-        gi.append({"ico":"🥅","label":"Jogo com mais gols","value":f"{most['gh']+most['ga']} gols","detail":f"{flag(most['h'])} {nm(most['h'])} {most['gh']}–{most['ga']} {nm(most['a'])} {flag(most['a'])}"})
-        gf=Counter(); gax=Counter()
-        for m in realg: gf[m["h"]]+=m["gh"]; gf[m["a"]]+=m["ga"]; gax[m["h"]]+=m["ga"]; gax[m["a"]]+=m["gh"]
-        if gf:
-            mk=gf.most_common(1)[0]; ms=gax.most_common(1)[0]
-            gi.append({"ico":"🔥","label":"Ataque mais positivo","value":f"{mk[1]} gols","detail":f"{flag(mk[0])} {nm(mk[0])}"})
-            gi.append({"ico":"🧤","label":"Defesa mais vazada","value":f"{ms[1]} sofridos","detail":f"{flag(ms[0])} {nm(ms[0])}"})
+            jp.append({"ico":"⏱️","label":"Gols por tempo","value":f"{h1} no 1ºT · {len(timed)-h1} no 2ºT"})
         pc=Counter((max(m["gh"],m["ga"]),min(m["gh"],m["ga"])) for m in realg).most_common(1)[0]
-        gi.append({"ico":"📊","label":"Placar mais comum","value":f"{pc[0][0]}–{pc[0][1]}","detail":f"{pc[1]}x até agora"})
+        jp.append({"ico":"📊","label":"Placar mais comum","value":f"{pc[0][0]}–{pc[0][1]}","detail":f"{pc[1]}x até agora"})
         dr=sum(1 for m in realg if m["gh"]==m["ga"])
-        gi.append({"ico":"🤝","label":"Empates","value":f"{dr} de {len(realg)}","detail":f"{round(100*dr/len(realg))}% dos jogos"})
-        tot=sum(m["gh"]+m["ga"] for m in realg)
-        gi.append({"ico":"📈","label":"Média de gols","value":f"{tot/len(realg):.2f}/jogo","detail":f"{tot} gols em {len(realg)} jogos"})
-    if gi:
-        C["sections"].append({"ico":"⚽","title":"Gols & Jogos","note":f"baseado em {len(realg)} jogo(s) já disputado(s)","items":gi})
+        jp.append({"ico":"🤝","label":"Empates","value":f"{dr} de {len(realg)}","detail":f"{round(100*dr/len(realg))}% dos jogos"})
+    if jp: C["sections"].append({"ico":"🔥","title":"Jogos & placares","items":jp})
+
+    # ===== ATAQUE & DEFESA =====
+    ad=[]
+    if realg and gf:
+        ad.append({"ico":"⚔️","label":"Melhores ataques (gols feitos)","rows":[{"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in atk[:6]]})
+        ad.append({"ico":"🛡️","label":"Defesas menos vazadas (gols sofridos)","rows":[{"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in defe[:6]]})
+        if apr: ad.append({"ico":"📈","label":"Melhor aproveitamento","rows":[{"n":f"{flag(c)} {nm(c)}","sub":f"{p2} pts · {j2} jogos","v":f"{round(pp*100)}%"} for c,pp,p2,j2 in apr[:8]]})
+    if ad: C["sections"].append({"ico":"🛡️","title":"Ataque & defesa","note":"aproveitamento considera quem fez ≥2 jogos","items":ad})
+
 
     # ===== ELENCOS =====
     if squads:
@@ -591,68 +620,6 @@ def compute_venues(stadiums, games):
         ROUTES[code]={"cities":cities,"km":km}
     return {"geo":list(GEO.values()),"routes":ROUTES,"contours":CONTOURS}
 
-def compute_numbers(games):
-    from collections import Counter, defaultdict
-    flag=lambda c: FLAG.get(c,""); nm=lambda c: NAME.get(c,c)
-    real=[m for m in games if m.get("r")]
-    N={"hero":[],"sections":[]}
-    if not real:
-        N["sections"].append({"ico":"⏳","title":"Aguardando a bola rolar","items":[
-            {"ico":"⚽","label":"A Copa ainda não começou","value":"—","detail":"os números aparecem sozinhos conforme os jogos são disputados"}]})
-        return N
-    ng=len(real)
-    gols=sum(m["gh"]+m["ga"] for m in real)
-    media=gols/ng
-    # artilheiros (gol contra não conta)
-    art=Counter(); pens=Counter()
-    for g in GOALS:
-        who=(g.get("who") or "").strip()
-        if not who or g.get("og"): continue
-        art[(who,g["c"])]+=1
-        if g.get("pen"): pens[(who,g["c"])]+=1
-    top_art=art.most_common(12)
-    # por seleção
-    gf=defaultdict(int); ga=defaultdict(int); pts=defaultdict(int); jg=defaultdict(int)
-    for m in real:
-        h,a,x,y=m["h"],m["a"],m["gh"],m["ga"]
-        gf[h]+=x; ga[h]+=y; gf[a]+=y; ga[a]+=x; jg[h]+=1; jg[a]+=1
-        if x>y: pts[h]+=3
-        elif y>x: pts[a]+=3
-        else: pts[h]+=1; pts[a]+=1
-    gl=[m for m in sorted(real,key=lambda m:-(abs(m["gh"]-m["ga"]))) if abs(m["gh"]-m["ga"])>0]
-    most_goals_game=sorted(real,key=lambda m:-(m["gh"]+m["ga"]))
-    atk=sorted(gf.items(),key=lambda kv:-kv[1])
-    defe=sorted(ga.items(),key=lambda kv:(kv[1],-jg[kv[0]]))
-    apr=sorted(((c,pts[c]/(jg[c]*3)) for c in jg),key=lambda kv:-kv[1])
-    # HERO
-    N["hero"]=[{"ico":"⚽","label":"Gols na Copa","value":str(gols),"detail":f"em {ng} jogos disputados"},
-               {"ico":"📊","label":"Média de gols","value":f"{media:.2f}".replace(".",","),"detail":"por jogo"}]
-    if top_art:
-        (who,c),n=top_art[0]
-        N["hero"].append({"ico":"👟","label":"Artilheiro","value":f"{n} gols","detail":f"{who} {flag(c)}"})
-    if gl:
-        m=gl[0]; N["hero"].append({"ico":"🔥","label":"Maior goleada","value":f"{m['gh']}–{m['ga']}","detail":f"{flag(m['h'])} {nm(m['h'])} × {nm(m['a'])} {flag(m['a'])}"})
-    # SECTIONS
-    if top_art:
-        N["sections"].append({"ico":"👟","title":"Artilheiros","note":f"{ng} jogos disputados","items":[
-            {"ico":"👟","label":"Goleadores da Copa 2026","rows":[
-                {"n":who,"sub":f"{flag(c)} {nm(c)}"+(f" · {pens[(who,c)]} pên." if pens[(who,c)] else ""),"v":str(n)} for (who,c),n in top_art]}]})
-    if gl:
-        N["sections"].append({"ico":"🔥","title":"Maiores goleadas","items":[
-            {"ico":"🔥","label":"Maiores diferenças de gols","rows":[
-                {"n":f"{flag(m['h'])} {m['h']} {m['gh']}–{m['ga']} {m['a']} {flag(m['a'])}","s":"","v":f"+{abs(m['gh']-m['ga'])}"} for m in gl[:6]]},
-            {"ico":"🎆","label":"Jogos com mais gols","rows":[
-                {"n":f"{flag(m['h'])} {m['h']} {m['gh']}–{m['ga']} {m['a']} {flag(m['a'])}","s":"","v":str(m['gh']+m['ga'])} for m in most_goals_game[:5] if (m['gh']+m['ga'])>=3]}]})
-    N["sections"].append({"ico":"🎯","title":"Ataque & defesa","items":[
-        {"ico":"⚔️","label":"Melhores ataques (gols feitos)","rows":[
-            {"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in atk[:6]]},
-        {"ico":"🛡️","label":"Defesas menos vazadas (gols sofridos)","rows":[
-            {"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in defe[:6]]}]})
-    N["sections"].append({"ico":"📈","title":"Aproveitamento","note":"% dos pontos possíveis","items":[
-        {"ico":"📈","label":"Melhor aproveitamento","rows":[
-            {"n":f"{flag(c)} {nm(c)}","sub":f"{pts[c]} pts · {jg[c]} jogos","v":f"{round(p*100)}%"} for c,p in apr[:8]]}]})
-    return N
-
 # ---------- projeção de probabilidades (Monte Carlo sobre o Elo) ----------
 def _poisson(l):
     L=math.exp(-l); k=0; p=1.0
@@ -770,9 +737,8 @@ def main():
         v=venue_of(meta.get("gr",""), sbc)
         _d,_h=fmt_when_brt(meta.get("dt",""),meta.get("tm",""))
         VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
-    CURIOS=compute_curios(games, squads, stadiums, teams)
+    STATS=compute_stats(games, squads, stadiums, teams)
     BRASIL=compute_brasil(games)
-    NUMBERS=compute_numbers(games)
     VENUES=compute_venues(stadiums, games)
     PROFILES=compute_profiles(games, squads)
     # retrospecto: histórico vai até 2025 (martj42); os jogos de 2026 vêm do openfootball (mesma fonte da tabela do app)
@@ -800,7 +766,7 @@ def main():
         if c: ENPT[al]={"pt":NAME.get(c,al),"fl":FLAG.get(c,"")}
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
-          "CURIOS":CURIOS,"VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":NUMBERS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT}
+          "VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":STATS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))
@@ -818,7 +784,7 @@ def main():
         '  <url>\n    <loc>https://evandroback.github.io/Copa-2026/</loc>\n'
         f'    <lastmod>{today}</lastmod>\n    <changefreq>hourly</changefreq>\n    <priority>1.0</priority>\n'
         '  </url>\n</urlset>\n')
-    print(f"[ok] site gerado — {real_n} jogos reais — {len(CURIOS.get('sections',[]))} seções de curiosidades — {asof}")
+    print(f"[ok] site gerado — {real_n} jogos reais — {len(STATS.get('sections',[]))} seções de números — {asof}")
 
 if __name__=="__main__":
     main()

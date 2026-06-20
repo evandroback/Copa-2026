@@ -212,7 +212,7 @@ footer b{color:var(--mut)}
 .acphteam.miss{color:var(--copa);background:rgba(232,51,74,.12)}
 .acphnote{font-size:11.5px;color:var(--mut2);margin-top:10px;line-height:1.5}
 .accempty{font-size:13.5px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:18px 16px;text-align:center}
-/* ===== Curiosidades ===== */
+/* ===== Cards (Números / Brasil) ===== */
 .cu-hero{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:20px}
 @media(min-width:560px){.cu-hero{grid-template-columns:repeat(4,1fr)}}
 .cu-herocard{background:linear-gradient(165deg,rgba(244,194,75,.16),rgba(232,51,74,.07),var(--surf2));border:1px solid rgba(244,194,75,.30);border-radius:15px;padding:14px 13px;position:relative;overflow:hidden}
@@ -224,7 +224,7 @@ footer b{color:var(--mut)}
 .cu-sec{margin-bottom:20px}
 .cu-sectitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt);margin:0 2px 12px;padding-bottom:8px;border-bottom:1px solid var(--line2)}
 .cu-note{font-family:Inter;font-weight:500;font-size:10.5px;color:var(--mut2);letter-spacing:0;text-align:right;flex:none}
-.cu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}
+.cu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:9px}
 .cu-item{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:11px 12px;display:flex;flex-direction:column}
 .cu-item:hover{border-color:var(--line2)}
 .cu-ico{font-size:17px;line-height:1;margin-bottom:7px}
@@ -354,7 +354,6 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
       <button class="tab" id="tabProb">Favoritos</button>
       <button class="tab" id="tabNumbers">Números</button>
       <button class="tab" id="tabAcc">Acertos</button>
-      <button class="tab" id="tabCurio">Curiosidades</button>
       <button class="tab" id="tabBrasil">Brasil</button>
       <button class="tab" id="tabVenues">Sedes</button>
     </div>
@@ -386,18 +385,13 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
   </section>
 
   <section class="panel hidden" id="secNumbers">
-    <div class="hint">Os <b>números reais da Copa 2026</b>, calculados só dos jogos já disputados — artilheiros, gols, goleadas, defesas e aproveitamento. <b>Atualiza sozinho</b> a cada jogo novo.</div>
+    <div class="hint">O <b>raio-X completo da Copa 2026</b> — artilheiros, gols, goleadas, ataque e defesa (dos jogos já disputados), além de elencos, clubes, sedes e confederações (dados oficiais). <b>Atualiza sozinho</b> a cada jogo novo.</div>
     <div id="numbersBox"></div>
   </section>
 
   <section class="panel hidden" id="secAcc">
     <div class="hint">Quanto meu <b>palpite original</b> (feito antes da Copa) vem acertando dos <span class="real">jogos já encerrados</span>. Critério: quem venceu — empate conta como erro, já que o palpite sempre cravava um vencedor.</div>
     <div id="accBox"></div>
-  </section>
-
-  <section class="panel hidden" id="secCurio">
-    <div class="hint">Recordes e fatos da Copa, calculados a partir dos <span class="real">jogos já disputados</span> e dos dados oficiais de elencos e sedes. Tudo se atualiza sozinho conforme a Copa avança.</div>
-    <div id="curioBox"></div>
   </section>
 
   <section class="panel hidden" id="secBrasil">
@@ -432,7 +426,7 @@ const DATA = /*__DATA__*/;
 const THIRD_ALLOC = /*__ALLOC__*/;
 const F=DATA.F, GR=DATA.GR, NAME=DATA.NAME, FLAG=DATA.FLAG, GAMES0=DATA.GAMES;
 const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
-const CURIOS=DATA.CURIOS||{hero:[],sections:[]}, VENUE_KO=DATA.VENUE_KO||{};
+const VENUE_KO=DATA.VENUE_KO||{};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
 const PROB=DATA.PROB||{};
@@ -670,7 +664,6 @@ function renderBlocks(data, boxId){
   }
   box.innerHTML = h || `<div class="accempty">As curiosidades vão aparecendo conforme os jogos acontecem.</div>`;
 }
-function renderCurios(){ renderBlocks(CURIOS,'curioBox'); }
 function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
 function renderProb(){
   const box=document.getElementById('probBox'); if(!box) return;
@@ -968,15 +961,14 @@ function drawVenues(code){
   }
 }
 
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), ta=document.getElementById('tabAcc'), tc=document.getElementById('tabCurio'), tb=document.getElementById('tabBrasil'), tv=document.getElementById('tabVenues');
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), ta=document.getElementById('tabAcc'), tb=document.getElementById('tabBrasil'), tv=document.getElementById('tabVenues');
 function setTab(t){ state.tab=t;
-  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); ta.classList.toggle('on',t==='acc'); tc.classList.toggle('on',t==='curio'); tb.classList.toggle('on',t==='brasil'); tv.classList.toggle('on',t==='venues');
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); ta.classList.toggle('on',t==='acc'); tb.classList.toggle('on',t==='brasil'); tv.classList.toggle('on',t==='venues');
   document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
   document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
   document.getElementById('secProb').classList.toggle('hidden',t!=='prob');
   document.getElementById('secNumbers').classList.toggle('hidden',t!=='numbers');
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
-  document.getElementById('secCurio').classList.toggle('hidden',t!=='curio');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
   document.getElementById('secVenues').classList.toggle('hidden',t!=='venues');
   const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,curio:tc,brasil:tb,venues:tv}[t];
@@ -984,11 +976,10 @@ function setTab(t){ state.tab=t;
   if(t==='prob') renderProb();
   if(t==='numbers') renderNumbers();
   if(t==='acc') renderAccuracy();
-  if(t==='curio') renderCurios();
   if(t==='brasil') renderBrasil();
   if(t==='venues') renderVenues();
   saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); ta.onclick=()=>setTab('acc'); tc.onclick=()=>setTab('curio'); tb.onclick=()=>setTab('brasil'); tv.onclick=()=>setTab('venues');
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); ta.onclick=()=>setTab('acc'); tb.onclick=()=>setTab('brasil'); tv.onclick=()=>setTab('venues');
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
   if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }
