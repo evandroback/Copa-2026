@@ -640,9 +640,9 @@ def compute_numbers(games):
     if gl:
         N["sections"].append({"ico":"🔥","title":"Maiores goleadas","items":[
             {"ico":"🔥","label":"Maiores diferenças de gols","rows":[
-                {"n":f"{flag(m['h'])} {nm(m['h'])} {m['gh']}–{m['ga']} {nm(m['a'])} {flag(m['a'])}","s":"","v":f"+{abs(m['gh']-m['ga'])}"} for m in gl[:6]]},
+                {"n":f"{flag(m['h'])} {m['h']} {m['gh']}–{m['ga']} {m['a']} {flag(m['a'])}","s":"","v":f"+{abs(m['gh']-m['ga'])}"} for m in gl[:6]]},
             {"ico":"🎆","label":"Jogos com mais gols","rows":[
-                {"n":f"{flag(m['h'])} {nm(m['h'])} {m['gh']}–{m['ga']} {nm(m['a'])} {flag(m['a'])}","s":"","v":str(m['gh']+m['ga'])} for m in most_goals_game[:5] if (m['gh']+m['ga'])>=3]}]})
+                {"n":f"{flag(m['h'])} {m['h']} {m['gh']}–{m['ga']} {m['a']} {flag(m['a'])}","s":"","v":str(m['gh']+m['ga'])} for m in most_goals_game[:5] if (m['gh']+m['ga'])>=3]}]})
     N["sections"].append({"ico":"🎯","title":"Ataque & defesa","items":[
         {"ico":"⚔️","label":"Melhores ataques (gols feitos)","rows":[
             {"n":f"{flag(c)} {nm(c)}","sub":f"{jg[c]} jogos","v":str(v)} for c,v in atk[:6]]},

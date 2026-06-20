@@ -461,7 +461,7 @@ const KO_IDS=Object.keys(KO).map(Number).sort((x,y)=>x-y);
 const DISPLAY={R32:[74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87],R16:[89,90,93,94,91,92,95,96],QF:[97,98,99,100],SF:[101,102],F:[104]};
 const RTITLE={R32:"32-avos",R16:"Oitavas",QF:"Quartas",SF:"Semis",F:"Final"};
 
-let state={ games:clone(GAMES0), edits:{}, manual:{}, follow:"BRA", tab:"groups" };
+let state={ games:clone(GAMES0), edits:{}, manual:{}, follow:"BRA", tab:"groups", blank:false };
 
 // ---- classificação ----
 let TAB={};
@@ -508,7 +508,7 @@ function recompute(){
     RES[id]={a,b};
     let p=state.manual[id];
     if(p && (!a||a.code!==p) && (!b||b.code!==p)){ delete state.manual[id]; p=null; }
-    PICK[id]= p || favorite(a,b);
+    PICK[id]= p || (state.blank ? null : favorite(a,b));
   }
 }
 
@@ -949,11 +949,13 @@ function drawVenues(code){
       lines+=`<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#f4c24b" stroke-width="2.5" stroke-dasharray="6 4" opacity=".9"/>`;
     }
   }
+  const CITYAB={'San Francisco Bay Area':'S. Francisco','New York/New Jersey':'Nova York','Mexico City':'Cidade do México','Philadelphia':'Filadélfia'};
   let pts='';
   geo.forEach(g=>{
     const [x,y]=proj(g.lng,g.lat), on=!code||rc.includes(g.city), big=rc.includes(g.city);
+    const cy=g.city.split(' (')[0], lab=CITYAB[cy]||cy;
     pts+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${big?7:5}" fill="${on?(ccColor[g.cc]||'#888'):'#2a3a33'}" stroke="${big?'#fff':'rgba(0,0,0,.35)'}" stroke-width="${big?1.5:.5}" opacity="${on?1:.5}"/>`;
-    if(on) pts+=`<text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="middle" class="vm-lab">${g.city.split(' (')[0]}</text>`;
+    if(on) pts+=`<text x="${x.toFixed(1)}" y="${(y-10).toFixed(1)}" text-anchor="middle" class="vm-lab">${lab}</text>`;
   });
   document.getElementById('venueMap').innerHTML=`<svg viewBox="0 0 ${W} ${H}" class="vmap">${paths}${lines}${pts}</svg>`;
   const info=document.getElementById('venueInfo');
@@ -993,22 +995,22 @@ document.getElementById('accBox').addEventListener('click',e=>{
   const b=e.target.closest('[data-r]');
   if(b){ accRound = b.dataset.r==='all'?'all':+b.dataset.r; renderAccuracy(); }
 });
-document.querySelectorAll('.btn-restore').forEach(b=>b.onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; renderAll(); saveSoon(); });
+document.querySelectorAll('.btn-restore').forEach(b=>b.onclick=()=>{ state.games=clone(GAMES0); state.edits={}; state.manual={}; state.blank=false; renderAll(); saveSoon(); });
 document.querySelectorAll('.btn-blank').forEach(b=>b.onclick=()=>{
   state.games.forEach(m=>{ if(!m.r){ m.gh=0; m.ga=0; m.blank=true; state.edits[canon(m)]={blank:1}; } });
-  state.manual={}; renderAll(); saveSoon();
+  state.manual={}; state.blank=true; renderAll(); saveSoon();
 });
 
 // ---- persistência ----
 let saveT=null;
 function saveSoon(){ if(saveT)clearTimeout(saveT); saveT=setTimeout(doSave,400); }
-async function doSave(){ try{ if(window.storage&&window.storage.set) await window.storage.set('wc2026:g2',JSON.stringify({edits:state.edits,manual:state.manual,follow:state.follow,tab:state.tab}),false);}catch(e){} }
+async function doSave(){ try{ if(window.storage&&window.storage.set) await window.storage.set('wc2026:g2',JSON.stringify({edits:state.edits,manual:state.manual,follow:state.follow,tab:state.tab,blank:state.blank}),false);}catch(e){} }
 async function loadSaved(){ try{ if(window.storage&&window.storage.get){ const r=await window.storage.get('wc2026:g2',false);
   if(r&&r.value){ const s=JSON.parse(r.value);
     const ne={};
     if(s.edits) for(const k in s.edits){ const v=s.edits[k]; const p=k.split(':'); const kc=p[0]+':'+(p[1]||'').split('-').sort().join('-'); const m=state.games.find(x=>!x.r&&canon(x)===kc); if(m){ if(v.blank){ m.blank=true; m.gh=0; m.ga=0; ne[kc]=v; } else if(v[m.h]!=null&&v[m.a]!=null){ m.gh=v[m.h]; m.ga=v[m.a]; m.blank=false; ne[kc]=v; } } }
     state.edits=ne;
-    if(s.manual)state.manual=s.manual; if(typeof s.follow==='string')state.follow=s.follow; if(s.tab)state.tab=s.tab;
+    if(s.manual)state.manual=s.manual; if(typeof s.follow==='string')state.follow=s.follow; if(s.tab)state.tab=s.tab; if(typeof s.blank==='boolean')state.blank=s.blank;
   } } }catch(e){} }
 
 // ---- placar ao vivo (fonte pública ESPN; com plano B via proxy e diagnóstico) ----
