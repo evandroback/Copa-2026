@@ -687,6 +687,69 @@ def monte_carlo(games, alloc_map, n=8000):
                  "f":round(r["f"]/n*100),"t":round(r["t"]/n*100,1)}
     return PROB
 
+def compute_brasil_path(games, alloc_map, n=20000):
+    random.seed(123)
+    from collections import Counter
+    realres={}
+    for m in games:
+        if m.get("r"): realres[frozenset((m["h"],m["a"]))]=(m["h"],m["gh"],m["a"],m["ga"])
+    real_ko={frozenset((k["h"],k["a"])):k["w"] for k in KO_REAL if k.get("w")}
+    PATH={"first":[76,91,99,102,104],"second":[75,90,97,101,104]}
+    PH=["R32","R16","QF","SF","F"]; BRA="BRA"
+    advs={"first":[Counter() for _ in PH],"second":[Counter() for _ in PH]}
+    reachf={"first":[0]*len(PH),"second":[0]*len(PH)}
+    pos=Counter()
+    for _ in range(n):
+        pg={}; thirds=[]
+        for g,ts in GR.items():
+            P={t:0 for t in ts}; GF={t:0 for t in ts}; GA={t:0 for t in ts}
+            for a,b in itertools.combinations(ts,2):
+                rr=realres.get(frozenset((a,b)))
+                if rr:
+                    h,gh,aw,ga_=rr; ga,gb=(gh,ga_) if h==a else (ga_,gh)
+                else: ga,gb=_goals(ELO[a],ELO[b])
+                GF[a]+=ga;GA[a]+=gb;GF[b]+=gb;GA[b]+=ga
+                if ga>gb:P[a]+=3
+                elif gb>ga:P[b]+=3
+                else:P[a]+=1;P[b]+=1
+            order=sorted(ts,key=lambda t:(-P[t],-(GF[t]-GA[t]),-GF[t],-ELO.get(t,1500),random.random()))
+            pg[g]=order; t=order[2]; thirds.append((g,P[t],GF[t]-GA[t],GF[t],ELO.get(t,1500)))
+        thirds.sort(key=lambda x:(-x[1],-x[2],-x[3],-x[4]))
+        alloc=alloc_map.get("".join(sorted(x[0] for x in thirds[:8])))
+        cpos=pg["C"].index(BRA)
+        if cpos==0: scen="first"
+        elif cpos==1: scen="second"
+        else:
+            if cpos==2 and "C" in set(x[0] for x in thirds[:8]): pos["third"]+=1
+            else: pos["out"]+=1
+            continue
+        pos[scen]+=1
+        RES={}
+        for i in sorted(KO):
+            a=_koslot(KO[i]["a"],pg,alloc,RES); b=_koslot(KO[i]["b"],pg,alloc,RES)
+            if a==BRA or b==BRA: w=BRA
+            elif not a: w=b
+            elif not b: w=a
+            elif frozenset((a,b)) in real_ko: w=real_ko[frozenset((a,b))]
+            else: w=a if random.random()<_adv(ELO.get(a,1500),ELO.get(b,1500)) else b
+            RES[i]={"a":a,"b":b,"w":w}
+        for k,j in enumerate(PATH[scen]):
+            r=RES[j]; opp = r["b"] if r["a"]==BRA else (r["a"] if r["b"]==BRA else None)
+            if opp: advs[scen][k][opp]+=1; reachf[scen][k]+=1
+    def fases(scen):
+        out=[]
+        for k,j in enumerate(PATH[scen]):
+            cnt=advs[scen][k]; rf=reachf[scen][k] or 1
+            full=[(code,c/rf*100) for code,c in cnt.most_common()]
+            big=[(code,p) for code,p in full if p>=1]
+            adlist=[{"c":code,"pct":round(p),"win":round(_adv(ELO.get(BRA,1500),ELO.get(code,1500))*100)} for code,p in big]
+            others=round(sum(p for code,p in full if p<1))
+            nother=sum(1 for code,p in full if p<1)
+            out.append({"game":j,"phase":PH[k],"advs":adlist,"others":others,"nother":nother,"npos":len(full)})
+        return out
+    return {"pos":{kk:round(pos[kk]/n*100,1) for kk in ("first","second","third","out")},
+            "first":fases("first"),"second":fases("second")}
+
 # ---------- montar / calcular ----------
 def build():
     real=load_seed(); real.update(fetch_results())   # openfootball tem prioridade sobre o seed
@@ -756,6 +819,7 @@ def main():
     # injetar no template
     ALLOC=json.load(open(os.path.join(HERE,"third_alloc.json"),encoding="utf-8"))
     PROB=monte_carlo(games, ALLOC, n=8000)
+    BRA_PATH=compute_brasil_path(games, ALLOC, n=20000)
     ESPN_ALIAS={"Türkiye":"Turkey","United States":"USA","Korea Republic":"South Korea",
                 "IR Iran":"Iran","Côte d'Ivoire":"Ivory Coast","Czechia":"Czech Republic",
                 "Cape Verde":"Cabo Verde","Curacao":"Curaçao","Bosnia and Herzegovina":"Bosnia & Herzegovina"}
@@ -766,7 +830,7 @@ def main():
         if c: ENPT[al]={"pt":NAME.get(c,al),"fl":FLAG.get(c,""),"c":c}
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
-          "VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":STATS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT}
+          "VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":STATS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT,"BRA_PATH":BRA_PATH}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))

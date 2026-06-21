@@ -369,6 +369,43 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .h2h-chip{font-size:11.5px;color:var(--mut);background:var(--surf2);border:1px solid var(--line2);border-radius:20px;padding:4px 11px}
 .h2h-chip b{font-family:Archivo;font-weight:900;color:var(--txt)}
 .h2h-note{font-size:12.5px;color:var(--mut2);background:var(--surf2);border:1px solid var(--line2);border-radius:9px;padding:11px 13px}
+.bp-pos{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.bp-pos-t{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);margin-bottom:10px}
+.bp-pb{display:flex;align-items:center;gap:10px;margin-bottom:7px}
+.bp-pb-l{font-size:12px;color:var(--mut);width:108px;flex:none}
+.bp-pb-bar{flex:1;height:9px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
+.bp-pb-bar span{display:block;height:100%;border-radius:5px}
+.bp-pb-bar .f1{background:var(--live)}.bp-pb-bar .f2{background:var(--gold)}.bp-pb-bar .f3{background:var(--mut)}
+.bp-pb-v{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);width:46px;text-align:right;flex:none}
+.bp-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.bp-tg{background:var(--surf);border:1px solid var(--line2);border-radius:11px;padding:13px;font-family:Archivo;font-weight:800;font-size:14px;color:var(--mut);cursor:pointer}
+.bp-tg.on{background:rgba(54,196,107,.1);border-color:rgba(54,196,107,.5);color:var(--txt)}
+.bp-note{font-size:11.5px;color:var(--mut2);line-height:1.5;margin-bottom:16px}
+.bp-fase{background:var(--surf2);border:1px solid var(--line);border-radius:13px;padding:14px 15px;margin-bottom:11px;position:relative}
+.bp-fase.final{border-color:rgba(244,194,75,.45);background:linear-gradient(180deg,rgba(244,194,75,.06),var(--surf2))}
+.bp-fh{display:flex;align-items:flex-start;gap:11px;margin-bottom:11px}
+.bp-num{width:26px;height:26px;flex:none;border-radius:50%;background:var(--copa);color:#fff;font-family:Archivo;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
+.bp-fase.final .bp-num{background:var(--gold);color:#1a1500}
+.bp-fhx{display:flex;flex-direction:column;gap:2px}
+.bp-phase{font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt)}
+.bp-when,.bp-place{font-size:11.5px;color:var(--mut)}
+.bp-win{display:flex;align-items:center;gap:9px;margin-bottom:12px}
+.bp-winl{font-size:12px;color:var(--mut);flex:none}
+.bp-win .bp-bar{flex:1;height:8px;background:rgba(255,255,255,.06);border-radius:5px;overflow:hidden}
+.bp-fill{height:100%;background:linear-gradient(90deg,var(--live),#5fdc8a);border-radius:5px}
+.bp-winv{font-family:Archivo;font-weight:800;font-size:14px;color:var(--live);width:44px;text-align:right;flex:none}
+.bp-advl{font-family:Archivo;font-weight:700;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--mut);margin-bottom:7px}
+.bp-advs{display:flex;flex-direction:column;gap:5px}
+.bp-src{font-size:12.5px;color:var(--mut);margin:-2px 0 11px;padding:8px 11px;background:rgba(255,255,255,.03);border-radius:8px;border-left:2px solid var(--copa)}
+.bp-src b{color:var(--txt)}
+.bp-adv{display:grid;grid-template-columns:22px minmax(58px,1fr) 44px 38px auto;align-items:center;gap:7px;padding:7px 9px;background:var(--surf);border:1px solid var(--line);border-radius:8px;cursor:pointer}
+.bp-adv-fl{font-size:17px}
+.bp-adv-nm{font-size:13px;color:var(--txt);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bp-adv-bar{height:6px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden}
+.bp-adv-bar span{display:block;height:100%;background:var(--gold);border-radius:4px}
+.bp-adv-pct{font-size:12px;color:var(--gold);font-weight:800;white-space:nowrap;text-align:right}
+.bp-adv-win{font-size:10.5px;color:var(--mut);font-weight:700;white-space:nowrap;background:rgba(255,255,255,.04);padding:2px 6px;border-radius:6px}
+.bp-adv-others{font-size:11.5px;color:var(--mut2);padding:7px 4px 2px;font-style:italic}
 </style>
 </head>
 <body>
@@ -391,6 +428,7 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
       <button class="tab" id="tabNumbers">Números</button>
       <button class="tab" id="tabAcc">Acertos</button>
       <button class="tab" id="tabBrasil">Brasil</button>
+      <button class="tab" id="tabBraPath">🇧🇷 Caminho</button>
       <button class="tab" id="tabVenues">Sedes</button>
     </div>
   </div>
@@ -435,6 +473,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     <div id="brasilBox"></div>
   </section>
 
+  <section class="panel hidden" id="secBraPath">
+    <div class="hint">O <b>caminho do Brasil no mata-mata</b> simulado milhares de vezes (Monte Carlo). Escolha <b>passar em 1º ou 2º</b> do grupo e veja, fase a fase até a final, <b>quem ele pode pegar</b>, a chance de cada adversário e a probabilidade de avançar. Atualiza conforme os resultados saem.</div>
+    <div id="braPathBox"></div>
+  </section>
+
   <section class="panel hidden" id="secVenues">
     <div class="hint">Os <b>16 estádios</b> da Copa espalhados por EUA, México e Canadá. <b>Toque numa seleção</b> abaixo para ver onde ela joga na fase de grupos e <b>quanto vai rodar</b> pelo continente.</div>
     <div class="venue-pick"><select id="venueSel"></select></div>
@@ -463,6 +506,7 @@ const THIRD_ALLOC = /*__ALLOC__*/;
 const F=DATA.F, GR=DATA.GR, NAME=DATA.NAME, FLAG=DATA.FLAG, GAMES0=DATA.GAMES;
 const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
 const VENUE_KO=DATA.VENUE_KO||{};
+const BRA_PATH=DATA.BRA_PATH||{pos:{},first:[],second:[]};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
 const PROB=DATA.PROB||{};
@@ -705,6 +749,40 @@ function renderBlocks(data, boxId){
   box.innerHTML = h || `<div class="accempty">As curiosidades vão aparecendo conforme os jogos acontecem.</div>`;
 }
 function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
+function renderBraPath(){
+  const box=document.getElementById('braPathBox'); if(!box) return;
+  const scen=state.braScen||'first';
+  const pos=BRA_PATH.pos||{};
+  const faseNm={R32:'32-avos de final',R16:'Oitavas de final',QF:'Quartas de final',SF:'Semifinal',F:'🏆 FINAL'};
+  let h=`<div class="bp-pos"><div class="bp-pos-t">Como o Brasil se classifica (simulado)</div>`;
+  const pb=(lab,v,cls)=>`<div class="bp-pb"><span class="bp-pb-l">${lab}</span><span class="bp-pb-bar"><span class="${cls}" style="width:${Math.max(2,v)}%"></span></span><span class="bp-pb-v">${v}%</span></div>`;
+  h+=pb('em 1º do grupo',pos.first||0,'f1')+pb('em 2º do grupo',pos.second||0,'f2');
+  if((pos.third||0)>0) h+=pb('como melhor 3º',pos.third,'f3');
+  h+=`</div>`;
+  h+=`<div class="bp-toggle"><button class="bp-tg ${scen==='first'?'on':''}" data-brascen="first">Se passar em 1º</button><button class="bp-tg ${scen==='second'?'on':''}" data-brascen="second">Se passar em 2º</button></div>`;
+  h+=`<div class="bp-note">Para cada fase: <b>data, sede e todos os possíveis adversários</b> com a chance de cada um (do Monte Carlo). "BRA %" = chance do Brasil vencer aquele rival. Conforme os grupos fecham, as opções vão sumindo até virar o adversário certo.</div>`;
+  const fases=BRA_PATH[scen]||[];
+  fases.forEach((f,i)=>{
+    const vk=VENUE_KO[f.game]||{};
+    const when=vk.dt?`${vk.dt}${vk.hr?' · '+vk.hr:''}`:'';
+    const place=vk.vn?`${vk.vn}${vk.co?' · '+vk.cf+' '+vk.co:''}`:'';
+    // origem do adversário (apenas 32-avos é simples e direto)
+    const src = i===0 ? (scen==='first'?'sai do <b>2º colocado do Grupo F</b>':'sai do <b>1º colocado do Grupo F</b>') : '';
+    h+=`<div class="bp-fase${f.phase==='F'?' final':''}">`;
+    h+=`<div class="bp-fh"><span class="bp-num">${i+1}</span><div class="bp-fhx"><span class="bp-phase">${faseNm[f.phase]}</span>${when?`<span class="bp-when">📅 ${when}</span>`:''}${place?`<span class="bp-place">📍 ${place}</span>`:''}</div></div>`;
+    if(src) h+=`<div class="bp-src">Adversário ${src}</div>`;
+    if(f.advs&&f.advs.length){
+      h+=`<div class="bp-advl">Pode pegar — ${f.npos} possíveis</div><div class="bp-advs">`;
+      f.advs.forEach(a=>{
+        h+=`<div class="bp-adv proteam" data-pro="${a.c}"><span class="bp-adv-fl">${FLAG[a.c]||''}</span><span class="bp-adv-nm">${NAME[a.c]||a.c}</span><span class="bp-adv-bar"><span style="width:${Math.max(3,a.pct)}%"></span></span><span class="bp-adv-pct">${a.pct}%</span><span class="bp-adv-win">BRA ${a.win}%</span></div>`;
+      });
+      if(f.nother>0) h+=`<div class="bp-adv-others">+ ${f.nother} ${f.nother===1?'outro time possível':'outros times possíveis'} (${f.others}% somados)</div>`;
+      h+=`</div>`;
+    }
+    h+=`</div>`;
+  });
+  box.innerHTML=h;
+}
 function boldPicks(){
   const elo=c=>(PROB[c]&&PROB[c].elo)||1500;
   const picks=[];
@@ -1090,25 +1168,28 @@ function drawVenues(code){
   }
 }
 
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), ta=document.getElementById('tabAcc'), tb=document.getElementById('tabBrasil'), tv=document.getElementById('tabVenues');
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), ta=document.getElementById('tabAcc'), tb=document.getElementById('tabBrasil'), tbp=document.getElementById('tabBraPath'), tv=document.getElementById('tabVenues');
 function setTab(t){ state.tab=t;
-  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); ta.classList.toggle('on',t==='acc'); tb.classList.toggle('on',t==='brasil'); tv.classList.toggle('on',t==='venues');
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); ta.classList.toggle('on',t==='acc'); tb.classList.toggle('on',t==='brasil'); tbp.classList.toggle('on',t==='brapath'); tv.classList.toggle('on',t==='venues');
   document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
   document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
   document.getElementById('secProb').classList.toggle('hidden',t!=='prob');
   document.getElementById('secNumbers').classList.toggle('hidden',t!=='numbers');
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
+  document.getElementById('secBraPath').classList.toggle('hidden',t!=='brapath');
   document.getElementById('secVenues').classList.toggle('hidden',t!=='venues');
-  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,brasil:tb,venues:tv}[t];
+  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,brasil:tb,brapath:tbp,venues:tv}[t];
   if(_act&&_act.scrollIntoView) _act.scrollIntoView({inline:'center',block:'nearest'});
   if(t==='prob') renderProb();
   if(t==='numbers') renderNumbers();
   if(t==='acc') renderAccuracy();
   if(t==='brasil') renderBrasil();
+  if(t==='brapath') renderBraPath();
   if(t==='venues') renderVenues();
   saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); ta.onclick=()=>setTab('acc'); tb.onclick=()=>setTab('brasil'); tv.onclick=()=>setTab('venues');
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); ta.onclick=()=>setTab('acc'); tb.onclick=()=>setTab('brasil'); tbp.onclick=()=>setTab('brapath'); tv.onclick=()=>setTab('venues');
+document.getElementById('braPathBox').addEventListener('click',e=>{ const b=e.target.closest('[data-brascen]'); if(b){ state.braScen=b.dataset.brascen; renderBraPath(); } });
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
   if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }
