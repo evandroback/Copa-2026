@@ -179,7 +179,21 @@ footer b{color:var(--mut)}
 .accbarfill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--qual),var(--gold));transition:width .4s}
 .accstats{flex-basis:100%;display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
 .accstats .st{font-family:Archivo;font-weight:700;font-size:12px;padding:5px 10px;border-radius:8px;background:var(--surf);border:1px solid var(--line)}
-.accstats .st.hit{color:var(--live)}.accstats .st.draw{color:var(--gold)}.accstats .st.miss{color:var(--copa)}.accstats .st.exact{color:var(--txt)}
+.accstats .st.hit{color:var(--live)}.accstats .st.draw{color:var(--gold)}.accstats .st.miss{color:var(--copa)}.accstats .st.exact{color:var(--txt)}.accstats .st.open{color:var(--mut)}
+.qual{background:linear-gradient(180deg,var(--surf2),#0f211a);border:1px solid var(--line2);border-radius:14px;padding:18px 16px;margin-bottom:18px}
+.qualhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.qualt{font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt)}
+.qualbig{font-family:Archivo;font-weight:800;font-size:30px;color:var(--gold);line-height:1}
+.qualbig span{font-size:15px;color:var(--mut)}
+.qualsub{font-size:12.5px;color:var(--mut);margin:6px 0 2px}
+.qrow{margin-top:12px}
+.qlab{font-family:Archivo;font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.3px;margin-bottom:6px}
+.qlab.hit{color:var(--live)}.qlab.miss{color:var(--copa)}.qlab.open{color:var(--mut)}.qlab.surp{color:var(--gold)}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qchip{font-size:12px;font-weight:600;padding:4px 9px;border-radius:8px;background:var(--surf);border:1px solid var(--line)}
+.qchip.in{border-color:rgba(54,196,107,.4)}.qchip.out{border-color:rgba(232,51,74,.4);opacity:.75}.qchip.open{color:var(--mut)}.qchip.surp{border-color:rgba(244,194,75,.45)}
+.qnote{font-size:11px;color:var(--mut2);margin-top:14px;line-height:1.5;border-top:1px solid var(--line);padding-top:10px}
+.accssubh{font-family:Archivo;font-weight:800;font-size:14px;color:var(--txt);margin:6px 0 12px}
 .acch{font-family:Archivo;font-weight:800;font-size:13.5px;margin:18px 0 9px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .acch.hit{color:var(--live)}.acch.draw{color:var(--gold)}.acch.miss{color:var(--copa)}
 .accm{background:var(--surf);border:1px solid var(--line);border-radius:10px;padding:9px 12px;margin-bottom:7px}
@@ -800,6 +814,58 @@ function accStats(reals){
   }
   return {hits,draws,misses,exact,total:reals.length};
 }
+// status de classificação ao mata-mata, com certeza matemática (conservador)
+function qualifStatus(){
+  const res={};
+  const groupDone={};
+  for(const g of LETTERS){
+    const teams=GR[g];
+    const reais=GAMES0.filter(m=>m.g===g&&m.r);
+    const rest=GAMES0.filter(m=>m.g===g&&!m.r);
+    groupDone[g]=rest.length===0;
+    const P={},rem={},GF={},GA={}; teams.forEach(t=>{P[t]=0;rem[t]=0;GF[t]=0;GA[t]=0;});
+    reais.forEach(m=>{ GF[m.h]+=m.gh;GA[m.h]+=m.ga;GF[m.a]+=m.ga;GA[m.a]+=m.gh; if(m.gh>m.ga)P[m.h]+=3; else if(m.ga>m.gh)P[m.a]+=3; else {P[m.h]++;P[m.a]++;} });
+    rest.forEach(m=>{ rem[m.h]++; rem[m.a]++; });
+    teams.forEach(t=>{
+      const pmin=P[t], pmax=P[t]+3*rem[t];
+      const canAhead=teams.filter(o=>o!==t && (P[o]+3*rem[o])>=pmin).length; // podem terminar à frente (pior caso de t)
+      const sureAhead=teams.filter(o=>o!==t && P[o]>pmax).length;            // garantidamente à frente
+      let code = canAhead<=1 ? 'in' : (sureAhead>=3 ? 'out' : 'open');
+      res[t]={code,g,P:P[t],sg:GF[t]-GA[t],gf:GF[t]};
+    });
+    if(groupDone[g]){ // grupo encerrado: posição final exata
+      const ord=teams.slice().sort((x,y)=>P[y]-P[x]||(GF[y]-GA[y])-(GF[x]-GA[x])||GF[y]-GF[x]||x.localeCompare(y));
+      ord.forEach((t,i)=>{ res[t].code = i<2?'in':(i===2?'open':'out'); res[t].third=(i===2); });
+    }
+  }
+  // todos os grupos encerrados → resolver os 8 melhores terceiros
+  if(LETTERS.every(g=>groupDone[g])){
+    const thirds=Object.keys(res).filter(c=>res[c].third);
+    thirds.sort((x,y)=>res[y].P-res[x].P||res[y].sg-res[x].sg||res[y].gf-res[x].gf);
+    thirds.forEach((c,i)=>{ res[c].code = i<8?'in':'out'; });
+  }
+  return res;
+}
+function accQualifHTML(){
+  if(!GAMES0.some(m=>m.r)) return '';
+  const st=qualifStatus();
+  const pred=new Set(PRED_PHASES.R32||[]);
+  const predIn=[],predOut=[],predOpen=[];
+  pred.forEach(c=>{ const s=(st[c]&&st[c].code)||'open'; (s==='in'?predIn:s==='out'?predOut:predOpen).push(c); });
+  const surp=Object.keys(st).filter(c=>st[c].code==='in'&&!pred.has(c));
+  const chip=(c,cls)=>`<span class="qchip ${cls}">${FLAG[c]} ${NAME[c]}</span>`;
+  const pct=Math.round(predIn.length/32*100);
+  let h=`<div class="qual"><div class="qualhead"><span class="qualt">🎟️ Quem cravei no mata-mata</span><span class="qualbig">${predIn.length}<span>/32</span></span></div>`;
+  h+=`<div class="qualsub">dos <b>32</b> que projetei antes da Copa, já confirmaram vaga · <b>${pct}%</b></div>`;
+  h+=`<div class="accbar"><div class="accbarfill" style="width:${pct}%"></div></div>`;
+  h+=`<div class="accstats"><span class="st hit">✅ ${predIn.length} confirmados</span><span class="st miss">❌ ${predOut.length} já caíram</span><span class="st open">⏳ ${predOpen.length} em aberto</span></div>`;
+  if(predIn.length)  h+=`<div class="qrow"><div class="qlab hit">✅ Confirmados (cravei e passaram)</div><div class="qchips">${predIn.map(c=>chip(c,'in')).join('')}</div></div>`;
+  if(predOut.length) h+=`<div class="qrow"><div class="qlab miss">❌ Eliminados (cravei e caíram)</div><div class="qchips">${predOut.map(c=>chip(c,'out')).join('')}</div></div>`;
+  if(predOpen.length)h+=`<div class="qrow"><div class="qlab open">⏳ Ainda em disputa</div><div class="qchips">${predOpen.map(c=>chip(c,'open')).join('')}</div></div>`;
+  if(surp.length)    h+=`<div class="qrow"><div class="qlab surp">⚡ Garantiram vaga sem eu prever</div><div class="qchips">${surp.map(c=>chip(c,'surp')).join('')}</div></div>`;
+  h+=`<div class="qnote"><b>Confirmado</b> = matematicamente garantido no top 2 do grupo. <b>Eliminado</b> = não pode mais passar (último). Os 3ºs ficam <b>em disputa</b> até definir os 8 melhores terceiros.</div></div>`;
+  return h;
+}
 function accGroupsHTML(){
   const allReals=GAMES0.filter(m=>m.r);
   if(!allReals.length) return `<div class="accempty">Nenhum jogo de grupo encerrado ainda.<br>Assim que os primeiros resultados reais entrarem, a assertividade aparece aqui.</div>`;
@@ -815,7 +881,7 @@ function accGroupsHTML(){
   const {hits,draws,misses,exact,total}=accStats(reals);
   const nHit=hits.length, pct=total?Math.round(nHit/total*100):0;
   const scope = accRound==='all'? `${total} ${total===1?'jogo encerrado':'jogos encerrados'}` : `Rodada ${accRound} · ${total} ${total===1?'jogo':'jogos'}`;
-  let h=tabs+`<div class="accsum">`+
+  let h=accQualifHTML()+`<div class="accssubh">🎯 Acerto no resultado dos jogos</div>`+tabs+`<div class="accsum">`+
     `<div class="accpct">${pct}%</div>`+
     `<div class="accpctlab">de acerto no resultado<br><span>${scope}</span></div>`+
     `<div class="accbar"><div class="accbarfill" style="width:${pct}%"></div></div>`+
@@ -971,7 +1037,7 @@ function setTab(t){ state.tab=t;
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
   document.getElementById('secVenues').classList.toggle('hidden',t!=='venues');
-  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,curio:tc,brasil:tb,venues:tv}[t];
+  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,brasil:tb,venues:tv}[t];
   if(_act&&_act.scrollIntoView) _act.scrollIntoView({inline:'center',block:'nearest'});
   if(t==='prob') renderProb();
   if(t==='numbers') renderNumbers();
