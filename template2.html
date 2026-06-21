@@ -48,6 +48,8 @@ h1 .yr{color:var(--gold)}
 .sub b{color:var(--txt);font-weight:600}
 .sub .real{color:var(--live);font-weight:700}
 .sub .asof{display:inline-block;color:var(--mut2);font-size:11.5px;margin-left:8px;padding-left:8px;border-left:1px solid var(--line2)}
+.sharebtn{margin-top:14px;background:linear-gradient(180deg,#f4c24b,#e0a832);color:#1a1500;border:0;border-radius:11px;padding:11px 18px;font-family:Archivo;font-weight:800;font-size:14px;cursor:pointer;box-shadow:0 4px 14px rgba(244,194,75,.18)}
+.sharebtn:active{transform:translateY(1px)}
 
 .bar{display:flex;gap:8px;align-items:center;margin:14px 0 4px;position:sticky;top:0;z-index:30;background:linear-gradient(180deg,var(--bg) 82%,transparent);padding:8px 0}
 .tabs{display:flex;gap:3px;background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:4px;overflow-x:auto;flex:0 1 auto;min-width:0;max-width:100%;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity}
@@ -114,6 +116,11 @@ h1 .yr{color:var(--gold)}
 .gm .tag.pal{color:var(--mut);background:rgba(255,255,255,.05)}
 .gm .scv.blank{color:var(--mut2);opacity:.55}
 .gm .tag.blank{color:var(--mut2);background:rgba(255,255,255,.03);border:1px dashed var(--line2)}
+.gm.islive{border-color:rgba(54,196,107,.5);background:rgba(54,196,107,.04)}
+.gm .scv.lv{color:var(--live);font-family:Archivo;font-weight:800;font-size:15px}
+.gm .tag.livetag{color:var(--live);background:rgba(54,196,107,.14);display:inline-flex;align-items:center;gap:3px}
+.lvdot{width:5px;height:5px;border-radius:50%;background:var(--live);display:inline-block;animation:lvpulse 1.4s infinite}
+@keyframes lvpulse{0%,100%{opacity:1}50%{opacity:.3}}
 /* linha discreta data/estadio/pais nos jogos */
 .gm-wrap{padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
 .gm-wrap:last-child{border-bottom:0}
@@ -256,6 +263,19 @@ footer b{color:var(--mut)}
 .cu-rnm{font-weight:600;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cu-rnsub{font-size:10px;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* ===== aba Favoritos (probabilidades) ===== */
+.prob-sec-h{font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt);margin:4px 0 10px}
+.ob-lab{font-family:Archivo;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.3px;color:var(--mut);margin:14px 0 8px}
+.ob-row{background:var(--surf2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:7px}
+.ob-pick{font-size:13.5px;color:var(--txt)}
+.ob-pick b{font-weight:700}
+.ob-vs{color:var(--mut2);font-size:11.5px;margin:0 2px}
+.ob-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:6px}
+.ob-gap{font-size:11px;color:var(--gold);font-weight:600}
+.ob-st{font-size:11px;font-weight:700;padding:2px 7px;border-radius:6px}
+.ob-st.hit{color:var(--live);background:rgba(54,196,107,.13)}
+.ob-st.miss{color:var(--copa);background:rgba(232,51,74,.12)}
+.ob-st.draw{color:var(--gold);background:rgba(244,194,75,.12)}
+.ob-st.pend{color:var(--mut);background:rgba(255,255,255,.05)}
 .prob-list{display:flex;flex-direction:column}
 .prob-row{display:grid;grid-template-columns:24px 26px 1fr 70px 42px;align-items:center;gap:9px;padding:9px 5px;cursor:pointer;border-bottom:1px solid rgba(255,255,255,.05)}
 .prob-row:last-child{border-bottom:0}
@@ -357,7 +377,9 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     <div class="eyebrow">EUA · México · Canadá — 11 jun a 19 jul 2026</div>
     <h1>Copa 2026 <span class="yr">Real + Palpite</span></h1>
     <p class="sub">Jogos encerrados entram <span class="real">travados</span>; o resto é meu palpite, que você edita — e tudo recalcula sozinho.<span class="asof">Atualizado __ASOF__</span></p>
+    <button class="sharebtn" id="shareBtn">📤 Compartilhar meu palpite</button>
   </header>
+  <canvas id="shareCanvas" width="1080" height="1350" style="display:none"></canvas>
 
   <div id="liveBar" class="livebar hidden"></div>
 
@@ -550,8 +572,12 @@ function renderGroups(){
 }
 function gmHTML(m,idx){
   const real=m.r;
+  const lv=liveFor(m.h,m.a);
   let score;
-  if(real){
+  if(lv){
+    const hs=lv.hc===m.h?lv.hs:lv.as, as=lv.hc===m.h?lv.as:lv.hs;
+    score=`<span class="scv lv">${hs}</span><span class="vs">×</span><span class="scv lv">${as}</span><span class="tag livetag"><span class="lvdot"></span>${lv.detail||'ao vivo'}</span>`;
+  }else if(real){
     score=`<span class="sc-fixed">${m.gh}</span><span class="vs">×</span><span class="sc-fixed">${m.ga}</span><span class="tag fim">FIM</span>`;
   }else{
     const bl=m.blank;
@@ -562,7 +588,7 @@ function gmHTML(m,idx){
   }
   const _w = m.dt ? (m.dt + (m.hr?` · ${m.hr}`:'')) : '';
   const meta = (_w||m.vn||m.co) ? `<div class="gm-meta">${_w?`<span>${_w}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
-  return `<div class="gm-wrap"><div class="gm ${real?'real':'pred'}">
+  return `<div class="gm-wrap"><div class="gm ${lv?'islive':real?'real':'pred'}">
     <span class="side proteam" data-pro="${m.h}"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
     <span class="score">${score}</span>
     <span class="side away proteam" data-pro="${m.a}"><span class="fl">${FLAG[m.a]}</span><span class="ab">${m.a}</span></span>
@@ -679,12 +705,49 @@ function renderBlocks(data, boxId){
   box.innerHTML = h || `<div class="accempty">As curiosidades vão aparecendo conforme os jogos acontecem.</div>`;
 }
 function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
+function boldPicks(){
+  const elo=c=>(PROB[c]&&PROB[c].elo)||1500;
+  const picks=[];
+  GAMES0.forEach(m=>{
+    if(F[m.h]===F[m.a]) return;
+    const favF = F[m.h]>F[m.a]?m.h:m.a;           // quem o palpite escolheu
+    const und  = favF===m.h?m.a:m.h;              // o rival
+    if(elo(favF) >= elo(und)) return;             // palpite concorda com o Elo → não foi ousado
+    const gap = Math.round(elo(und)-elo(favF));   // quanto o Elo preferia o rival
+    let status='pend';
+    if(m.r){ const w=m.gh>m.ga?m.h:(m.ga>m.gh?m.a:null); status=w===favF?'hit':(w===null?'draw':'miss'); }
+    picks.push({favF,und,gap,status,m});
+  });
+  picks.sort((a,b)=>b.gap-a.gap);
+  return picks;
+}
+function boldPicksHTML(){
+  const picks=boldPicks();
+  if(!picks.length) return '';
+  const judged=picks.filter(p=>p.status==='hit'||p.status==='miss');
+  const hits=judged.filter(p=>p.status==='hit').length;
+  const done=picks.filter(p=>p.status!=='pend');
+  const pend=picks.filter(p=>p.status==='pend');
+  const row=p=>{
+    const st = p.status==='hit'?'<span class="ob-st hit">✅ deu certo</span>'
+             : p.status==='miss'?'<span class="ob-st miss">❌ não rolou</span>'
+             : p.status==='draw'?'<span class="ob-st draw">➖ empate</span>'
+             : '<span class="ob-st pend">⏳ a jogar</span>';
+    return `<div class="ob-row"><div class="ob-pick"><b>${FLAG[p.favF]} ${NAME[p.favF]}</b> <span class="ob-vs">sobre</span> ${FLAG[p.und]} ${NAME[p.und]}</div><div class="ob-meta"><span class="ob-gap">Elo dava +${p.gap} ao rival</span>${st}</div></div>`;
+  };
+  let h=`<div class="prob-sec-h" style="margin-top:24px">🎲 Onde fui ousado</div>`;
+  h+=`<div class="hint" style="margin:0 0 12px">Jogos em que meu palpite vai <b>contra o favorito do Elo</b> — apostei no azarão. Quanto maior o "+Elo", mais ousada a aposta.</div>`;
+  if(judged.length) h+=`<div class="accstats" style="margin-bottom:12px"><span class="st hit">✅ ${hits} deram certo</span><span class="st miss">❌ ${judged.length-hits} não</span><span class="st open">🎯 ${Math.round(hits/judged.length*100)}% de aproveitamento</span></div>`;
+  if(done.length){ h+=`<div class="ob-lab">Já julgados</div>`+done.map(row).join(''); }
+  if(pend.length){ h+=`<div class="ob-lab">Ainda por vir · top ${Math.min(6,pend.length)} mais ousadas</div>`+pend.slice(0,6).map(row).join(''); }
+  return h;
+}
 function renderProb(){
   const box=document.getElementById('probBox'); if(!box) return;
   const rank=Object.keys(PROB).sort((a,b)=> (PROB[b].t-PROB[a].t) || (PROB[b].elo-PROB[a].elo) );
   if(!rank.length){ box.innerHTML='<div class="hint">Projeção indisponível.</div>'; return; }
   const maxT=Math.max.apply(null,rank.map(c=>PROB[c].t).concat([1]));
-  box.innerHTML='<div class="prob-list">'+rank.map((c,i)=>{
+  box.innerHTML='<div class="prob-sec-h">🏆 Quem leva a taça</div><div class="prob-list">'+rank.map((c,i)=>{
     const p=PROB[c], w=Math.max(3, p.t/maxT*100);
     const medal = i===0?'prob-rk gold':(i<3?'prob-rk top':'prob-rk');
     return '<div class="prob-row proteam" data-pro="'+c+'">'
@@ -695,7 +758,7 @@ function renderProb(){
       +'<span class="prob-bar"><span class="prob-fill" style="width:'+w+'%"></span></span>'
       +'<span class="prob-pct">'+p.t+'%</span>'
       +'</div>';
-  }).join('')+'</div>';
+  }).join('')+'</div>'+boldPicksHTML();
 }
 
 // ---- modal de perfil de país ----
@@ -1080,7 +1143,7 @@ async function _try(url){
 }
 function _parse(j){
   const evs=(j&&j.events)||[];
-  const tr=n=>{ const e=ENPT[n]; return e?{nm:e.pt,fl:e.fl}:{nm:n,fl:''}; };
+  const tr=n=>{ const e=ENPT[n]; return e?{nm:e.pt,fl:e.fl,c:e.c}:{nm:n,fl:'',c:null}; };
   return evs.map(ev=>{
     const c=(ev.competitions&&ev.competitions[0])||{}; const cs=c.competitors||[];
     const home=cs.find(x=>x.homeAway==='home')||cs[0]||{};
@@ -1089,9 +1152,19 @@ function _parse(j){
     const H=tr((home.team&&(home.team.displayName||home.team.shortDisplayName||home.team.abbreviation))||'?');
     const A=tr((away.team&&(away.team.displayName||away.team.shortDisplayName||away.team.abbreviation))||'?');
     return { state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'',
-      hn:H.nm, hfl:H.fl, an:A.nm, afl:A.fl,
+      hn:H.nm, hfl:H.fl, hc:H.c, an:A.nm, afl:A.fl, ac:A.c,
       hs:(home.score!=null?home.score:''), as:(away.score!=null?away.score:'') };
   });
+}
+let LIVE=[], _liveSig='';
+function liveFor(h,a){ return LIVE.find(g=>(g.hc===h&&g.ac===a)||(g.hc===a&&g.ac===h)); }
+function updateLive(games){ LIVE=(games||[]).filter(g=>g.hc&&g.ac&&g.state==='in'); }
+function refreshLiveCards(){
+  const sig=JSON.stringify(LIVE.map(g=>[g.hc,g.ac,g.hs,g.as]));
+  if(sig===_liveSig) return; _liveSig=sig;
+  const y=window.scrollY;
+  if(state.tab==='groups') renderGroups(); else if(state.tab==='ko') renderKO();
+  window.scrollTo(0,y);
 }
 async function fetchLive(){
   // 1) direto
@@ -1120,9 +1193,68 @@ function renderLiveBar(res){
     : '<div class="lb-head" style="color:var(--mut2)">Jogos de hoje · fonte conectada ✓ ('+res.src+')</div>';
   bar.className='livebar'; bar.innerHTML=head+show.map(_gm).join('');
 }
-async function tickLive(){ try{ renderLiveBar(await fetchLive()); }catch(e){} }
+async function tickLive(){ try{ const res=await fetchLive(); renderLiveBar(res); if(res.ok){ updateLive(res.games); refreshLiveCards(); } }catch(e){} }
 tickLive(); setInterval(tickLive, 30000);
 
+function shareStats(){
+  const reals=GAMES0.filter(m=>m.r);
+  let hits=0,decided=0;
+  try{ const s=accStats(reals); hits=s.hits.length; decided=s.hits.length+s.misses.length; }catch(e){}
+  const pct=decided?Math.round(hits/decided*100):0;
+  let confirmed=0;
+  try{ const st=qualifStatus(); const pred=new Set(PRED_PHASES.R32||[]); confirmed=[...pred].filter(c=>st[c]&&st[c].code==='in').length; }catch(e){}
+  return {pct,decided,confirmed};
+}
+function _rr(x,px,py,w,h,r){ x.beginPath(); x.moveTo(px+r,py); x.arcTo(px+w,py,px+w,py+h,r); x.arcTo(px+w,py+h,px,py+h,r); x.arcTo(px,py+h,px,py,r); x.arcTo(px,py,px+w,py,r); x.closePath(); }
+function drawShareCard(){
+  const cv=document.getElementById('shareCanvas'); if(!cv) return;
+  const x=cv.getContext('2d'); const W=1080,H=1350;
+  const g=x.createLinearGradient(0,0,0,H); g.addColorStop(0,'#152a20'); g.addColorStop(1,'#0a1410');
+  x.fillStyle=g; x.fillRect(0,0,W,H);
+  x.strokeStyle='rgba(244,194,75,.45)'; x.lineWidth=5; x.strokeRect(24,24,W-48,H-48);
+  x.textAlign='center';
+  x.fillStyle='#e8334a'; x.font='bold 27px Arial'; x.fillText('EUA · MÉXICO · CANADÁ · 2026', W/2, 104);
+  x.fillStyle='#ffffff'; x.font='900 84px Arial'; x.fillText('COPA 2026', W/2, 194);
+  x.fillStyle='#f4c24b'; x.font='italic bold 46px Arial'; x.fillText('meu palpite', W/2, 252);
+  const ch=(PRED_PHASES.CH||[])[0], fin=PRED_PHASES.F||[];
+  const vice=fin.find(c=>c!==ch), semis=(PRED_PHASES.SF||[]).filter(c=>!fin.includes(c));
+  x.fillStyle='#f4c24b'; x.font='bold 30px Arial'; x.fillText('🏆 CAMPEÃO', W/2, 358);
+  try{ x.font='128px Arial'; x.fillText(FLAG[ch]||'🏳️', W/2, 492); }catch(e){}
+  x.fillStyle='#ffffff'; x.font='900 72px Arial'; x.fillText((NAME[ch]||'?').toUpperCase(), W/2, 576);
+  if(vice){
+    x.fillStyle='#9aa8a0'; x.font='bold 26px Arial'; x.fillText('VICE-CAMPEÃO', W/2, 672);
+    try{ x.font='66px Arial'; x.fillText(FLAG[vice]||'', W/2, 742); }catch(e){}
+    x.fillStyle='#dfe7e2'; x.font='bold 44px Arial'; x.fillText(NAME[vice]||'', W/2, 798);
+  }
+  if(semis.length){
+    x.fillStyle='#9aa8a0'; x.font='bold 24px Arial'; x.fillText('TAMBÉM NA SEMIFINAL', W/2, 884);
+    x.fillStyle='#c7d0ca'; x.font='bold 38px Arial';
+    x.fillText(semis.map(c=>(FLAG[c]||'')+' '+NAME[c]).join('     '), W/2, 938);
+  }
+  const s=shareStats();
+  x.fillStyle='rgba(255,255,255,.05)'; _rr(x,80,1006,W-160,196,20); x.fill();
+  x.fillStyle='#36c46b'; x.font='900 66px Arial'; x.textAlign='left'; x.fillText(s.pct+'%', 132, 1092);
+  x.fillStyle='#9aa8a0'; x.font='25px Arial'; x.fillText('de acerto nos', 132, 1128); x.fillText('jogos decididos', 132, 1162);
+  x.fillStyle='#f4c24b'; x.font='900 66px Arial'; x.textAlign='right'; x.fillText(s.confirmed+'/32', W-132, 1092);
+  x.fillStyle='#9aa8a0'; x.font='25px Arial'; x.fillText('cravados já', W-132, 1128); x.fillText('no mata-mata', W-132, 1162);
+  x.textAlign='center'; x.fillStyle='#6a7a72'; x.font='bold 30px Arial'; x.fillText('evandroback.github.io/Copa-2026', W/2, 1284);
+}
+function shareImage(){
+  const btn=document.getElementById('shareBtn'); const old=btn?btn.textContent:'';
+  try{ drawShareCard(); }catch(e){ if(btn)btn.textContent='⚠️ erro ao gerar'; return; }
+  const cv=document.getElementById('shareCanvas');
+  cv.toBlob(function(blob){
+    if(!blob){ if(btn)btn.textContent='⚠️ erro'; return; }
+    const file=new File([blob],'palpite-copa2026.png',{type:'image/png'});
+    if(navigator.share && navigator.canShare && navigator.canShare({files:[file]})){
+      navigator.share({files:[file], title:'Meu palpite — Copa 2026', text:'Meu palpite pra Copa do Mundo 2026 🏆'}).catch(()=>{});
+    }else{
+      const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='palpite-copa2026.png'; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000);
+      if(btn){ btn.textContent='✅ imagem baixada'; setTimeout(()=>btn.textContent=old,2500); }
+    }
+  },'image/png');
+}
+var _sb=document.getElementById('shareBtn'); if(_sb) _sb.onclick=shareImage;
 (async function(){ await loadSaved(); buildFollow(); renderAll(); setTab(state.tab||'groups'); })();
 </script>
 </body>

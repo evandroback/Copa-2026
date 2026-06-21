@@ -760,10 +760,10 @@ def main():
                 "IR Iran":"Iran","Côte d'Ivoire":"Ivory Coast","Czechia":"Czech Republic",
                 "Cape Verde":"Cabo Verde","Curacao":"Curaçao","Bosnia and Herzegovina":"Bosnia & Herzegovina"}
     ENPT={}
-    for eng,code in OF_NAMES.items(): ENPT[eng]={"pt":NAME.get(code,eng),"fl":FLAG.get(code,"")}
+    for eng,code in OF_NAMES.items(): ENPT[eng]={"pt":NAME.get(code,eng),"fl":FLAG.get(code,""),"c":code}
     for al,eng in ESPN_ALIAS.items():
         c=OF_NAMES.get(eng)
-        if c: ENPT[al]={"pt":NAME.get(c,al),"fl":FLAG.get(c,"")}
+        if c: ENPT[al]={"pt":NAME.get(c,al),"fl":FLAG.get(c,""),"c":c}
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
           "VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":STATS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT}
