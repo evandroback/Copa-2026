@@ -345,6 +345,10 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .proname{font-family:Archivo;font-weight:900;font-size:22px;color:var(--txt);line-height:1.05}
 .prosub{font-family:Archivo;font-weight:700;font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--gold);margin-top:4px}
 /* ===== confronto direto (head-to-head) ===== */
+.gm-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+.gm-foot .gm-meta{flex:1;min-width:0;margin:0}
+.h2h-ic{flex:none;background:var(--surf2);border:1px solid var(--line2);border-radius:8px;padding:3px 9px;font-size:14px;line-height:1;cursor:pointer;transition:.12s;opacity:.7}
+.h2h-ic:hover,.h2h-ic:active{opacity:1;border-color:var(--gold);background:rgba(244,194,75,.1)}
 .h2h-btn{display:flex;width:fit-content;align-items:center;gap:4px;margin:7px auto 0;padding:3px 11px;font-family:Inter;font-size:10.5px;font-weight:600;color:var(--mut);background:var(--surf2);border:1px solid var(--line2);border-radius:20px;cursor:pointer;transition:.12s}
 .h2h-btn:hover{color:var(--gold);border-color:var(--gold)}
 .h2h-empty{font-size:14px;line-height:1.55;color:var(--mut);background:var(--surf2);border:1px solid var(--line2);border-radius:12px;padding:16px}
@@ -631,12 +635,12 @@ function gmHTML(m,idx){
           `<span class="tag ${bl?'blank':'pal'}">${bl?'em branco':'palpite'}</span>`;
   }
   const _w = m.dt ? (m.dt + (m.hr?` · ${m.hr}`:'')) : '';
-  const meta = (_w||m.vn||m.co) ? `<div class="gm-meta">${_w?`<span>${_w}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}</div>` : '';
+  const metaInner = `${_w?`<span>${_w}</span>`:''}${m.vn?`<span class="sep">·</span><span>${m.vn}</span>`:''}${m.co?`<span class="sep">·</span><span class="vflag">${m.cf||''}</span><span>${m.co}</span>`:''}`;
   return `<div class="gm-wrap"><div class="gm ${lv?'islive':real?'real':'pred'}">
     <span class="side proteam" data-pro="${m.h}"><span class="fl">${FLAG[m.h]}</span><span class="ab">${m.h}</span></span>
     <span class="score">${score}</span>
     <span class="side away proteam" data-pro="${m.a}"><span class="fl">${FLAG[m.a]}</span><span class="ab">${m.a}</span></span>
-  </div>${meta}<button class="h2h-btn" data-h2h="${m.h}:${m.a}">🆚 retrospecto</button></div>`;
+  </div><div class="gm-foot"><div class="gm-meta">${metaInner}</div><button class="h2h-ic" data-h2h="${m.h}:${m.a}" aria-label="Ver retrospecto do confronto" title="Retrospecto">🆚</button></div></div>`;
 }
 
 // ---- render bracket ----
