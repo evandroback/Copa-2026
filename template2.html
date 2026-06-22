@@ -157,6 +157,8 @@ h1 .yr{color:var(--gold)}
 .slot.l .flag{filter:grayscale(.6) opacity(.55)}
 .slot.l .nm{color:var(--mut2);text-decoration:line-through;text-decoration-color:rgba(255,255,255,.2)}
 .slot.foll .nm{color:#ff8a98}
+.slot-info{flex:none;background:none;border:0;color:var(--mut2);font-size:15px;cursor:pointer;padding:0 1px;opacity:.55;line-height:1}
+.slot-info:hover,.slot-info:active{opacity:1;color:var(--gold)}
 .badge{font-family:Archivo;font-weight:800;font-size:10px;color:var(--mut);background:#0f1c17;border:1px solid var(--line);border-radius:5px;padding:1px 6px}
 .origin{font-size:9.5px;color:var(--mut2);padding:2px 10px 5px;letter-spacing:.04em}
 .finals{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px}
@@ -305,6 +307,10 @@ footer b{color:var(--mut)}
 .lb-status.post{color:var(--mut);background:var(--surf2)}
 .lb-match{font-family:Archivo;font-weight:700;font-size:14px;color:var(--txt);line-height:1.2}
 .lb-match .sc{font-weight:900;color:var(--gold);padding:0 5px}
+.lb-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lb-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;margin-top:1px}
+.lb-when{color:var(--mut);font-weight:600}
+.lb-pred{color:var(--gold);font-weight:700;background:rgba(244,194,75,.1);padding:1px 7px;border-radius:5px}
 /* ===== aba Sedes (mapa) ===== */
 .venue-pick{margin-bottom:12px}
 .venue-pick select{width:100%;padding:11px 13px;font-family:Inter;font-size:14px;font-weight:600;color:var(--txt);background:var(--surf);border:1px solid var(--line2);border-radius:11px;-webkit-appearance:none;appearance:none}
@@ -410,6 +416,20 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .bp-adv-pct{font-size:12px;color:var(--gold);font-weight:800;white-space:nowrap;text-align:right}
 .bp-adv-win{font-size:10.5px;color:var(--mut);font-weight:700;white-space:nowrap;background:rgba(255,255,255,.04);padding:2px 6px;border-radius:6px}
 .bp-adv-others{font-size:11.5px;color:var(--mut2);padding:7px 4px 2px;font-style:italic}
+.cf-box{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:13px 15px;margin-bottom:14px}
+.cf-h{font-family:Archivo;font-weight:800;font-size:13px;color:var(--txt);margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.cf-rec{font-size:11px;color:var(--mut);font-weight:600;white-space:nowrap}
+.cf-dots{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.cf-dots.mini{gap:3px;margin-top:4px}
+.cf-dots.big .cf-dot{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:8px;font-family:Archivo;font-weight:700;font-size:12.5px}
+.cf-dots.big .cf-dot.w{background:rgba(54,196,107,.15);color:var(--live)}
+.cf-dots.big .cf-dot.d{background:rgba(244,194,75,.15);color:var(--gold)}
+.cf-dots.big .cf-dot.l{background:rgba(232,51,74,.15);color:var(--copa)}
+.cf-dots.big .cf-fl{font-size:14px}
+.cf-dots.mini .cf-dot{width:7px;height:7px;border-radius:50%}
+.cf-dots.mini .cf-dot.w{background:var(--live)}
+.cf-dots.mini .cf-dot.d{background:var(--gold)}
+.cf-dots.mini .cf-dot.l{background:var(--copa)}
 </style>
 </head>
 <body>
@@ -604,7 +624,7 @@ function renderGroups(){
       const s=st[t], sg=s.GF-s.GA, j=s.W+s.D+s.L;
       const adv=(i===2 && thirds.includes(g));
       h+=`<tr class="q${i+1}${adv?' adv':''}"><td class="pos">${i+1}</td>
-        <td class="l"><span class="proteam" data-pro="${t}"><span class="fl">${FLAG[t]}</span> <span class="nm">${NAME[t]}</span></span>${adv?'<span class="adv-badge">3º ✓</span>':''}</td>
+        <td class="l"><span class="proteam" data-pro="${t}"><span class="fl">${FLAG[t]}</span> <span class="nm">${NAME[t]}</span></span>${adv?'<span class="adv-badge">3º ✓</span>':''}<div class="cf-dots mini">${formDotsHTML(t,false)}</div></td>
         <td class="pts">${s.P}</td><td>${j}</td><td>${sg>0?'+':''}${sg}</td><td>${s.GF}</td></tr>`;
     });
     h+=`</tbody></table>`;
@@ -661,7 +681,7 @@ function slotHTML(id,side){
   if(!t){ const L=slotLabel(spec); return `<div class="slot empty ph" title="${L.title}"><span class="badge">${L.t}</span></div>`; }
   let cls="slot"; if(pick) cls+= pick===t.code?" w":" l";
   if(state.follow && t.code===state.follow) cls+=" foll";
-  return `<div class="${cls}" data-pick="${id}:${t.code}"><span class="flag">${t.flag}</span><span class="nm">${t.name}</span></div>`;
+  return `<div class="${cls}" data-pick="${id}:${t.code}"><span class="flag">${t.flag}</span><span class="nm">${t.name}</span><button class="slot-info" data-pro="${t.code}" aria-label="Ver ${t.name}" title="Ver seleção">ⓘ</button></div>`;
 }
 function h2hMiniText(a,b){
   if(!a||!b||a===b) return '';
@@ -844,12 +864,32 @@ function renderProb(){
 }
 
 // ---- modal de perfil de país ----
+function copaForm(code){
+  const out=[];
+  (state.games||[]).forEach(m=>{
+    if(!m.r||(m.h!==code&&m.a!==code)) return;
+    const isH=m.h===code, gf=isH?m.gh:m.ga, ga=isH?m.ga:m.gh, opp=isH?m.a:m.h;
+    out.push({opp,gf,ga,res:gf>ga?'w':(gf<ga?'l':'d'),rd:m.rd});
+  });
+  return out;
+}
+function formDotsHTML(code,withScore){
+  const f=copaForm(code); if(!f.length) return '';
+  return f.map(x=>`<span class="cf-dot ${x.res}" title="${NAME[x.opp]} ${x.gf}–${x.ga}">${withScore?`<span class="cf-fl">${FLAG[x.opp]}</span><span class="cf-sc">${x.gf}–${x.ga}</span>`:''}</span>`).join('');
+}
+function copaFormHTML(code){
+  const f=copaForm(code); if(!f.length) return '';
+  const w=f.filter(x=>x.res==='w').length,d=f.filter(x=>x.res==='d').length,l=f.filter(x=>x.res==='l').length;
+  return `<div class="cf-box"><div class="cf-h">Campanha na Copa 2026 <span class="cf-rec">${w}V · ${d}E · ${l}D</span></div><div class="cf-dots big">${formDotsHTML(code,true)}</div></div>`;
+}
 function openProfile(code){
   const p=PROFILES[code]; if(!p) return;
   document.getElementById('proFlag').textContent=p.fl||'';
   document.getElementById('proName').textContent=p.nm||'';
   document.getElementById('proSub').textContent=p.sub||'';
   renderBlocks({sections:p.sections||[]},'proBody');
+  const cf=copaFormHTML(code);
+  if(cf) document.getElementById('proBody').insertAdjacentHTML('afterbegin', cf);
   document.getElementById('proModal').classList.remove('hidden');
   document.body.style.overflow='hidden';
 }
@@ -1094,6 +1134,7 @@ groupsGrid.addEventListener('click',e=>{
   renderAll();
 });
 document.getElementById('koBody').addEventListener('click',e=>{
+  if(e.target.closest('[data-pro]')) return;
   const s=e.target.closest('[data-pick]'); if(!s) return;
   const [id,code]=s.dataset.pick.split(':');
   if(state.manual[id]===code) delete state.manual[id]; else state.manual[id]=code;
@@ -1234,9 +1275,11 @@ function _parse(j){
     const home=cs.find(x=>x.homeAway==='home')||cs[0]||{};
     const away=cs.find(x=>x.homeAway==='away')||cs[1]||{};
     const st=(ev.status&&ev.status.type)||{};
+    let hora='';
+    if(ev.date){ try{ hora=new Date(ev.date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).replace(':00','h').replace(':','h'); }catch(e){} }
     const H=tr((home.team&&(home.team.displayName||home.team.shortDisplayName||home.team.abbreviation))||'?');
     const A=tr((away.team&&(away.team.displayName||away.team.shortDisplayName||away.team.abbreviation))||'?');
-    return { state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'',
+    return { state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'', hora,
       hn:H.nm, hfl:H.fl, hc:H.c, an:A.nm, afl:A.fl, ac:A.c,
       hs:(home.score!=null?home.score:''), as:(away.score!=null?away.score:'') };
   });
@@ -1259,12 +1302,25 @@ async function fetchLive(){
   return {ok:false,src:'',games:[]};
 }
 function _gm(g){
-  let cls='pre',lab=(g.short||'—');
-  if(g.state==='in'){ cls='live'; lab=(g.detail||g.short||'•'); }
+  let cls='pre',lab;
+  if(g.state==='in'){ cls='live'; lab='<span class="lvdot"></span>AO VIVO'; }
   else if(g.state==='post'){ cls='post'; lab='FIM'; }
+  else { cls='pre'; lab=g.hora||g.short||'—'; }
   const sc=(g.state==='pre')?'<span class="sc">×</span>':'<span class="sc">'+g.hs+' - '+g.as+'</span>';
   const h=(g.hfl?g.hfl+' ':'')+g.hn, a=g.an+(g.afl?' '+g.afl:'');
-  return '<div class="lb-game"><span class="lb-status '+cls+'">'+lab+'</span><span class="lb-match"><b>'+h+'</b> '+sc+' <b>'+a+'</b></span></div>';
+  // nosso palpite (placar previsto, mesmo da aba Acertos)
+  let pal='';
+  if(g.hc&&g.ac&&F[g.hc]!=null&&F[g.ac]!=null){
+    const ps=predScore(g.hc,g.ac);
+    const ph=(g.hc===ps.hi)?ps.sh:ps.sl, pa=(g.hc===ps.hi)?ps.sl:ps.sh;
+    pal='<span class="lb-pred">🔮 nosso palpite: '+ph+'–'+pa+'</span>';
+  }
+  // horário e relógio do jogo (não somem quando fica ao vivo)
+  let info='';
+  if(g.state==='in') info='<span class="lb-when">'+(g.hora?g.hora+' · ':'')+(g.detail||'em andamento')+'</span>';
+  else if(g.state==='post'&&g.hora) info='<span class="lb-when">começou '+g.hora+'</span>';
+  const sub=(info||pal)?'<div class="lb-sub">'+info+pal+'</div>':'';
+  return '<div class="lb-game"><span class="lb-status '+cls+'">'+lab+'</span><div class="lb-body"><span class="lb-match"><b>'+h+'</b> '+sc+' <b>'+a+'</b></span>'+sub+'</div></div>';
 }
 function renderLiveBar(res){
   const bar=document.getElementById('liveBar'); if(!bar) return;
