@@ -1012,11 +1012,18 @@ function qualifStatus(){
     const P={},rem={},GF={},GA={}; teams.forEach(t=>{P[t]=0;rem[t]=0;GF[t]=0;GA[t]=0;});
     reais.forEach(m=>{ GF[m.h]+=m.gh;GA[m.h]+=m.ga;GF[m.a]+=m.ga;GA[m.a]+=m.gh; if(m.gh>m.ga)P[m.h]+=3; else if(m.ga>m.gh)P[m.a]+=3; else {P[m.h]++;P[m.a]++;} });
     rest.forEach(m=>{ rem[m.h]++; rem[m.a]++; });
+    const oc=[[3,0],[1,1],[0,3]]; const nr=rest.length; const tot=Math.pow(3,nr);
+    const top2={}; teams.forEach(t=>top2[t]=0);
+    for(let mask=0;mask<tot;mask++){
+      const pp={}; teams.forEach(t=>pp[t]=P[t]);
+      let mm=mask;
+      for(let i=0;i<nr;i++){ const o=oc[mm%3]; mm=(mm/3)|0; pp[rest[i].h]+=o[0]; pp[rest[i].a]+=o[1]; }
+      teams.forEach(t=>{ const ah=teams.filter(o=>o!==t&&pp[o]>pp[t]).length, ti=teams.filter(o=>o!==t&&pp[o]===pp[t]).length; if(ah+ti<=1) top2[t]++; }); // pior caso de desempate
+    }
     teams.forEach(t=>{
-      const pmin=P[t], pmax=P[t]+3*rem[t];
-      const canAhead=teams.filter(o=>o!==t && (P[o]+3*rem[o])>=pmin).length; // podem terminar à frente (pior caso de t)
+      const pmax=P[t]+3*rem[t];
       const sureAhead=teams.filter(o=>o!==t && P[o]>pmax).length;            // garantidamente à frente
-      let code = canAhead<=1 ? 'in' : (sureAhead>=3 ? 'out' : 'open');
+      let code = (top2[t]===tot) ? 'in' : (sureAhead>=3 ? 'out' : 'open');   // 'in' = top 2 em TODOS os cenários
       res[t]={code,g,P:P[t],sg:GF[t]-GA[t],gf:GF[t]};
     });
     if(groupDone[g]){ // grupo encerrado: posição final exata
