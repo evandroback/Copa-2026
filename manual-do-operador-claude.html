@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Operador · Claude</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0A0F1F;
+    --ink-2:#0E1428;
+    --surface:#141C36;
+    --surface-2:#1B2547;
+    --line:rgba(255,255,255,.08);
+    --line-strong:rgba(255,255,255,.16);
+    --text:#ECEEF7;
+    --dim:#98A1BE;
+    --faint:#646E8C;
+    --amber:#F5B544;
+    --amber-2:#FFC868;
+    --amber-soft:rgba(245,181,68,.12);
+    --amber-line:rgba(245,181,68,.32);
+    --coral:#FF6F6F;
+    --coral-soft:rgba(255,111,111,.11);
+    --coral-line:rgba(255,111,111,.30);
+    --sage:#74C69D;
+    --sage-soft:rgba(116,198,157,.12);
+    --sage-line:rgba(116,198,157,.30);
+    --font-d:'Space Grotesk',system-ui,sans-serif;
+    --font-b:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-m:'IBM Plex Mono',ui-monospace,'SF Mono',monospace;
+    --maxw:1080px;
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{
+    background:
+      radial-gradient(1200px 700px at 80% -10%, rgba(245,181,68,.07), transparent 60%),
+      radial-gradient(900px 600px at -10% 10%, rgba(116,198,157,.05), transparent 55%),
+      var(--ink);
+    color:var(--text);
+    font-family:var(--font-b);
+    font-size:16px;
+    line-height:1.6;
+    letter-spacing:.005em;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+
+  /* progress bar */
+  .progress{position:fixed;top:0;left:0;height:2px;width:0;background:linear-gradient(90deg,var(--amber),var(--amber-2));z-index:100;transition:width .1s linear}
+
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
+
+  .mono{font-family:var(--font-m)}
+  .eyebrow{
+    font-family:var(--font-m);
+    font-size:.72rem;
+    letter-spacing:.22em;
+    text-transform:uppercase;
+    color:var(--amber);
+    display:inline-flex;align-items:center;gap:.6em;
+  }
+  .eyebrow::before{content:"";width:26px;height:1px;background:var(--amber-line)}
+
+  /* ---------- HERO ---------- */
+  .hero{padding:54px 0 30px;position:relative}
+  .hero-grid{display:grid;gap:30px}
+  .kicker{font-family:var(--font-m);font-size:.74rem;letter-spacing:.26em;text-transform:uppercase;color:var(--faint);margin-bottom:22px}
+  .kicker b{color:var(--dim);font-weight:500}
+  h1{
+    font-family:var(--font-d);
+    font-weight:700;
+    font-size:clamp(2.2rem,7.5vw,4.3rem);
+    line-height:1.02;
+    letter-spacing:-.02em;
+    margin-bottom:20px;
+  }
+  h1 .em{color:var(--amber);position:relative;white-space:nowrap}
+  .lead{font-size:clamp(1.02rem,2.4vw,1.22rem);color:var(--dim);max-width:48ch;line-height:1.55}
+  .lead strong{color:var(--text);font-weight:600}
+
+  /* hero widget */
+  .demo{
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,rgba(27,37,71,.55),rgba(20,28,54,.35));
+    border-radius:16px;
+    padding:22px 20px 24px;
+    position:relative;
+    overflow:hidden;
+  }
+  .demo::before{content:"";position:absolute;inset:0;background:radial-gradient(420px 180px at 100% 0,var(--amber-soft),transparent 70%);pointer-events:none}
+  .demo-top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px;position:relative}
+  .demo-title{font-family:var(--font-d);font-weight:600;font-size:1.06rem;letter-spacing:-.01em}
+  .demo-sub{font-family:var(--font-m);font-size:.72rem;color:var(--faint);letter-spacing:.04em}
+
+  .gauge{margin:20px 0 4px}
+  .seg-row{display:flex;gap:3px;height:46px;align-items:flex-end;margin-bottom:14px}
+  .seg{flex:1;border-radius:3px 3px 0 0;background:var(--amber-soft);border:1px solid var(--amber-line);min-width:4px;transition:height .25s ease, background .25s ease;height:30%}
+  .seg.hist{background:var(--amber-soft)}
+  .seg.now{background:linear-gradient(180deg,var(--amber),var(--amber-2));border-color:var(--amber-2);box-shadow:0 0 18px rgba(245,181,68,.4)}
+
+  .readouts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:6px}
+  .ro{border:1px solid var(--line);border-radius:11px;padding:13px 14px;background:rgba(10,15,31,.35)}
+  .ro .lbl{font-family:var(--font-m);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);display:block;margin-bottom:7px;line-height:1.3}
+  .ro .val{font-family:var(--font-d);font-weight:600;font-size:1.5rem;letter-spacing:-.01em;color:var(--text);font-variant-numeric:tabular-nums}
+  .ro.accent .val{color:var(--amber)}
+  .ro .unit{font-size:.78rem;color:var(--dim);font-family:var(--font-b);font-weight:400}
+
+  .slider-wrap{margin-top:20px}
+  .slider-label{display:flex;justify-content:space-between;align-items:center;font-family:var(--font-m);font-size:.72rem;color:var(--dim);margin-bottom:10px;letter-spacing:.04em}
+  .slider-label b{color:var(--amber);font-size:.92rem}
+  input[type=range]{
+    -webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;
+    background:linear-gradient(90deg,var(--amber) var(--fill,8%),var(--line-strong) var(--fill,8%));
+    outline:none;cursor:pointer;
+  }
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:20px;height:20px;border-radius:50%;background:var(--amber);border:3px solid var(--ink);box-shadow:0 0 0 1px var(--amber-line),0 4px 12px rgba(245,181,68,.4);cursor:pointer}
+  input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:var(--amber);border:3px solid var(--ink);cursor:pointer}
+  .demo-caption{font-size:.86rem;color:var(--dim);line-height:1.5;margin-top:18px;border-top:1px solid var(--line);padding-top:14px}
+  .demo-caption b{color:var(--text);font-weight:600}
+  .ill{font-family:var(--font-m);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:10px;display:block}
+
+  /* ---------- NAV CHIPS ---------- */
+  .toc{display:flex;flex-wrap:wrap;gap:8px;padding:30px 0 8px;border-bottom:1px solid var(--line)}
+  .chip{
+    font-family:var(--font-m);font-size:.74rem;letter-spacing:.04em;
+    color:var(--dim);text-decoration:none;
+    border:1px solid var(--line);border-radius:100px;padding:7px 13px;
+    transition:all .18s ease;white-space:nowrap;
+  }
+  .chip:hover,.chip:focus-visible{border-color:var(--amber-line);color:var(--amber);background:var(--amber-soft)}
+  .chip b{color:var(--faint);margin-right:6px}
+
+  /* ---------- SECTIONS ---------- */
+  section{padding:58px 0;border-bottom:1px solid var(--line)}
+  .s-head{margin-bottom:30px}
+  .s-num{font-family:var(--font-m);font-size:.8rem;color:var(--amber);letter-spacing:.1em;display:block;margin-bottom:14px}
+  h2{font-family:var(--font-d);font-weight:700;font-size:clamp(1.55rem,4.5vw,2.4rem);line-height:1.08;letter-spacing:-.018em;margin-bottom:14px}
+  .s-intro{color:var(--dim);max-width:60ch;font-size:1.02rem}
+  .s-intro strong{color:var(--text);font-weight:600}
+
+  p{margin-bottom:16px}
+  .body p{color:var(--dim)}
+  .body strong{color:var(--text);font-weight:600}
+
+  /* badges */
+  .badge{display:inline-flex;align-items:center;gap:.4em;font-family:var(--font-m);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:6px;vertical-align:middle;font-weight:500;white-space:nowrap}
+  .badge.fact{color:var(--sage);background:var(--sage-soft);border:1px solid var(--sage-line)}
+  .badge.inf{color:var(--amber);background:var(--amber-soft);border:1px solid var(--amber-line)}
+  .badge.myth{color:var(--coral);background:var(--coral-soft);border:1px solid var(--coral-line)}
+  .badge.dot::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+
+  /* cards */
+  .cards{display:grid;gap:14px;margin-top:8px}
+  @media(min-width:760px){.cards.two{grid-template-columns:1fr 1fr}.cards.three{grid-template-columns:repeat(2,1fr)}}
+  @media(min-width:1000px){.cards.three{grid-template-columns:repeat(3,1fr)}}
+  .card{
+    border:1px solid var(--line);border-radius:14px;padding:20px 18px;
+    background:linear-gradient(180deg,rgba(27,37,71,.4),rgba(20,28,54,.2));
+    transition:border-color .2s ease,transform .2s ease;
+    position:relative;
+  }
+  .card:hover{border-color:var(--line-strong);transform:translateY(-2px)}
+  .card h3{font-family:var(--font-d);font-weight:600;font-size:1.08rem;letter-spacing:-.01em;margin-bottom:9px;display:flex;align-items:center;gap:10px}
+  .card h3 .ix{font-family:var(--font-m);font-size:.8rem;color:var(--amber);font-weight:500;flex:none}
+  .card p{color:var(--dim);font-size:.93rem;margin-bottom:0}
+  .card p+p{margin-top:10px}
+  .card .tag{margin-top:13px}
+
+  /* layered list (camadas) */
+  .layers{display:grid;gap:10px;margin-top:8px;counter-reset:lyr}
+  .layer{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;border:1px solid var(--line);border-radius:13px;padding:17px 18px;background:rgba(20,28,54,.3);transition:border-color .2s}
+  .layer:hover{border-color:var(--amber-line)}
+  .layer .scope{font-family:var(--font-m);font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);background:var(--amber);padding:5px 9px;border-radius:6px;font-weight:600;white-space:nowrap;align-self:start;margin-top:2px}
+  .layer.wide .scope{background:var(--surface-2);color:var(--dim);border:1px solid var(--line-strong)}
+  .layer h4{font-family:var(--font-d);font-weight:600;font-size:1.04rem;margin-bottom:5px;letter-spacing:-.01em}
+  .layer p{color:var(--dim);font-size:.91rem;margin:0}
+  .layer .when{color:var(--faint);font-size:.83rem;margin-top:7px;font-family:var(--font-m);letter-spacing:.02em}
+
+  /* prompt blocks */
+  .prompt-pair{display:grid;gap:16px;margin-top:10px}
+  @media(min-width:880px){.prompt-pair{grid-template-columns:1fr 1.25fr;align-items:start}}
+  .pblock{border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--ink-2)}
+  .pblock-head{display:flex;align-items:center;justify-content:space-between;padding:11px 15px;border-bottom:1px solid var(--line);background:rgba(10,15,31,.5)}
+  .pblock-head .t{font-family:var(--font-m);font-size:.74rem;letter-spacing:.06em;display:flex;align-items:center;gap:9px}
+  .pblock.bad .t{color:var(--coral)}
+  .pblock.good .t{color:var(--sage)}
+  .pblock-head .t .ic{font-size:.9rem}
+  .copy{font-family:var(--font-m);font-size:.68rem;letter-spacing:.06em;color:var(--dim);background:transparent;border:1px solid var(--line);border-radius:7px;padding:5px 11px;cursor:pointer;transition:all .16s;text-transform:uppercase}
+  .copy:hover{border-color:var(--amber-line);color:var(--amber)}
+  .copy.done{color:var(--sage);border-color:var(--sage-line)}
+  .pcode{font-family:var(--font-m);font-size:.8rem;line-height:1.7;padding:16px 15px;white-space:pre-wrap;word-break:break-word;color:#C9D0E6;overflow-x:auto}
+  .pcode .tag-x{color:var(--amber)}
+  .pcode .dim-x{color:var(--faint)}
+
+  /* myth flip cards */
+  .myths{display:grid;gap:14px;margin-top:8px}
+  @media(min-width:760px){.myths{grid-template-columns:1fr 1fr}}
+  .flip{perspective:1400px;min-height:172px;cursor:pointer}
+  .flip-in{position:relative;width:100%;height:100%;min-height:172px;transition:transform .55s cubic-bezier(.4,.1,.2,1);transform-style:preserve-3d}
+  .flip.on .flip-in{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;padding:19px 18px;display:flex;flex-direction:column;border:1px solid var(--line)}
+  .face.front{background:linear-gradient(180deg,rgba(255,111,111,.07),rgba(20,28,54,.3));border-color:var(--coral-line)}
+  .face.back{background:linear-gradient(180deg,rgba(116,198,157,.08),rgba(20,28,54,.4));border-color:var(--sage-line);transform:rotateY(180deg)}
+  .face .lbl{font-family:var(--font-m);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:11px;display:flex;align-items:center;gap:.5em}
+  .face.front .lbl{color:var(--coral)}
+  .face.back .lbl{color:var(--sage)}
+  .face .txt{font-size:.96rem;line-height:1.5;color:var(--text)}
+  .face.front .txt{font-family:var(--font-d);font-weight:500;font-size:1.04rem;letter-spacing:-.01em}
+  .face .txt b{font-weight:600}
+  .flip-hint{margin-top:auto;padding-top:12px;font-family:var(--font-m);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+
+  /* checklist */
+  .check{display:grid;gap:11px;margin-top:8px;counter-reset:ck}
+  .ck{display:grid;grid-template-columns:auto 1fr;gap:15px;align-items:start;padding:15px 17px;border:1px solid var(--line);border-radius:12px;background:rgba(20,28,54,.3);transition:border-color .2s,background .2s}
+  .ck:hover{border-color:var(--amber-line);background:rgba(27,37,71,.4)}
+  .ck::before{counter-increment:ck;content:counter(ck,decimal-leading-zero);font-family:var(--font-m);font-size:.82rem;color:var(--amber);font-weight:500;padding-top:2px}
+  .ck div{font-size:.96rem;color:var(--text)}
+  .ck div b{color:#fff;font-weight:600}
+  .ck div span{color:var(--dim)}
+
+  /* callout */
+  .callout{border-left:2px solid var(--amber);background:var(--amber-soft);border-radius:0 12px 12px 0;padding:17px 19px;margin:22px 0 4px}
+  .callout .h{font-family:var(--font-d);font-weight:600;color:var(--amber);margin-bottom:7px;font-size:.96rem;display:flex;align-items:center;gap:8px}
+  .callout p{color:var(--dim);font-size:.93rem;margin:0}
+  .callout p strong{color:var(--text)}
+
+  .callout.sage{border-color:var(--sage);background:var(--sage-soft)}
+  .callout.sage .h{color:var(--sage)}
+
+  /* footer */
+  footer{padding:46px 0 70px;border-bottom:none}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:26px}
+  .legend .li{display:flex;align-items:center;gap:8px;font-size:.84rem;color:var(--dim)}
+  .foot-note{font-size:.84rem;color:var(--faint);line-height:1.6;max-width:64ch;font-family:var(--font-m);letter-spacing:.01em}
+  .foot-note strong{color:var(--dim)}
+  .sign{margin-top:28px;font-family:var(--font-d);font-size:1.1rem;color:var(--text);font-weight:600;letter-spacing:-.01em}
+  .sign span{color:var(--amber)}
+
+  /* reveal */
+  .rv{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .6s ease}
+  .rv.in{opacity:1;transform:none}
+
+  @media(prefers-reduced-motion:reduce){
+    *{transition:none!important;animation:none!important}
+    html{scroll-behavior:auto}
+    .rv{opacity:1;transform:none}
+    .flip-in{transition:none}
+  }
+
+  @media(min-width:980px){
+    .hero-grid{grid-template-columns:1.05fr .95fr;align-items:center;gap:48px}
+    .hero{padding:74px 0 40px}
+  }
+  @media(max-width:430px){
+    .wrap{padding:0 16px}
+    .readouts{gap:10px}
+    .ro .val{font-size:1.28rem}
+  }
+</style>
+</head>
+<body>
+<div class="progress" id="progress"></div>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Manual do operador &nbsp;·&nbsp; <b>uso avançado do Claude</b> &nbsp;·&nbsp; ed. jun/2026</div>
+    <div class="hero-grid">
+      <div>
+        <h1>Pare de adivinhar.<br>Entenda a <span class="em">máquina</span>.</h1>
+        <p class="lead">A diferença entre um usuário casual e um especialista não são <strong>palavras mágicas</strong> — elas não existem. É entender o que acontece embaixo do capô: como o contexto é processado, onde os tokens vão e quais alavancas realmente movem o resultado. Esta é a aula.</p>
+      </div>
+
+      <!-- SIGNATURE WIDGET -->
+      <div class="demo">
+        <div class="demo-top">
+          <div class="demo-title">O custo invisível de uma conversa</div>
+          <div class="demo-sub">arraste &rarr;</div>
+        </div>
+        <p style="color:var(--dim);font-size:.88rem;margin:8px 0 0;position:relative">A cada nova mensagem, o Claude <b style="color:var(--text)">relê toda a conversa do zero</b>. Veja o que acontece conforme o papo cresce.</p>
+
+        <div class="gauge">
+          <div class="seg-row" id="segRow"></div>
+        </div>
+
+        <div class="readouts">
+          <div class="ro">
+            <span class="lbl">Relido neste turno</span>
+            <span class="val"><span id="thisTurn">3.000</span> <span class="unit">tk</span></span>
+          </div>
+          <div class="ro accent">
+            <span class="lbl">Total já processado</span>
+            <span class="val"><span id="totalTk">9.000</span> <span class="unit">tk</span></span>
+          </div>
+        </div>
+
+        <div class="slider-wrap">
+          <div class="slider-label"><span>Turno da conversa</span><span><b id="turnNum">6</b> / 14</span></div>
+          <input type="range" min="1" max="14" value="6" id="slider" aria-label="Turno da conversa">
+        </div>
+
+        <div class="demo-caption" id="caption"></div>
+        <span class="ill">Valores ilustrativos · ~500 tk por turno</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Índice">
+    <a class="chip" href="#modelo"><b>01</b>A máquina</a>
+    <a class="chip" href="#economia"><b>02</b>Economia real</a>
+    <a class="chip" href="#camadas"><b>03</b>Camadas de contexto</a>
+    <a class="chip" href="#prompting"><b>04</b>Prompting de elite</a>
+    <a class="chip" href="#ocultos"><b>05</b>Itens ocultos</a>
+    <a class="chip" href="#mitos"><b>06</b>Mitos × fatos</a>
+    <a class="chip" href="#checklist"><b>07</b>Checklist</a>
+  </nav>
+</div>
+
+<main class="wrap">
+
+  <!-- 01 -->
+  <section id="modelo" class="rv">
+    <div class="s-head">
+      <span class="s-num">01 / O MODELO MENTAL</span>
+      <h2>Como o Claude realmente funciona</h2>
+      <p class="s-intro">Quase tudo que parece "truque" vira óbvio quando você entende quatro fatos sobre a máquina. Sem isso, você está dirigindo no escuro.</p>
+    </div>
+    <div class="cards two body">
+      <div class="card">
+        <h3><span class="ix">i.</span>Zero memória entre mensagens</h3>
+        <p>O Claude não "lembra" do que você disse há cinco mensagens. A cada turno, <strong>todo o histórico visível da conversa é reenviado e reprocessado do zero</strong>. Ele é um leitor brilhante com amnésia entre cliques — o que dá contexto é o texto que está na tela, não uma lembrança.</p>
+        <span class="tag"><span class="badge fact dot">fato</span></span>
+      </div>
+      <div class="card">
+        <h3><span class="ix">ii.</span>A janela de contexto é finita</h3>
+        <p>Os modelos atuais (Opus/Sonnet recentes) chegam a <strong>1 milhão de tokens</strong> de janela — cerca de 750 mil palavras. Parece infinito, mas não é: encher de entulho não é de graça. A atenção dilui e o foco cai no meio do texto.</p>
+        <span class="tag"><span class="badge fact dot">fato</span></span>
+      </div>
+      <div class="card">
+        <h3><span class="ix">iii.</span>Token ≠ palavra</h3>
+        <p>O modelo lê em <strong>tokens</strong>, não palavras. Em inglês, ~1 token = 0,75 palavra. Em português, o tokenizador é menos eficiente — a mesma frase custa <strong>mais tokens</strong>. "Coxa e sobrecoxa" pesa mais que o equivalente em inglês. Não muda sua estratégia, mas explica por que textos longos em PT consomem rápido.</p>
+        <span class="tag"><span class="badge inf dot">inferência</span></span>
+      </div>
+      <div class="card">
+        <h3><span class="ix">iv.</span>O princípio-mestre</h3>
+        <p>A própria Anthropic resume tudo numa frase: buscar <strong>"o menor conjunto de tokens de alto sinal que maximiza a chance do resultado desejado"</strong>. Atenção é recurso finito. Curar o contexto &gt; despejar contexto. Guarde isso — é a régua de toda decisão daqui pra frente.</p>
+        <span class="tag"><span class="badge fact dot">fato · eng. Anthropic</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section id="economia" class="rv">
+    <div class="s-head">
+      <span class="s-num">02 / ECONOMIA DE VERDADE</span>
+      <h2>O que você paga ≠ o que você consome</h2>
+      <p class="s-intro">Aqui mora o erro nº 1 de quem fala em "economizar tokens" sem entender o que está economizando. <strong>Depende de onde você usa o Claude.</strong></p>
+    </div>
+
+    <div class="cards two body">
+      <div class="card">
+        <h3><span class="ix">A.</span>No app / claude.ai</h3>
+        <p>Você <strong>não paga por token</strong>. Paga uma assinatura e tem <strong>limites de uso</strong> num período. Então "economizar" aqui significa três coisas: não esgotar seu limite, manter a qualidade alta (contexto limpo) e manter a velocidade. Conversa inchada queima as três.</p>
+      </div>
+      <div class="card">
+        <h3><span class="ix">B.</span>Na API</h3>
+        <p>Você paga <strong>por token</strong> — entrada + saída. Aqui token é dinheiro direto, e <strong>saída custa bem mais que entrada</strong>. Resposta verbosa é cara. É onde técnicas como cache de prompt e respostas enxutas viram economia literal no boleto.</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="h">⚠ A armadilha do crescimento quadrático</div>
+      <p>Releia o widget lá em cima. Numa conversa de 14 turnos, cada mensagem sua faz o Claude reler <strong>todo o histórico</strong> — e o custo total da conversa cresce em curva, não em linha reta. Por isso conversa longa é triplamente ruim: <strong>gasta mais seu limite, responde mais devagar e degrada a qualidade</strong>.</p>
+    </div>
+
+    <h3 style="font-family:var(--font-d);font-weight:600;font-size:1.15rem;margin:32px 0 4px">As 7 táticas que funcionam</h3>
+    <div class="cards three body" style="margin-top:16px">
+      <div class="card"><h3><span class="ix">1</span>Um assunto, uma conversa</h3><p>Mudou de tema? Abra conversa nova. Higiene de contexto antes de qualquer truque. Não arraste a análise de condena pra dentro do papo sobre viagem.</p></div>
+      <div class="card"><h3><span class="ix">2</span>Ramifique, não empurre</h3><p>Conversa azedou ou foi pro lado errado? <strong>Edite uma mensagem anterior</strong> em vez de seguir empurrando. Você cria um novo galho e descarta todo o lixo acumulado depois daquele ponto.</p></div>
+      <div class="card"><h3><span class="ix">3</span>Cole o trecho, não o tomo</h3><p>Precisa de uma seção do relatório? Cole a seção. Despejar o PDF inteiro pra perguntar sobre um parágrafo é desperdício puro de atenção.</p></div>
+      <div class="card"><h3><span class="ix">4</span>Peça o formato curto</h3><p>"Responda em tópicos, sem introdução." Você corta a saída verbosa que ninguém ia ler — e na API, corta custo.</p></div>
+      <div class="card"><h3><span class="ix">5</span>Contexto fixo sobe de camada</h3><p>O que você re-explica todo dia (seu papel, regras, identidade visual) vai para Projeto / Memória / Estilo — <strong>não recolado a cada chat</strong>. Detalhe na seção 03.</p></div>
+      <div class="card"><h3><span class="ix">6</span>Cache de prompt <span class="badge inf" style="margin-left:6px">API</span></h3><p>Partes repetidas (system prompt, documento fixo) ficam em cache e não são recobradas a cada chamada. Economia direta em fluxos automatizados.</p></div>
+    </div>
+
+    <div class="callout sage" style="margin-top:24px">
+      <div class="h">↪ A contra-intuição que separa o especialista</div>
+      <p>"Economizar token" <strong>não é "menos texto sempre"</strong>. Às vezes dar <strong>mais</strong> contexto relevante de uma vez <strong>reduz</strong> o total — porque corta idas-e-voltas e releituras. Há relato de empresa que <strong>baixou o consumo total</strong> ao subir o contexto de 200K para 500K: o modelo passou a reler menos. A meta é cortar <strong>desperdício</strong>, não cortar informação útil. <span class="badge inf" style="margin-left:4px">relatado</span></p>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section id="camadas" class="rv">
+    <div class="s-head">
+      <span class="s-num">03 / AS CAMADAS DE CONTEXTO</span>
+      <h2>O mapa que quase ninguém tem</h2>
+      <p class="s-intro">Existem cinco lugares onde "contexto" pode viver, do mais amplo ao mais efêmero. Usar o lugar certo é o que faz você <strong>parar de pagar (em tempo e em uso) pela mesma explicação toda vez</strong>.</p>
+    </div>
+
+    <div class="layers">
+      <div class="layer wide">
+        <span class="scope">Global</span>
+        <div>
+          <h4>Preferências do usuário</h4>
+          <p>Tom e formato que valem em <strong>todas</strong> as conversas. Configuração única nos ajustes.</p>
+          <div class="when">▸ use para: "sempre responda em PT-BR", "seja direto", formatação padrão</div>
+        </div>
+      </div>
+      <div class="layer wide">
+        <span class="scope">Quem é você</span>
+        <div>
+          <h4>Memória <span class="badge fact" style="margin-left:6px">fato</span></h4>
+          <p>O Claude lembra fatos sobre você entre conversas. <strong>Editável e apagável</strong> nos ajustes — vale revisar o que está lá e corrigir o que estiver errado.</p>
+          <div class="when">▸ use para: seu papel, seu contexto recorrente, suas preferências de trabalho</div>
+        </div>
+      </div>
+      <div class="layer wide">
+        <span class="scope">Sua voz</span>
+        <div>
+          <h4>Estilos (Styles) <span class="badge fact" style="margin-left:6px">fato</span></h4>
+          <p>Voz e formato de escrita salvos, aplicáveis por conversa. Um entregável que você repete vira um estilo fixo.</p>
+          <div class="when">▸ use para: padronizar relatórios, e-mails, o tom "conselheiro brutalmente honesto"</div>
+        </div>
+      </div>
+      <div class="layer">
+        <span class="scope">Um trabalho</span>
+        <div>
+          <h4>Projetos (Projects) <span class="badge fact" style="margin-left:6px">fato</span></h4>
+          <p>Um workspace com <strong>instruções permanentes + arquivos de conhecimento</strong>. Toda conversa dentro dele já nasce com o contexto carregado. A alavanca mais subutilizada que existe.</p>
+          <div class="when">▸ use para: cada linha de trabalho recorrente, com seus dados e regras fixas</div>
+        </div>
+      </div>
+      <div class="layer">
+        <span class="scope">Agora</span>
+        <div>
+          <h4>A conversa atual</h4>
+          <p>Contexto efêmero. Vale só aqui e some quando você fecha. Tudo que for durável <strong>não devia morar aqui</strong>.</p>
+          <div class="when">▸ use para: a tarefa pontual do momento</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <div class="h">→ Aplicado ao seu caso</div>
+      <p>Cada frente sua é um <strong>Projeto</strong> esperando para existir: análise de DIF/condena, política de cargos, headcount por automação. Suba para o projeto os CSVs consolidados e as regras fixas — PT-BR, fórmulas em português, BRL, identidade Lar, marcadores epistêmicos. A partir daí você <strong>para de recolar isso</strong>, e cada conversa começa 80% pronta. <span class="badge inf" style="margin-left:4px">inferência aplicada ao seu contexto</span></p>
+    </div>
+  </section>
+
+  <!-- 04 -->
+  <section id="prompting" class="rv">
+    <div class="s-head">
+      <span class="s-num">04 / PROMPTING DE ELITE</span>
+      <h2>O que move a agulha de verdade</h2>
+      <p class="s-intro">Tudo abaixo está na documentação oficial da Anthropic. Não são opiniões nem folclore — são as técnicas que medem diferença real de qualidade.</p>
+    </div>
+
+    <div class="cards two body">
+      <div class="card"><h3><span class="ix">1</span>Papel / persona</h3><p>"Você é um auditor de SIF revisando…" Definir o papel é uma das formas <strong>mais eficazes</strong> de direcionar o modelo. Muda tom, vocabulário e profundidade de uma vez.</p></div>
+      <div class="card"><h3><span class="ix">2</span>Clareza &gt; volume</h3><p>Diga o objetivo, o público e <strong>o que NÃO fazer</strong>. Vago entra, vago sai. A maioria dos resultados ruins é prompt ambíguo, não modelo burro.</p></div>
+      <div class="card"><h3><span class="ix">3</span>Exemplos (few-shot)</h3><p>Mostre 2–3 exemplos canônicos do que você quer. Exemplos valem mais que regras. Mas <strong>não encha de casos de borda</strong> — poucos e diversos batem uma lista interminável.</p></div>
+      <div class="card"><h3><span class="ix">4</span>Estrutura com tags XML</h3><p>Separe instrução de dado com <span class="mono" style="color:var(--amber)">&lt;contexto&gt;</span>, <span class="mono" style="color:var(--amber)">&lt;dados&gt;</span>, <span class="mono" style="color:var(--amber)">&lt;formato&gt;</span>. Reduz ambiguidade e o Claude responde à estrutura.</p></div>
+      <div class="card"><h3><span class="ix">5</span>Dê tempo para pensar</h3><p>"Pense passo a passo antes de responder." Nos modelos atuais existe o <strong>raciocínio estendido</strong> que faz isso nativamente — ligue para problemas difíceis, desligue no trivial.</p></div>
+      <div class="card"><h3><span class="ix">6</span>Especifique a saída</h3><p>Tabela? JSON? Markdown sem bullets? Pedir o formato certo <strong>de primeira</strong> economiza três idas-e-voltas de "agora põe em tabela".</p></div>
+      <div class="card"><h3><span class="ix">7</span>Decomponha</h3><p>Tarefa grande → peça <strong>um plano antes</strong> da execução, ou quebre em etapas. Você revisa o plano barato antes de gastar na entrega inteira.</p></div>
+      <div class="card"><h3><span class="ix">8</span>Meta-prompting</h3><p>Peça ao Claude para <strong>escrever, criticar e melhorar o seu próprio prompt</strong>. O Console da Anthropic tem geradores de prompt. O modelo é ótimo ferramenteiro de si mesmo.</p></div>
+    </div>
+
+    <h3 style="font-family:var(--font-d);font-weight:600;font-size:1.15rem;margin:34px 0 4px">Antes × depois — no seu mundo</h3>
+    <p style="color:var(--dim);font-size:.95rem;margin-top:8px">O mesmo pedido, dois resultados. À esquerda, o que a maioria digita. À direita, o que um especialista digita.</p>
+
+    <div class="prompt-pair">
+      <div class="pblock bad">
+        <div class="pblock-head"><span class="t"><span class="ic">✕</span>FRACO</span><button class="copy" data-copy="bad">copiar</button></div>
+        <div class="pcode" id="bad">analisa esses dados de condena e me fala o que tá errado</div>
+      </div>
+      <div class="pblock good">
+        <div class="pblock-head"><span class="t"><span class="ic">✓</span>DE ESPECIALISTA</span><button class="copy" data-copy="good">copiar</button></div>
+        <div class="pcode" id="good"><span class="tag-x">&lt;papel&gt;</span>
+Você é analista de desempenho de abate de aves,
+brutalmente honesto e com rigor epistêmico.
+<span class="tag-x">&lt;/papel&gt;</span>
+
+<span class="tag-x">&lt;contexto&gt;</span>
+24 meses de condena (PT e IT), plantas UIA a UIA4.
+Suspeito de duplicidade na condena total da UIA.
+<span class="tag-x">&lt;/contexto&gt;</span>
+
+<span class="tag-x">&lt;tarefa&gt;</span>
+1. Recalcule a taxa real por planta.
+2. Aponte a pior planta e a causa provável.
+3. Marque o que for hipótese com [Inferência].
+<span class="tag-x">&lt;/tarefa&gt;</span>
+
+<span class="tag-x">&lt;formato&gt;</span>
+Tabela (taxa %, ranking) + 3 bullets de diagnóstico.
+PT-BR. Sem introdução.
+<span class="tag-x">&lt;/formato&gt;</span></div>
+      </div>
+    </div>
+    <p style="color:var(--faint);font-size:.88rem;margin-top:16px;font-family:var(--font-m)">▸ Papel + contexto + tarefa numerada + formato. Quatro alavancas num prompt só. É a diferença entre uma resposta genérica e uma entrega pronta.</p>
+  </section>
+
+  <!-- 05 -->
+  <section id="ocultos" class="rv">
+    <div class="s-head">
+      <span class="s-num">05 / ITENS OCULTOS</span>
+      <h2>O que separa o ninja</h2>
+      <p class="s-intro">Recursos reais que a maioria nunca tocou. Nada de "modo secreto" — só coisa que existe e quase ninguém usa.</p>
+    </div>
+    <div class="cards three body">
+      <div class="card"><h3>Ramificar editando</h3><p>O truque de higiene de contexto mais subestimado. Edite uma mensagem antiga para criar um <strong>galho novo</strong> — testa alternativas e descarta caminhos ruins sem poluir o histórico.</p><span class="tag"><span class="badge fact dot">fato</span></span></div>
+      <div class="card"><h3>Raciocínio sob demanda</h3><p>Ligue o <strong>extended thinking</strong> para problemas difíceis (análise, lógica, código complexo). Desligue no trivial — pensar gasta mais tempo e tokens à toa.</p><span class="tag"><span class="badge fact dot">fato</span></span></div>
+      <div class="card"><h3>Artifacts cirúrgicos</h3><p>"Altere <strong>só</strong> a função X." Em vez de mandar regenerar o artefato inteiro, peça a edição pontual. Preserva o resto e economiza geração.</p><span class="tag"><span class="badge fact dot">fato</span></span></div>
+      <div class="card"><h3>Connectors / MCP</h3><p>Puxe dados de Drive, e-mail, repositório <strong>direto</strong>, sem copiar e colar. Menos atrito, menos erro de transcrição, contexto sempre atual.</p><span class="tag"><span class="badge fact dot">fato</span></span></div>
+      <div class="card"><h3>Anexar &gt; colar gigante</h3><p>Arquivo grande <strong>anexado</strong> costuma ser melhor que despejar o texto cru no chat — fica referenciável e processado de forma mais limpa.</p><span class="tag"><span class="badge inf dot">inferência</span></span></div>
+      <div class="card"><h3>Buscar chats passados</h3><p>Recupere uma conversa antiga via busca/memória em vez de <strong>refazer do zero</strong>. Sua biblioteca de trabalho já feito é um ativo — use.</p><span class="tag"><span class="badge fact dot">fato</span></span></div>
+    </div>
+    <div class="callout">
+      <div class="h">★ A jogada que junta tudo</div>
+      <p>Seu tom "conselheiro brutalmente honesto + PT-BR + marcadores [Inferência] + exemplos de frigorífico" não devia ser <strong>redigitado a cada conversa</strong>. Isso é um <strong>Estilo salvo</strong> (a voz) dentro de um <strong>Projeto</strong> (o trabalho). Configure uma vez, colha para sempre.</p>
+    </div>
+  </section>
+
+  <!-- 06 -->
+  <section id="mitos" class="rv">
+    <div class="s-head">
+      <span class="s-num">06 / MITOS × FATOS</span>
+      <h2>Folclore que custa seu tempo</h2>
+      <p class="s-intro">Honestidade brutal: muita "dica de especialista" que circula é lenda. Toque cada cartão para virar — vermelho é o mito, verde é o que a documentação realmente diz.</p>
+    </div>
+    <div class="myths" id="myths">
+      <div class="flip"><div class="flip-in">
+        <div class="face front"><div class="lbl">✕ Mito</div><div class="txt">Dizer "por favor" e "obrigado" deixa as respostas tecnicamente melhores.</div><div class="flip-hint">toque para a verdade</div></div>
+        <div class="face back"><div class="lbl">✓ Fato</div><div class="txt">Cortesia não atrapalha, mas <b>não melhora a precisão</b> de forma relevante. O que melhora é clareza, contexto e exemplos. Seja gentil se quiser — só não conte com isso como técnica.</div></div>
+      </div></div>
+      <div class="flip"><div class="flip-in">
+        <div class="face front"><div class="lbl">✕ Mito</div><div class="txt">Ameaçar, prometer gorjeta ou dramatizar ("é urgente, vou ser demitido") melhora o resultado.</div><div class="flip-hint">toque para a verdade</div></div>
+        <div class="face back"><div class="lbl">✓ Fato</div><div class="txt">Folclore. Pode <b>parar de funcionar</b> a qualquer atualização e não é confiável. A própria Anthropic recomenda técnicas principiadas, não truques. Se você se pega inventando rodeios "só pra ver se cola", há um jeito mais claro.</div></div>
+      </div></div>
+      <div class="flip"><div class="flip-in">
+        <div class="face front"><div class="lbl">✕ Mito</div><div class="txt">Existe um "modo desenvolvedor" secreto ou um prompt mágico que destrava tudo.</div><div class="flip-hint">toque para a verdade</div></div>
+        <div class="face back"><div class="lbl">✓ Fato</div><div class="txt">Não existe atalho mágico. Existe <b>método</b>: papel, contexto, exemplos, estrutura, formato. Quem promete o "prompt secreto" está vendendo fumaça.</div></div>
+      </div></div>
+      <div class="flip"><div class="flip-in">
+        <div class="face front"><div class="lbl">✕ Mito</div><div class="txt">Quanto mais longo o prompt, melhor a resposta.</div><div class="flip-hint">toque para a verdade</div></div>
+        <div class="face back"><div class="lbl">✓ Fato</div><div class="txt">O que conta é <b>sinal, não volume</b>. Entulho piora o foco e dilui o pedido. Prompt denso e específico bate prompt longo e vago toda vez.</div></div>
+      </div></div>
+      <div class="flip"><div class="flip-in">
+        <div class="face front"><div class="lbl">✕ Mito</div><div class="txt">Encher o prompt com TODOS os casos de borda deixa o Claude mais preciso.</div><div class="flip-hint">toque para a verdade</div></div>
+        <div class="face back"><div class="lbl">✓ Fato</div><div class="txt">A Anthropic recomenda o <b>contrário</b>: poucos exemplos canônicos e diversos, não uma lista infinita de regras. Exemplos são "fotos" que valem mais que mil instruções.</div></div>
+      </div></div>
+      <div class="flip"><div class="flip-in">
+        <div class="face front"><div class="lbl">✕ Mito</div><div class="txt">Conversa longa = o Claude "aprende" comigo ali e vai ficando melhor.</div><div class="flip-hint">toque para a verdade</div></div>
+        <div class="face back"><div class="lbl">✓ Fato</div><div class="txt">Dentro da conversa ele <b>não aprende — só relê</b>. Conversa longa tende a <b>degradar</b>, não melhorar. Aprendizado entre sessões é o sistema de Memória, não o histórico do chat.</div></div>
+      </div></div>
+    </div>
+  </section>
+
+  <!-- 07 -->
+  <section id="checklist" class="rv">
+    <div class="s-head">
+      <span class="s-num">07 / CHECKLIST DO OPERADOR</span>
+      <h2>Leve isto para cada sessão</h2>
+      <p class="s-intro">O resumo acionável. Se você só guardar esta seção, já opera acima da média.</p>
+    </div>
+    <div class="check">
+      <div class="ck"><div><b>Contexto fixo mora em Projeto / Memória / Estilo.</b> <span>Nunca recole seu papel e suas regras a cada chat.</span></div></div>
+      <div class="ck"><div><b>Um assunto, uma conversa.</b> <span>Mudou de tema, abre conversa nova. Higiene antes de truque.</span></div></div>
+      <div class="ck"><div><b>Azedou? Ramifique editando</b> <span>uma mensagem anterior em vez de empurrar histórico podre.</span></div></div>
+      <div class="ck"><div><b>Todo prompt sério leva quatro coisas:</b> <span>papel, contexto, tarefa, formato. De preferência em tags XML.</span></div></div>
+      <div class="ck"><div><b>Peça o formato de saída de primeira.</b> <span>Corta as idas-e-voltas de "agora põe em tabela".</span></div></div>
+      <div class="ck"><div><b>Problema difícil → raciocínio estendido.</b> <span>Trivial → desligado. Não pague pensamento à toa.</span></div></div>
+      <div class="ck"><div><b>Mais contexto útil pode custar menos,</b> <span>não mais. Corte desperdício, não informação.</span></div></div>
+      <div class="ck"><div><b>Ignore palavras mágicas e gorjetas.</b> <span>Invista em clareza e exemplos. É o que mede diferença.</span></div></div>
+      <div class="ck"><div><b>Revise sua Memória de tempos em tempos.</b> <span>Confira o que o Claude guardou sobre você e corrija o que estiver errado.</span></div></div>
+      <div class="ck"><div><b>Peça ao Claude para melhorar seu prompt.</b> <span>Meta-prompting é o atalho que de fato existe.</span></div></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="wrap">
+  <div class="legend">
+    <div class="li"><span class="badge fact dot">fato</span> documentação ou engenharia oficial da Anthropic</div>
+    <div class="li"><span class="badge inf dot">inferência</span> dedução razoável, não verificada ao detalhe</div>
+    <div class="li"><span class="badge myth dot">mito</span> folclore desmentido</div>
+  </div>
+  <p class="foot-note"><strong>Nota epistêmica.</strong> Recursos de produto mudam rápido — o corte de conhecimento desta aula é jan/2026 e os fatos foram verificados por busca em jun/2026. Nomes exatos de menus e a disponibilidade por plano podem variar; a fonte da verdade é sempre a documentação atual em docs.claude.com. Os números do widget são <strong>ilustrativos</strong>, para mostrar o formato do crescimento, não medições reais. Onde marquei [inferência], é dedução minha — não tome como fato confirmado.</p>
+  <div class="sign">Agora você opera a <span>máquina</span>, não adivinha.</div>
+</footer>
+
+<script>
+(function(){
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* progress bar */
+  var bar = document.getElementById('progress');
+  function onScroll(){
+    var h = document.documentElement;
+    var max = h.scrollHeight - h.clientHeight;
+    var p = max>0 ? (h.scrollTop || document.body.scrollTop)/max : 0;
+    bar.style.width = (p*100)+'%';
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+
+  /* hero widget */
+  var slider = document.getElementById('slider');
+  var segRow = document.getElementById('segRow');
+  var thisTurnEl = document.getElementById('thisTurn');
+  var totalEl = document.getElementById('totalTk');
+  var turnNumEl = document.getElementById('turnNum');
+  var caption = document.getElementById('caption');
+  var PER = 500;
+  var fmt = function(n){ return n.toLocaleString('pt-BR'); };
+
+  function render(){
+    var n = parseInt(slider.value,10);
+    var thisTurn = n*PER;
+    var total = PER * n*(n+1)/2;
+    thisTurnEl.textContent = fmt(thisTurn);
+    totalEl.textContent = fmt(total);
+    turnNumEl.textContent = n;
+    var pct = ((n-1)/(14-1))*100;
+    slider.style.setProperty('--fill', pct+'%');
+
+    // segments
+    segRow.innerHTML='';
+    var max = 14;
+    for(var i=1;i<=n;i++){
+      var s=document.createElement('div');
+      s.className='seg '+(i===n?'now':'hist');
+      // height grows slightly with position for a "stacking" feel
+      var hgt = 34 + (i/max)*60;
+      s.style.height = hgt+'%';
+      segRow.appendChild(s);
+    }
+
+    var msg;
+    if(n<=2){ msg = 'Conversa novinha. Custo baixo, foco máximo. É aqui que o Claude está mais afiado.'; }
+    else if(n<=6){ msg = 'Cada mensagem sua já relê <b>'+fmt(thisTurn)+' tokens</b>. Ainda saudável — mas a curva começou a subir.'; }
+    else if(n<=10){ msg = 'No turno '+n+', cada pergunta faz o Claude reler <b>'+fmt(thisTurn)+' tokens</b>. A conversa inteira já custou <b>'+fmt(total)+'</b>. Hora de pensar em ramificar.'; }
+    else { msg = 'Turno '+n+': <b>'+fmt(thisTurn)+' tokens</b> relidos a cada mensagem, <b>'+fmt(total)+'</b> no total. Lento, caro e o foco já caiu. <b>Abra conversa nova.</b>'; }
+    caption.innerHTML = msg;
+  }
+  slider.addEventListener('input', render);
+  render();
+
+  /* copy buttons */
+  document.querySelectorAll('.copy').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-copy');
+      var el = document.getElementById(id);
+      var text = el.innerText;
+      var done = function(){
+        var old = btn.textContent;
+        btn.textContent = 'copiado ✓';
+        btn.classList.add('done');
+        setTimeout(function(){ btn.textContent='copiar'; btn.classList.remove('done'); },1600);
+      };
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done).catch(function(){fallback(text);done();});
+      } else { fallback(text); done(); }
+    });
+  });
+  function fallback(text){
+    var ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+    document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(ta);
+  }
+
+  /* flip cards */
+  document.querySelectorAll('#myths .flip').forEach(function(card){
+    card.setAttribute('tabindex','0');
+    card.setAttribute('role','button');
+    var toggle=function(){ card.classList.toggle('on'); };
+    card.addEventListener('click', toggle);
+    card.addEventListener('keydown', function(e){ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); toggle(); }});
+  });
+
+  /* reveal on scroll */
+  if(!reduce && 'IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(en){ if(en.isIntersecting){ en.target.classList.add('in'); io.unobserve(en.target);} });
+    },{threshold:.12, rootMargin:'0px 0px -8% 0px'});
+    document.querySelectorAll('.rv').forEach(function(el){ io.observe(el); });
+  } else {
+    document.querySelectorAll('.rv').forEach(function(el){ el.classList.add('in'); });
+  }
+})();
+</script>
+</body>
+</html>
