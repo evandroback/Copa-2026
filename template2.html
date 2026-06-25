@@ -431,6 +431,23 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .cf-dots.mini .cf-dot.w{background:var(--live)}
 .cf-dots.mini .cf-dot.d{background:var(--gold)}
 .cf-dots.mini .cf-dot.l{background:var(--copa)}
+.lb-game.tappable{cursor:pointer;border-radius:8px;transition:background .12s}
+.lb-game.tappable:hover,.lb-game.tappable:active{background:rgba(255,255,255,.04)}
+.lb-stat{color:var(--live);font-weight:700;background:rgba(54,196,107,.1);padding:1px 7px;border-radius:5px}
+.st-head{text-align:center;margin-bottom:18px;padding-right:20px}
+.st-teams{display:flex;align-items:center;justify-content:center;gap:12px;font-family:Archivo;font-weight:800;font-size:16px;color:var(--txt)}
+.st-score{font-size:20px;color:var(--gold)}
+.st-sub{font-size:12px;color:var(--mut);margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px}
+.st-list{display:flex;flex-direction:column;gap:13px}
+.st-vals{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px}
+.st-hv,.st-av{font-family:Archivo;font-weight:800;color:var(--txt);min-width:44px;font-size:14px}
+.st-av{text-align:right}
+.st-lab{color:var(--mut);font-size:12px;text-align:center;flex:1}
+.st-bar{display:flex;height:7px;border-radius:4px;overflow:hidden;background:rgba(255,255,255,.05);gap:2px}
+.st-h{background:var(--gold);border-radius:4px;min-width:2px}
+.st-a{background:#5b8def;border-radius:4px;min-width:2px}
+.st-load{text-align:center;color:var(--mut);padding:28px;font-size:14px}
+.st-empty{text-align:center;color:var(--mut);padding:22px;font-size:13.5px;line-height:1.55;background:var(--surf2);border:1px solid var(--line2);border-radius:12px}
 </style>
 </head>
 <body>
@@ -522,6 +539,14 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     <button class="proclose" data-close aria-label="Fechar">✕</button>
     <div class="prohead"><span class="proflag" id="proFlag"></span><div><div class="proname" id="proName"></div><div class="prosub" id="proSub"></div></div></div>
     <div id="proBody"></div>
+  </div>
+</div>
+
+<div class="promodal hidden" id="statModal">
+  <div class="probackdrop" data-close></div>
+  <div class="procard">
+    <button class="proclose" data-close aria-label="Fechar">✕</button>
+    <div id="statBody"></div>
   </div>
 </div>
 
@@ -896,6 +921,7 @@ function openProfile(code){
 }
 function closeProfile(){
   document.getElementById('proModal').classList.add('hidden');
+  var sm=document.getElementById('statModal'); if(sm) sm.classList.add('hidden');
   document.body.style.overflow='';
 }
 // ---- modal de confronto direto (head-to-head) ----
@@ -1287,7 +1313,7 @@ function _parse(j){
     if(ev.date){ try{ hora=new Date(ev.date).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Sao_Paulo'}).replace(':00','h').replace(':','h'); }catch(e){} }
     const H=tr((home.team&&(home.team.displayName||home.team.shortDisplayName||home.team.abbreviation))||'?');
     const A=tr((away.team&&(away.team.displayName||away.team.shortDisplayName||away.team.abbreviation))||'?');
-    return { state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'', hora,
+    return { id:ev.id, state:(st.state||'').toLowerCase(), detail:(ev.status&&ev.status.displayClock)||'', short:st.shortDetail||'', hora,
       hn:H.nm, hfl:H.fl, hc:H.c, an:A.nm, afl:A.fl, ac:A.c,
       hs:(home.score!=null?home.score:''), as:(away.score!=null?away.score:'') };
   });
@@ -1327,8 +1353,11 @@ function _gm(g){
   let info='';
   if(g.state==='in') info='<span class="lb-when">'+(g.hora?g.hora+' · ':'')+(g.detail||'em andamento')+'</span>';
   else if(g.state==='post'&&g.hora) info='<span class="lb-when">começou '+g.hora+'</span>';
-  const sub=(info||pal)?'<div class="lb-sub">'+info+pal+'</div>':'';
-  return '<div class="lb-game"><span class="lb-status '+cls+'">'+lab+'</span><div class="lb-body"><span class="lb-match"><b>'+h+'</b> '+sc+' <b>'+a+'</b></span>'+sub+'</div></div>';
+  const canStat=(g.state==='in'||g.state==='post')&&g.id;
+  const statTip=canStat?'<span class="lb-stat">📊 estatísticas</span>':'';
+  const sub=(info||pal||statTip)?'<div class="lb-sub">'+info+pal+statTip+'</div>':'';
+  const clickAttr=canStat?' data-livestat="'+g.id+'" role="button" tabindex="0"':'';
+  return '<div class="lb-game'+(canStat?' tappable':'')+'"'+clickAttr+'><span class="lb-status '+cls+'">'+lab+'</span><div class="lb-body"><span class="lb-match"><b>'+h+'</b> '+sc+' <b>'+a+'</b></span>'+sub+'</div></div>';
 }
 function renderLiveBar(res){
   const bar=document.getElementById('liveBar'); if(!bar) return;
@@ -1342,8 +1371,74 @@ function renderLiveBar(res){
     : '<div class="lb-head" style="color:var(--mut2)">Jogos de hoje · fonte conectada ✓ ('+res.src+')</div>';
   bar.className='livebar'; bar.innerHTML=head+show.map(_gm).join('');
 }
-async function tickLive(){ try{ const res=await fetchLive(); renderLiveBar(res); if(res.ok){ updateLive(res.games); refreshLiveCards(); } }catch(e){} }
+async function tickLive(){ try{ const res=await fetchLive(); _lastGames=res.games||[]; renderLiveBar(res); if(res.ok){ updateLive(res.games); refreshLiveCards(); } }catch(e){} }
 tickLive(); setInterval(tickLive, 30000);
+
+// ---- estatísticas detalhadas do jogo (endpoint summary da ESPN) ----
+let _lastGames=[];
+const STAT_DEFS=[
+  {l:'Posse de bola', keys:['possessionPct'], pct:true},
+  {l:'Finalizações', keys:['totalShots','shots']},
+  {l:'No gol', keys:['shotsOnTarget','onTargetShots']},
+  {l:'Grandes chances', keys:['bigChanceCreated','bigChances']},
+  {l:'Escanteios', keys:['wonCorners','corners','cornerKicks']},
+  {l:'Passes certos', keys:['accuratePasses']},
+  {l:'Precisão de passe', keys:['passPct','accuratePassesPct'], pct:true},
+  {l:'Impedimentos', keys:['offsides']},
+  {l:'Faltas', keys:['foulsCommitted','fouls','totalFouls']},
+  {l:'Cartões amarelos', keys:['yellowCards']},
+  {l:'Defesas do goleiro', keys:['saves','goalKeeperSaves']},
+];
+async function fetchStats(id){
+  const url='https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/summary?event='+id;
+  try{ return await _try(url); }catch(e){}
+  try{ return await _try('https://api.allorigins.win/raw?url='+encodeURIComponent(url)); }catch(e){}
+  return null;
+}
+function _statTeam(t){
+  const e=ENPT[(t.team&&(t.team.displayName||t.team.shortDisplayName||t.team.abbreviation))||''];
+  const stats={}; (t.statistics||[]).forEach(s=>{ if(s.name) stats[s.name]=s.displayValue; });
+  return { nm: e?e.pt:((t.team&&t.team.displayName)||'?'), fl: e?e.fl:'', stats };
+}
+function parseStats(j){
+  const bs=j&&j.boxscore; if(!bs||!bs.teams||bs.teams.length<2) return null;
+  let H=bs.teams[0], A=bs.teams[1];
+  if((bs.teams[0].homeAway||'').toLowerCase()==='away'){ H=bs.teams[1]; A=bs.teams[0]; }
+  const home=_statTeam(H), away=_statTeam(A);
+  if(Object.keys(home.stats).length===0 && Object.keys(away.stats).length===0) return null;
+  return {home,away};
+}
+function _pickStat(s,keys){ for(const k of keys){ if(s[k]!=null && s[k]!=='') return s[k]; } return null; }
+function _num(v){ if(v==null) return 0; const m=String(v).replace(',','.').match(/-?\d+(\.\d+)?/); return m?parseFloat(m[0]):0; }
+function statsBarsHTML(p){
+  if(!p) return '<div class="st-empty">Não consegui carregar as estatísticas deste jogo. A fonte pode ainda não tê-las publicado, ou o jogo é da Copa simulada (sem dados reais).</div>';
+  let h='';
+  STAT_DEFS.forEach(d=>{
+    const hv=_pickStat(p.home.stats,d.keys), av=_pickStat(p.away.stats,d.keys);
+    if(hv==null&&av==null) return;
+    const hn=_num(hv), an=_num(av), tot=hn+an;
+    const hp=tot>0?Math.round(hn/tot*100):50;
+    h+='<div class="st-row"><div class="st-vals"><span class="st-hv">'+(hv!=null?hv:'–')+(d.pct?'%':'')+'</span><span class="st-lab">'+d.l+'</span><span class="st-av">'+(av!=null?av:'–')+(d.pct?'%':'')+'</span></div><div class="st-bar"><span class="st-h" style="width:'+hp+'%"></span><span class="st-a" style="width:'+(100-hp)+'%"></span></div></div>';
+  });
+  if(h) return h;
+  const names=[...new Set([...Object.keys(p.home.stats),...Object.keys(p.away.stats)])];
+  if(names.length) return '<div class="st-empty">A fonte trouxe dados, mas com nomes de campo que eu ainda não mapeei. Me manda um print desta lista que eu ajusto:<br><br><b>'+names.join(' · ')+'</b></div>';
+  return '<div class="st-empty">Estatísticas ainda não disponíveis para este jogo.</div>';
+}
+async function openLiveStats(id){
+  const body=document.getElementById('statBody'); if(!body) return;
+  const g=(_lastGames||[]).find(x=>String(x.id)===String(id));
+  const head = g ? '<div class="st-head"><div class="st-teams"><b>'+(g.hfl?g.hfl+' ':'')+g.hn+'</b><span class="st-score">'+(g.hs!==''?g.hs+'–'+g.as:'×')+'</span><b>'+g.an+(g.afl?' '+g.afl:'')+'</b></div><div class="st-sub">'+(g.state==='in'?'<span class="lvdot"></span> ao vivo'+(g.detail?' · '+g.detail:''):'fim de jogo')+'</div></div>' : '';
+  body.innerHTML=head+'<div class="st-load">carregando estatísticas…</div>';
+  document.getElementById('statModal').classList.remove('hidden');
+  document.body.style.overflow='hidden';
+  const j=await fetchStats(id);
+  body.innerHTML=head+'<div class="st-list">'+statsBarsHTML(j?parseStats(j):null)+'</div>';
+}
+document.getElementById('liveBar').addEventListener('click',e=>{
+  const s=e.target.closest('[data-livestat]'); if(!s) return;
+  openLiveStats(s.dataset.livestat);
+});
 
 function shareStats(){
   const reals=GAMES0.filter(m=>m.r);
