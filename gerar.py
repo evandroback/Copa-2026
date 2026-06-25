@@ -763,7 +763,7 @@ def build():
             meta=META_GRP.get(frozenset((H,A))) or {}
             _d,_h=fmt_when_brt(meta.get("dt",""),meta.get("tm",""))
             games.append({"g":g,"h":H,"a":A,"gh":gh,"ga":ga,"r":rr,"rd":rd,
-                          "dt":_d,"hr":_h,"gr":meta.get("gr","")})
+                          "dt":_d,"hr":_h,"gr":meta.get("gr",""),"iso":(meta.get("dt","") or "").replace("-","")})
     return games
 
 def standings(games):
@@ -799,7 +799,7 @@ def main():
     for num,meta in META_KO.items():
         v=venue_of(meta.get("gr",""), sbc)
         _d,_h=fmt_when_brt(meta.get("dt",""),meta.get("tm",""))
-        VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],"")}
+        VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],""),"iso":(meta.get("dt","") or "").replace("-","")}
     STATS=compute_stats(games, squads, stadiums, teams)
     BRASIL=compute_brasil(games)
     VENUES=compute_venues(stadiums, games)
