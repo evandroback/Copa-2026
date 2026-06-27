@@ -469,6 +469,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .ko-foot{display:flex;flex-direction:column;gap:5px;align-items:center;margin-top:7px}
 .ko-foot .h2h-btn{margin:0}
 .stat-btn{color:var(--live)!important;border-color:rgba(54,196,107,.35)!important}
+.thd-j{color:var(--gold)}
+.slot-prob{flex:none;font-family:Archivo;font-weight:800;font-size:10.5px;color:var(--mut);background:rgba(255,255,255,.05);padding:1px 6px;border-radius:5px;margin-left:auto}
+.slot.w .slot-prob{color:var(--live);background:rgba(54,196,107,.14)}
+.slot.l .slot-prob{opacity:.55}
+.slot .slot-info{margin-left:0}
 </style>
 </head>
 <body>
@@ -725,12 +730,15 @@ function thirdOrigin(id){
   const sp=KO[id].b; if(!sp.th) return ""; const al=allocNow(); if(!al) return "";
   const g=al[sp.th]; return g?("3º colocado · Grupo "+g):"";
 }
+function advP(a,b){ const fa=F[a]!=null?F[a]:50, fb=F[b]!=null?F[b]:50; return 1/(1+Math.pow(10,(fb-fa)/28)); } // mesma base (força F) dos palpites de placar
 function slotHTML(id,side){
   const spec=KO[id][side], t=RES[id]?RES[id][side]:null, pick=PICK[id];
   if(!t){ const L=slotLabel(spec); return `<div class="slot empty ph" title="${L.title}"><span class="badge">${L.t}</span></div>`; }
   let cls="slot"; if(pick) cls+= pick===t.code?" w":" l";
   if(state.follow && t.code===state.follow) cls+=" foll";
-  return `<div class="${cls}" data-pick="${id}:${t.code}"><span class="flag">${t.flag}</span><span class="nm">${t.name}</span><button class="slot-info" data-pro="${t.code}" aria-label="Ver ${t.name}" title="Ver seleção">ⓘ</button></div>`;
+  const other=RES[id]?RES[id][side==='a'?'b':'a']:null;
+  const probTag = (other&&other.code) ? `<span class="slot-prob" title="Chance de vencer o confronto (Elo)">${Math.round(advP(t.code,other.code)*100)}%</span>` : '';
+  return `<div class="${cls}" data-pick="${id}:${t.code}"><span class="flag">${t.flag}</span><span class="nm">${t.name}</span>${probTag}<button class="slot-info" data-pro="${t.code}" aria-label="Ver ${t.name}" title="Ver seleção">ⓘ</button></div>`;
 }
 function h2hMiniText(a,b){
   if(!a||!b||a===b) return '';
@@ -1116,7 +1124,7 @@ function thirdsRankHTML(){
   h+='<div class="thd-list">';
   rows.forEach((r,i)=>{
     if(i===8) h+='<div class="thd-cut">corte — 8 vagas acima · eliminados abaixo</div>';
-    h+='<div class="thd-row '+(r.qualif?'q':'x')+'"><span class="thd-rank">'+r.rank+'º</span><div class="thd-mid"><span class="thd-team proteam" data-pro="'+r.c+'">'+FLAG[r.c]+' '+NAME[r.c]+'</span><span class="thd-grp">Grupo '+r.g+' · '+r.j+'J</span></div><span class="thd-st"><b>'+r.P+'</b> pts · '+(r.sg>=0?'+':'')+r.sg+' SG · '+r.gf+' GP</span></div>';
+    h+='<div class="thd-row '+(r.qualif?'q':'x')+'"><span class="thd-rank">'+r.rank+'º</span><div class="thd-mid"><span class="thd-team proteam" data-pro="'+r.c+'">'+FLAG[r.c]+' '+NAME[r.c]+'</span><span class="thd-grp">Grupo '+r.g+'</span></div><span class="thd-st"><b>'+r.P+'</b> pts · '+(r.sg>=0?'+':'')+r.sg+' SG · '+r.gf+' GP · <b class="thd-j">'+r.j+'J</b></span></div>';
   });
   h+='</div></div>';
   return h;
