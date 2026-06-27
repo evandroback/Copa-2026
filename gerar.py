@@ -751,6 +751,28 @@ def compute_brasil_path(games, alloc_map, n=20000):
             "first":fases("first"),"second":fases("second")}
 
 # ---------- montar / calcular ----------
+def build_players(squads):
+    if not squads: return []
+    import unicodedata
+    def norm(s): return unicodedata.normalize('NFKD',(s or '')).encode('ascii','ignore').decode().lower().strip()
+    art={}
+    for g in GOALS:
+        if g.get("who") and not g.get("og"):
+            k=(norm(g["who"]), g["c"]); art[k]=art.get(k,0)+1
+    out=[]
+    for t in squads:
+        tname=(t.get("name","") or "").strip()
+        code = OF_NAMES.get(tname,"") or t.get("fifa_code","")
+        if code not in NAME: continue
+        for p in t.get("players",[]):
+            a=age_on(p.get("date_of_birth",""))
+            club=p.get("club") or {}
+            out.append({"n":p.get("name",""),"c":code,"pos":p.get("pos",""),
+                        "num":(p.get("number",0) or 0),"age":(round(a) if a else 0),
+                        "cl":club.get("name",""),"cc":(club.get("country","") or ""),
+                        "g":art.get((norm(p.get("name","")), code),0)})
+    return out
+
 def build():
     real=load_seed(); real.update(fetch_results())   # openfootball tem prioridade sobre o seed
     games=[]
@@ -801,6 +823,7 @@ def main():
         _d,_h=fmt_when_brt(meta.get("dt",""),meta.get("tm",""))
         VENUE_KO[str(num)]={"dt":_d,"hr":_h,"vn":v["vn"],"co":v["co"],"cf":CFLAG.get(v["cc"],""),"iso":(meta.get("dt","") or "").replace("-","")}
     STATS=compute_stats(games, squads, stadiums, teams)
+    PLAYERS=build_players(squads)
     BRASIL=compute_brasil(games)
     VENUES=compute_venues(stadiums, games)
     PROFILES=compute_profiles(games, squads)
@@ -830,7 +853,7 @@ def main():
         if c: ENPT[al]={"pt":NAME.get(c,al),"fl":FLAG.get(c,""),"c":c}
     DATA={"F":F,"GR":GR,"NAME":NAME,"FLAG":FLAG,"GAMES":games,
           "PRED_PHASES":original_phases(ALLOC),"KO_REAL":KO_REAL,
-          "VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":STATS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT,"BRA_PATH":BRA_PATH}
+          "VENUE_KO":VENUE_KO,"BRASIL":BRASIL,"NUMBERS":STATS,"VENUES":VENUES,"PROFILES":PROFILES,"ALL":ALL_FULL,"PROB":PROB,"ENPT":ENPT,"BRA_PATH":BRA_PATH,"PLAYERS":PLAYERS}
     tpl=open(os.path.join(HERE,"template2.html"),encoding="utf-8").read()
     html=(tpl.replace("/*__DATA__*/",json.dumps(DATA,ensure_ascii=False,separators=(",",":")))
              .replace("/*__ALLOC__*/",json.dumps(ALLOC,ensure_ascii=False,separators=(",",":")))

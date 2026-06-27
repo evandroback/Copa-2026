@@ -454,7 +454,7 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .thd-sub{font-size:11.5px;color:var(--mut);line-height:1.5;margin-bottom:11px}
 .thd-sub i{color:var(--mut2)}
 .thd-list{display:flex;flex-direction:column;gap:4px}
-.thd-row{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:9px;padding:8px 11px;background:var(--surf);border:1px solid var(--line);border-radius:9px;border-left-width:3px}
+.thd-row{display:grid;grid-template-columns:28px 1fr 54px;align-items:center;gap:9px;padding:8px 11px;background:var(--surf);border:1px solid var(--line);border-radius:9px;border-left-width:3px}
 .thd-row.q{border-left-color:var(--live)}
 .thd-row.x{border-left-color:var(--copa);opacity:.6}
 .thd-rank{font-family:Archivo;font-weight:800;font-size:14px;color:var(--mut)}
@@ -462,8 +462,16 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .thd-mid{display:flex;flex-direction:column;gap:1px;min-width:0}
 .thd-team{font-size:13.5px;color:var(--txt);font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .thd-grp{font-size:10.5px;color:var(--mut2)}
-.thd-st{font-size:10.5px;color:var(--mut);white-space:nowrap;text-align:right}
-.thd-st b{color:var(--txt);font-size:12px}
+.thd-prob{display:flex;flex-direction:column;align-items:flex-end;gap:3px;width:54px}
+.thd-pv{font-family:Archivo;font-weight:800;font-size:13px;color:var(--mut)}
+.thd-pv.hi{color:var(--live)}
+.thd-pv.mid{color:var(--gold)}
+.thd-pv.lo{color:var(--copa)}
+.thd-pbar{width:100%;height:4px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden}
+.thd-pbar span{display:block;height:100%;border-radius:3px;background:var(--mut)}
+.thd-pbar span.hi{background:var(--live)}
+.thd-pbar span.mid{background:var(--gold)}
+.thd-pbar span.lo{background:var(--copa)}
 .thd-cut{text-align:center;font-size:10px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.4px;padding:6px;margin:4px 0;border-top:1px dashed rgba(244,194,75,.45)}
 .stat-ic{font-size:13px}
 .ko-foot{display:flex;flex-direction:column;gap:5px;align-items:center;margin-top:7px}
@@ -474,6 +482,30 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .slot.w .slot-prob{color:var(--live);background:rgba(54,196,107,.14)}
 .slot.l .slot-prob{opacity:.55}
 .slot .slot-info{margin-left:0}
+.pl-ctrl{display:flex;gap:8px;margin-bottom:10px}
+.pl-search{flex:1;min-width:0;background:var(--surf);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:14px;font-family:Inter}
+.pl-country{flex:none;max-width:44%;background:var(--surf);border:1px solid var(--line2);border-radius:10px;padding:10px 8px;color:var(--txt);font-size:13px;font-family:Inter}
+.pl-count{font-size:11.5px;color:var(--mut);margin-bottom:8px}
+.pl-table{border:1px solid var(--line);border-radius:11px;overflow:hidden}
+.pl-head{display:grid;grid-template-columns:34px 1fr 46px 30px 34px;gap:6px;padding:10px 11px;background:var(--surf2);border-bottom:1px solid var(--line2);font-family:Archivo;font-weight:800;font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px}
+.pl-h{cursor:pointer;user-select:none;white-space:nowrap}
+.pl-h.num,.pl-h.pp{text-align:center}
+.pl-h:active{color:var(--gold)}
+.pl-row{display:grid;grid-template-columns:34px 1fr 46px 30px 34px;gap:6px;align-items:center;padding:8px 11px;border-bottom:1px solid rgba(255,255,255,.04)}
+.pl-row:last-child{border-bottom:0}
+.pl-num{font-family:Archivo;font-weight:700;font-size:12px;color:var(--mut2);text-align:center}
+.pl-nm{display:flex;flex-direction:column;gap:1px;min-width:0}
+.pl-nl{font-size:13.5px;color:var(--txt);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-club{font-size:10.5px;color:var(--mut2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-pos{font-family:Archivo;font-weight:800;font-size:10px;text-align:center;padding:2px 0;border-radius:5px}
+.pos-GK{color:#f4c24b;background:rgba(244,194,75,.12)}
+.pos-DF{color:#5b8def;background:rgba(91,141,239,.12)}
+.pos-MF{color:#36c46b;background:rgba(54,196,107,.12)}
+.pos-FW{color:#e8334a;background:rgba(232,51,74,.12)}
+.pl-age{text-align:center;font-size:13px;color:var(--mut);font-family:Archivo;font-weight:700}
+.pl-g{text-align:center;font-family:Archivo;font-weight:800;font-size:14px;color:var(--mut2)}
+.pl-g.has{color:var(--gold)}
+.pl-empty{padding:24px;text-align:center;color:var(--mut);font-size:13px}
 </style>
 </head>
 <body>
@@ -494,6 +526,7 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
       <button class="tab" id="tabKO">Chaveamento</button>
       <button class="tab" id="tabProb">Favoritos</button>
       <button class="tab" id="tabNumbers">Números</button>
+      <button class="tab" id="tabPlayers">Jogadores</button>
       <button class="tab" id="tabAcc">Acertos</button>
       <button class="tab" id="tabBrasil">Brasil</button>
       <button class="tab" id="tabBraPath">🇧🇷 Caminho</button>
@@ -529,6 +562,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
   <section class="panel hidden" id="secNumbers">
     <div class="hint">O <b>raio-X completo da Copa 2026</b> — artilheiros, gols, goleadas, ataque e defesa (dos jogos já disputados), além de elencos, clubes, sedes e confederações (dados oficiais). <b>Atualiza sozinho</b> a cada jogo novo.</div>
     <div id="numbersBox"></div>
+  </section>
+
+  <section class="panel hidden" id="secPlayers">
+    <div class="hint">Todos os <b>convocados</b> da Copa 2026 (dados oficiais). Busque por nome, filtre por seleção e <b>toque num cabeçalho</b> para ordenar. Gols são os <span class="real">desta Copa</span>.</div>
+    <div id="playersBox"></div>
   </section>
 
   <section class="panel hidden" id="secAcc">
@@ -586,6 +624,41 @@ const BRA_PATH=DATA.BRA_PATH||{pos:{},first:[],second:[]};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
 const PROB=DATA.PROB||{};
+const PLAYERS=DATA.PLAYERS||[];
+const POSPT={GK:'GOL',DF:'ZAG',MF:'MEI',FW:'ATA'};
+function renderPlayers(){
+  const box=document.getElementById('playersBox'); if(!box) return;
+  if(!PLAYERS.length){ box.innerHTML='<div class="accempty">Lista de jogadores indisponível.</div>'; return; }
+  const countries=[...new Set(PLAYERS.map(p=>p.c))].sort((a,b)=>(NAME[a]||a).localeCompare(NAME[b]||b,'pt'));
+  let opts='<option value="">Todas as seleções</option>';
+  countries.forEach(c=>opts+='<option value="'+c+'">'+(NAME[c]||c)+'</option>');
+  box.innerHTML='<div class="pl-ctrl"><input class="pl-search" id="plSearch" placeholder="🔎 Buscar jogador ou clube"><select class="pl-country" id="plCountry">'+opts+'</select></div>'+
+    '<div class="pl-count" id="plCount"></div>'+
+    '<div class="pl-table"><div class="pl-head" id="plHead"></div><div id="plList"></div></div>';
+  const si=document.getElementById('plSearch'), co=document.getElementById('plCountry');
+  si.value=state.plQ||''; co.value=state.plC||'';
+  si.addEventListener('input',e=>{ state.plQ=e.target.value; plUpdate(); });
+  co.addEventListener('change',e=>{ state.plC=e.target.value; plUpdate(); });
+  document.getElementById('plHead').addEventListener('click',e=>{ const hh=e.target.closest('[data-sort]'); if(!hh) return; const col=hh.dataset.sort, s=state.plSort||{col:'g',dir:-1}; if(s.col===col)s.dir=-s.dir; else {s.col=col;s.dir=(col==='n'||col==='c'||col==='pos')?1:-1;} state.plSort=s; plUpdate(); });
+  plUpdate();
+}
+function plUpdate(){
+  const s=state.plSort=state.plSort||{col:'g',dir:-1};
+  const q=(state.plQ||'').toLowerCase().trim(), fc=state.plC||'';
+  let list=PLAYERS.filter(p=> (!fc||p.c===fc) && (!q || p.n.toLowerCase().includes(q) || (NAME[p.c]||'').toLowerCase().includes(q) || (p.cl||'').toLowerCase().includes(q)));
+  const col=s.col,dir=s.dir;
+  list.sort((a,b)=>{
+    if(col==='n'||col==='c'||col==='pos'){ const va=col==='c'?(NAME[a.c]||''):String(a[col]||''), vb=col==='c'?(NAME[b.c]||''):String(b[col]||''); return dir*va.localeCompare(vb,'pt')||a.n.localeCompare(b.n,'pt'); }
+    return dir*((a[col]||0)-(b[col]||0)) || a.n.localeCompare(b.n,'pt');
+  });
+  const total=list.length, LIM=200, shown=list.slice(0,LIM);
+  const arr=c=> s.col===c?(s.dir<0?' ▾':' ▴'):'';
+  const hd=document.getElementById('plHead'); if(hd) hd.innerHTML='<span class="pl-h num" data-sort="num">Nº'+arr('num')+'</span><span class="pl-h nm" data-sort="n">Jogador'+arr('n')+'</span><span class="pl-h pp" data-sort="pos">Pos'+arr('pos')+'</span><span class="pl-h pp" data-sort="age">Id'+arr('age')+'</span><span class="pl-h pp" data-sort="g">⚽'+arr('g')+'</span>';
+  const cnt=document.getElementById('plCount'); if(cnt) cnt.textContent=total+(total===1?' jogador':' jogadores')+(total>LIM?' · mostrando os '+LIM+' primeiros (refine a busca)':'');
+  let h='';
+  shown.forEach(p=>{ h+='<div class="pl-row"><span class="pl-num">'+(p.num||'–')+'</span><span class="pl-nm"><span class="pl-nl">'+(FLAG[p.c]||'')+' '+p.n+'</span><span class="pl-club">'+(NAME[p.c]||p.c)+(p.cl?' · '+p.cl:'')+'</span></span><span class="pl-pos pos-'+p.pos+'">'+(POSPT[p.pos]||p.pos||'–')+'</span><span class="pl-age">'+(p.age||'–')+'</span><span class="pl-g'+(p.g>0?' has':'')+'">'+p.g+'</span></div>'; });
+  const ls=document.getElementById('plList'); if(ls) ls.innerHTML=h||'<div class="pl-empty">Nenhum jogador encontrado.</div>';
+}
 const NUMBERS=DATA.NUMBERS||{sections:[]};
 const VENUES=DATA.VENUES||{geo:[],routes:{}};
 const ENPT=DATA.ENPT||{};
@@ -1120,11 +1193,13 @@ function thirdsRankHTML(){
   const rows=thirdsRanking();
   const allDone=rows.every(r=>r.done);
   let h='<div class="thd-box"><div class="thd-h">🥉 Ranking dos 3º colocados'+(allDone?'':' <span class="thd-prov">parcial</span>')+'</div>';
-  h+='<div class="thd-sub">Os <b>8 melhores</b> terceiros avançam ao mata-mata. Ordem: pontos → saldo de gols → gols pró.'+(allDone?'':' <i>Grupos em andamento — posições mudam (veja os J de cada um).</i>')+'</div>';
+  h+='<div class="thd-sub">Os <b>8 melhores</b> terceiros avançam ao mata-mata. Ordem: pontos → saldo de gols → gols pró. A <b>%</b> à direita é a chance de <b>classificar</b> (simulação que já considera os jogos que faltam — por isso difere da ordem atual).'+(allDone?'':' <i>Grupos em andamento — posições ainda mudam (veja os J de cada um).</i>')+'</div>';
   h+='<div class="thd-list">';
   rows.forEach((r,i)=>{
     if(i===8) h+='<div class="thd-cut">corte — 8 vagas acima · eliminados abaixo</div>';
-    h+='<div class="thd-row '+(r.qualif?'q':'x')+'"><span class="thd-rank">'+r.rank+'º</span><div class="thd-mid"><span class="thd-team proteam" data-pro="'+r.c+'">'+FLAG[r.c]+' '+NAME[r.c]+'</span><span class="thd-grp">Grupo '+r.g+'</span></div><span class="thd-st"><b>'+r.P+'</b> pts · '+(r.sg>=0?'+':'')+r.sg+' SG · '+r.gf+' GP · <b class="thd-j">'+r.j+'J</b></span></div>';
+    const pg=(PROB[r.c]&&PROB[r.c].g!=null)?PROB[r.c].g:null;
+    const pcls=pg==null?'':(pg>=80?'hi':pg>=40?'mid':'lo');
+    h+='<div class="thd-row '+(r.qualif?'q':'x')+'"><span class="thd-rank">'+r.rank+'º</span><div class="thd-mid"><span class="thd-team proteam" data-pro="'+r.c+'">'+FLAG[r.c]+' '+NAME[r.c]+'</span><span class="thd-grp">Gr. '+r.g+' · <b>'+r.P+'</b>pts · '+(r.sg>=0?'+':'')+r.sg+' · '+r.gf+'gp · <b class="thd-j">'+r.j+'J</b></span></div>'+(pg!=null?'<div class="thd-prob"><span class="thd-pv '+pcls+'">'+pg+'%</span><span class="thd-pbar"><span class="'+pcls+'" style="width:'+pg+'%"></span></span></div>':'')+'</div>';
   });
   h+='</div></div>';
   return h;
@@ -1313,27 +1388,29 @@ function drawVenues(code){
   }
 }
 
-const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), ta=document.getElementById('tabAcc'), tb=document.getElementById('tabBrasil'), tbp=document.getElementById('tabBraPath'), tv=document.getElementById('tabVenues');
+const tg=document.getElementById('tabGroups'), tk=document.getElementById('tabKO'), tp=document.getElementById('tabProb'), tn=document.getElementById('tabNumbers'), tpls=document.getElementById('tabPlayers'), ta=document.getElementById('tabAcc'), tb=document.getElementById('tabBrasil'), tbp=document.getElementById('tabBraPath'), tv=document.getElementById('tabVenues');
 function setTab(t){ state.tab=t;
-  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); ta.classList.toggle('on',t==='acc'); tb.classList.toggle('on',t==='brasil'); tbp.classList.toggle('on',t==='brapath'); tv.classList.toggle('on',t==='venues');
+  tg.classList.toggle('on',t==='groups'); tk.classList.toggle('on',t==='ko'); tp.classList.toggle('on',t==='prob'); tn.classList.toggle('on',t==='numbers'); tpls.classList.toggle('on',t==='players'); ta.classList.toggle('on',t==='acc'); tb.classList.toggle('on',t==='brasil'); tbp.classList.toggle('on',t==='brapath'); tv.classList.toggle('on',t==='venues');
   document.getElementById('secGroups').classList.toggle('hidden',t!=='groups');
   document.getElementById('secKO').classList.toggle('hidden',t!=='ko');
   document.getElementById('secProb').classList.toggle('hidden',t!=='prob');
   document.getElementById('secNumbers').classList.toggle('hidden',t!=='numbers');
+  document.getElementById('secPlayers').classList.toggle('hidden',t!=='players');
   document.getElementById('secAcc').classList.toggle('hidden',t!=='acc');
   document.getElementById('secBrasil').classList.toggle('hidden',t!=='brasil');
   document.getElementById('secBraPath').classList.toggle('hidden',t!=='brapath');
   document.getElementById('secVenues').classList.toggle('hidden',t!=='venues');
-  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,acc:ta,brasil:tb,brapath:tbp,venues:tv}[t];
+  const _act={groups:tg,ko:tk,prob:tp,numbers:tn,players:tpls,acc:ta,brasil:tb,brapath:tbp,venues:tv}[t];
   if(_act&&_act.scrollIntoView) _act.scrollIntoView({inline:'center',block:'nearest'});
   if(t==='prob') renderProb();
   if(t==='numbers') renderNumbers();
+  if(t==='players') renderPlayers();
   if(t==='acc') renderAccuracy();
   if(t==='brasil') renderBrasil();
   if(t==='brapath') renderBraPath();
   if(t==='venues') renderVenues();
   saveSoon(); }
-tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); ta.onclick=()=>setTab('acc'); tb.onclick=()=>setTab('brasil'); tbp.onclick=()=>setTab('brapath'); tv.onclick=()=>setTab('venues');
+tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); tpls.onclick=()=>setTab('players'); ta.onclick=()=>setTab('acc'); tb.onclick=()=>setTab('brasil'); tbp.onclick=()=>setTab('brapath'); tv.onclick=()=>setTab('venues');
 document.getElementById('braPathBox').addEventListener('click',e=>{ const b=e.target.closest('[data-brascen]'); if(b){ state.braScen=b.dataset.brascen; renderBraPath(); } });
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
