@@ -506,6 +506,11 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .pl-g{text-align:center;font-family:Archivo;font-weight:800;font-size:14px;color:var(--mut2)}
 .pl-g.has{color:var(--gold)}
 .pl-empty{padding:24px;text-align:center;color:var(--mut);font-size:13px}
+.pl-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+.pl-chip{background:var(--surf);border:1px solid var(--line2);border-radius:8px;padding:6px 12px;color:var(--mut);font-size:12.5px;font-weight:700;font-family:Inter;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.pl-chip.on{background:rgba(244,194,75,.15);border-color:var(--gold);color:var(--gold)}
+.pl-chip.gl{margin-left:auto}
+.pl-chip.gl.on{background:rgba(54,196,107,.15);border-color:var(--live);color:var(--live)}
 </style>
 </head>
 <body>
@@ -632,31 +637,47 @@ function renderPlayers(){
   const countries=[...new Set(PLAYERS.map(p=>p.c))].sort((a,b)=>(NAME[a]||a).localeCompare(NAME[b]||b,'pt'));
   let opts='<option value="">Todas as seleções</option>';
   countries.forEach(c=>opts+='<option value="'+c+'">'+(NAME[c]||c)+'</option>');
-  box.innerHTML='<div class="pl-ctrl"><input class="pl-search" id="plSearch" placeholder="🔎 Buscar jogador ou clube"><select class="pl-country" id="plCountry">'+opts+'</select></div>'+
+  const posChips=[['','Todos'],['GK','GOL'],['DF','ZAG'],['MF','MEI'],['FW','ATA']].map(x=>'<button class="pl-chip" data-pos="'+x[0]+'">'+x[1]+'</button>').join('');
+  box.innerHTML='<div class="pl-ctrl"><input class="pl-search" id="plSearch" placeholder="🔎 Nome, clube ou nº da camisa" inputmode="text"><select class="pl-country" id="plCountry">'+opts+'</select></div>'+
+    '<div class="pl-chips" id="plChips">'+posChips+'<button class="pl-chip gl" data-goals="1">⚽ com gols</button></div>'+
     '<div class="pl-count" id="plCount"></div>'+
     '<div class="pl-table"><div class="pl-head" id="plHead"></div><div id="plList"></div></div>';
   const si=document.getElementById('plSearch'), co=document.getElementById('plCountry');
   si.value=state.plQ||''; co.value=state.plC||'';
   si.addEventListener('input',e=>{ state.plQ=e.target.value; plUpdate(); });
   co.addEventListener('change',e=>{ state.plC=e.target.value; plUpdate(); });
+  document.getElementById('plChips').addEventListener('click',e=>{
+    const pc=e.target.closest('[data-pos]'), gc=e.target.closest('[data-goals]');
+    if(pc) state.plPos=pc.dataset.pos; else if(gc) state.plGoals=!state.plGoals; else return;
+    plUpdate();
+  });
   document.getElementById('plHead').addEventListener('click',e=>{ const hh=e.target.closest('[data-sort]'); if(!hh) return; const col=hh.dataset.sort, s=state.plSort||{col:'g',dir:-1}; if(s.col===col)s.dir=-s.dir; else {s.col=col;s.dir=(col==='n'||col==='c'||col==='pos')?1:-1;} state.plSort=s; plUpdate(); });
   plUpdate();
 }
 function plUpdate(){
   const s=state.plSort=state.plSort||{col:'g',dir:-1};
-  const q=(state.plQ||'').toLowerCase().trim(), fc=state.plC||'';
-  let list=PLAYERS.filter(p=> (!fc||p.c===fc) && (!q || p.n.toLowerCase().includes(q) || (NAME[p.c]||'').toLowerCase().includes(q) || (p.cl||'').toLowerCase().includes(q)));
+  const q=(state.plQ||'').toLowerCase().trim(), fc=state.plC||'', fp=state.plPos||'', fg=!!state.plGoals;
+  const qn=/^\d+$/.test(q)?parseInt(q,10):null;
+  let list=PLAYERS.filter(p=>{
+    if(fc&&p.c!==fc) return false;
+    if(fp&&p.pos!==fp) return false;
+    if(fg&&!(p.g>0)) return false;
+    if(q){ const byNum=qn!=null&&p.num===qn; const byTxt=p.n.toLowerCase().includes(q)||(NAME[p.c]||'').toLowerCase().includes(q)||(p.cl||'').toLowerCase().includes(q); if(!byNum&&!byTxt) return false; }
+    return true;
+  });
   const col=s.col,dir=s.dir;
   list.sort((a,b)=>{
     if(col==='n'||col==='c'||col==='pos'){ const va=col==='c'?(NAME[a.c]||''):String(a[col]||''), vb=col==='c'?(NAME[b.c]||''):String(b[col]||''); return dir*va.localeCompare(vb,'pt')||a.n.localeCompare(b.n,'pt'); }
     return dir*((a[col]||0)-(b[col]||0)) || a.n.localeCompare(b.n,'pt');
   });
-  const total=list.length, LIM=200, shown=list.slice(0,LIM);
+  const total=list.length;
   const arr=c=> s.col===c?(s.dir<0?' ▾':' ▴'):'';
+  document.querySelectorAll('#plChips [data-pos]').forEach(b=>b.classList.toggle('on',(b.dataset.pos||'')===fp));
+  const gb=document.querySelector('#plChips [data-goals]'); if(gb) gb.classList.toggle('on',fg);
   const hd=document.getElementById('plHead'); if(hd) hd.innerHTML='<span class="pl-h num" data-sort="num">Nº'+arr('num')+'</span><span class="pl-h nm" data-sort="n">Jogador'+arr('n')+'</span><span class="pl-h pp" data-sort="pos">Pos'+arr('pos')+'</span><span class="pl-h pp" data-sort="age">Id'+arr('age')+'</span><span class="pl-h pp" data-sort="g">⚽'+arr('g')+'</span>';
-  const cnt=document.getElementById('plCount'); if(cnt) cnt.textContent=total+(total===1?' jogador':' jogadores')+(total>LIM?' · mostrando os '+LIM+' primeiros (refine a busca)':'');
+  const cnt=document.getElementById('plCount'); if(cnt) cnt.textContent=total+(total===1?' jogador':' jogadores');
   let h='';
-  shown.forEach(p=>{ h+='<div class="pl-row"><span class="pl-num">'+(p.num||'–')+'</span><span class="pl-nm"><span class="pl-nl">'+(FLAG[p.c]||'')+' '+p.n+'</span><span class="pl-club">'+(NAME[p.c]||p.c)+(p.cl?' · '+p.cl:'')+'</span></span><span class="pl-pos pos-'+p.pos+'">'+(POSPT[p.pos]||p.pos||'–')+'</span><span class="pl-age">'+(p.age||'–')+'</span><span class="pl-g'+(p.g>0?' has':'')+'">'+p.g+'</span></div>'; });
+  list.forEach(p=>{ h+='<div class="pl-row"><span class="pl-num">'+(p.num||'–')+'</span><span class="pl-nm"><span class="pl-nl">'+(FLAG[p.c]||'')+' '+p.n+'</span><span class="pl-club">'+(NAME[p.c]||p.c)+(p.cl?' · '+p.cl:'')+'</span></span><span class="pl-pos pos-'+p.pos+'">'+(POSPT[p.pos]||p.pos||'–')+'</span><span class="pl-age">'+(p.age||'–')+'</span><span class="pl-g'+(p.g>0?' has':'')+'">'+p.g+'</span></div>'; });
   const ls=document.getElementById('plList'); if(ls) ls.innerHTML=h||'<div class="pl-empty">Nenhum jogador encontrado.</div>';
 }
 const NUMBERS=DATA.NUMBERS||{sections:[]};
