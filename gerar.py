@@ -255,8 +255,21 @@ def fetch_results():
         else:
             ph=OF_KO.get((m.get("round") or "").strip())
             if not ph: continue                       # 3o lugar ou rodada desconhecida
-            w = t1 if ft[0]>ft[1] else t2 if ft[1]>ft[0] else None
-            KO_REAL.append({"ph":ph,"h":t1,"a":t2,"gh":int(ft[0]),"ga":int(ft[1]),"w":w}); ko_n+=1
+            sc=(m.get("score") or {})
+            etv=sc.get("et"); pen=sc.get("p")
+            # gols exibidos: usa o placar da prorrogacao quando houver, senao o do tempo normal
+            dh,da=(etv if etv else ft); dh,da=int(dh),int(da)
+            # vencedor: penaltis > prorrogacao > tempo normal (mata-mata nao tem empate)
+            if pen and len(pen)==2 and pen[0]!=pen[1]:
+                w = t1 if pen[0]>pen[1] else t2
+            elif etv and etv[0]!=etv[1]:
+                w = t1 if etv[0]>etv[1] else t2
+            else:
+                w = t1 if ft[0]>ft[1] else t2 if ft[1]>ft[0] else None
+            entry={"ph":ph,"h":t1,"a":t2,"gh":dh,"ga":da,"w":w,
+                   "n":(int(m["num"]) if m.get("num") else None)}
+            if pen and len(pen)==2: entry["pen"]=[int(pen[0]),int(pen[1])]
+            KO_REAL.append(entry); ko_n+=1
     # rodada do grupo = ordem cronologica dos jogos JA encerrados de cada grupo (2 por rodada)
     from collections import defaultdict
     bg=defaultdict(list)

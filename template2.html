@@ -482,6 +482,17 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .slot.w .slot-prob{color:var(--live);background:rgba(54,196,107,.14)}
 .slot.l .slot-prob{opacity:.55}
 .slot .slot-info{margin-left:0}
+/* --- resultado REAL do mata-mata --- */
+.slot.rw{background:rgba(54,196,107,.12)}
+.slot.rw .nm{color:var(--live);font-weight:800}
+.slot.rw::after{content:"✓";color:var(--live);font-size:11px;font-weight:800}
+.slot.rl .flag{filter:grayscale(.7) opacity(.5)}
+.slot.rl .nm{color:var(--mut2)}
+.slot-goals{flex:none;font-family:Archivo;font-weight:800;font-size:14px;color:var(--txt);background:rgba(255,255,255,.07);padding:1px 8px;border-radius:5px;margin-left:auto;min-width:22px;text-align:center}
+.slot.rw .slot-goals{color:var(--live);background:rgba(54,196,107,.16)}
+.slot.rl .slot-goals{color:var(--mut)}
+.slot-goals .pen{font-size:9px;font-weight:700;color:var(--mut2);margin-left:2px}
+.rdone{display:inline-block;margin-left:7px;font-size:8px;font-weight:800;letter-spacing:.06em;color:var(--live);background:rgba(54,196,107,.14);border:1px solid rgba(54,196,107,.32);border-radius:4px;padding:0 5px;vertical-align:middle;text-transform:uppercase}
 .pl-ctrl{display:flex;gap:8px;margin-bottom:10px}
 .pl-search{flex:1;min-width:0;background:var(--surf);border:1px solid var(--line2);border-radius:10px;padding:10px 12px;color:var(--txt);font-size:14px;font-family:Inter}
 .pl-country{flex:none;max-width:44%;background:var(--surf);border:1px solid var(--line2);border-radius:10px;padding:10px 8px;color:var(--txt);font-size:13px;font-family:Inter}
@@ -624,6 +635,12 @@ const DATA = /*__DATA__*/;
 const THIRD_ALLOC = /*__ALLOC__*/;
 const F=DATA.F, GR=DATA.GR, NAME=DATA.NAME, FLAG=DATA.FLAG, GAMES0=DATA.GAMES;
 const PRED_PHASES=DATA.PRED_PHASES||{}, KO_REAL=DATA.KO_REAL||[];
+// indices de resultado REAL do mata-mata (priorizam o palpite na chave)
+const KO_REAL_BYN={}, KO_REAL_BYPAIR={};
+for(const k of KO_REAL){
+  if(k.n!=null) KO_REAL_BYN[k.n]=k;
+  if(k.h&&k.a) KO_REAL_BYPAIR[[k.h,k.a].slice().sort().join('|')]=k;
+}
 const VENUE_KO=DATA.VENUE_KO||{};
 const BRA_PATH=DATA.BRA_PATH||{pos:{},first:[],second:[]};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
@@ -737,7 +754,7 @@ function allocNow(){ return THIRD_ALLOC[thirdsSet().join("")]||null; }
 const team=c=>c?{code:c,name:NAME[c],flag:FLAG[c]}:null;
 
 // ---- mata-mata ----
-let RES={}, PICK={};
+let RES={}, PICK={}, REALSC={};   // REALSC[id]={a,b,pen,w} = placar real (jogo encerrado)
 function resolveSlot(s){
   if(s.wn) return team(posOf(s.wn,1));
   if(s.ru) return team(posOf(s.ru,2));
@@ -748,10 +765,28 @@ function resolveSlot(s){
 }
 const favorite=(a,b)=> !a?(b?b.code:null) : !b?a.code : (F[a.code]>=F[b.code]?a.code:b.code);
 function recompute(){
-  TAB=standings(); RES={}; PICK={};
+  TAB=standings(); RES={}; PICK={}; REALSC={};
   for(const id of KO_IDS){
-    const m=KO[id], a=resolveSlot(m.a), b=resolveSlot(m.b);
+    const m=KO[id];
+    let a=resolveSlot(m.a), b=resolveSlot(m.b);
+    // (1) jogo encerrado por NÚMERO: as seleções e o placar vêm do real (openfootball)
+    const rkN=KO_REAL_BYN[id];
+    if(rkN && rkN.w){
+      a=team(rkN.h); b=team(rkN.a); RES[id]={a,b};
+      REALSC[id]={a:rkN.gh,b:rkN.ga,pen:rkN.pen||null,w:rkN.w};
+      PICK[id]=rkN.w;                              // vencedor real segue na chave (jogo 90 etc.)
+      continue;
+    }
     RES[id]={a,b};
+    // (2) fallback: casa o real pelo par de seleções já resolvidas (sem número)
+    const rkP=(a&&b)?KO_REAL_BYPAIR[[a.code,b.code].slice().sort().join('|')]:null;
+    if(rkP && rkP.w){
+      const flip=(a.code!==rkP.h);
+      REALSC[id]={a:flip?rkP.ga:rkP.gh,b:flip?rkP.gh:rkP.ga,
+                  pen:rkP.pen?(flip?[rkP.pen[1],rkP.pen[0]]:[rkP.pen[0],rkP.pen[1]]):null,w:rkP.w};
+      PICK[id]=rkP.w; continue;
+    }
+    // (3) ainda não decidido: palpite do usuário ou favorito (ou vazio no "zerar")
     let p=state.manual[id];
     if(p && (!a||a.code!==p) && (!b||b.code!==p)){ delete state.manual[id]; p=null; }
     PICK[id]= p || (state.blank ? null : favorite(a,b));
@@ -826,13 +861,22 @@ function thirdOrigin(id){
 }
 function advP(a,b){ const fa=F[a]!=null?F[a]:50, fb=F[b]!=null?F[b]:50; return 1/(1+Math.pow(10,(fb-fa)/28)); } // mesma base (força F) dos palpites de placar
 function slotHTML(id,side){
-  const spec=KO[id][side], t=RES[id]?RES[id][side]:null, pick=PICK[id];
+  const spec=KO[id][side], t=RES[id]?RES[id][side]:null, pick=PICK[id], rs=REALSC[id];
   if(!t){ const L=slotLabel(spec); return `<div class="slot empty ph" title="${L.title}"><span class="badge">${L.t}</span></div>`; }
-  let cls="slot"; if(pick) cls+= pick===t.code?" w":" l";
+  let cls="slot";
+  if(rs){ cls += (rs.w===t.code)?" rw":" rl"; }      // resultado real: vencedor / perdedor
+  else if(pick) cls+= pick===t.code?" w":" l";
   if(state.follow && t.code===state.follow) cls+=" foll";
   const other=RES[id]?RES[id][side==='a'?'b':'a']:null;
-  const probTag = (other&&other.code) ? `<span class="slot-prob" title="Chance de vencer o confronto (Elo)">${Math.round(advP(t.code,other.code)*100)}%</span>` : '';
-  return `<div class="${cls}" data-pick="${id}:${t.code}"><span class="flag">${t.flag}</span><span class="nm">${t.name}</span>${probTag}<button class="slot-info" data-pro="${t.code}" aria-label="Ver ${t.name}" title="Ver seleção">ⓘ</button></div>`;
+  let tag='';
+  if(rs){
+    const g=side==='a'?rs.a:rs.b, pv=rs.pen?(side==='a'?rs.pen[0]:rs.pen[1]):null;
+    tag=`<span class="slot-goals" title="Placar final (resultado real)">${g}${pv!=null?`<span class="pen">(${pv})</span>`:''}</span>`;
+  } else if(other&&other.code){
+    tag=`<span class="slot-prob" title="Chance de vencer o confronto (Elo)">${Math.round(advP(t.code,other.code)*100)}%</span>`;
+  }
+  const dp = rs ? '' : ` data-pick="${id}:${t.code}"`; // jogo encerrado não é clicável
+  return `<div class="${cls}"${dp}><span class="flag">${t.flag}</span><span class="nm">${t.name}</span>${tag}<button class="slot-info" data-pro="${t.code}" aria-label="Ver ${t.name}" title="Ver seleção">ⓘ</button></div>`;
 }
 function h2hMiniText(a,b){
   if(!a||!b||a===b) return '';
@@ -865,7 +909,7 @@ function matchHTML(id){
   const canStat = r.a&&r.b&&r.a.code&&r.b.code && v&&v.iso && v.iso<=_ymd();
   const statbtn = canStat ? `<button class="h2h-btn stat-btn" data-matchstat="${r.a.code}:${r.b.code}:${v.iso}" title="Estatísticas">📊 estatísticas</button>` : '';
   const foot = (h2hbtn||statbtn) ? `<div class="ko-foot">${h2hbtn}${statbtn}</div>` : '';
-  return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div>${foot}</div>`;
+  return `<div class="matchwrap"><div class="match${foll?' followed':''}"><span class="mnum">Jogo ${id}${REALSC[id]?'<span class="rdone">encerrado</span>':''}</span>${slotHTML(id,'a')}${slotHTML(id,'b')}${o?`<div class="origin">${o}</div>`:''}${meta}</div>${foot}</div>`;
 }
 function renderKO(){
   const body=document.getElementById('koBody'), finals=document.getElementById('finalsBox');
