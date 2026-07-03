@@ -41,7 +41,7 @@ body{
   color:var(--txt);font-family:"Twemoji Country Flags",Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
   -webkit-font-smoothing:antialiased;line-height:1.45;
 }
-.wrap{max-width:680px;margin:0 auto;padding:18px 16px 90px}
+.wrap{max-width:1760px;margin:0 auto;padding:18px clamp(14px,3.2vw,48px) 96px}
 header .eyebrow{font-family:"Twemoji Country Flags",Archivo;font-weight:800;letter-spacing:.24em;text-transform:uppercase;font-size:11px;color:var(--copa)}
 h1{font-family:"Twemoji Country Flags",Archivo;font-weight:900;font-size:clamp(26px,6vw,44px);line-height:.95;margin:5px 0 7px;letter-spacing:-.01em}
 h1 .yr{color:var(--gold)}
@@ -67,7 +67,7 @@ h1 .yr{color:var(--gold)}
 .panel-actions{display:flex;justify-content:flex-end;gap:8px;margin-bottom:11px}
 
 .panel{margin-top:16px}
-.hint{font-size:13px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:11px 14px;margin-bottom:14px}
+.hint{font-size:13px;color:var(--mut);background:var(--surf);border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:10px;padding:11px 14px;margin-bottom:14px;max-width:88ch}
 .hint .real{color:var(--live);font-weight:700}
 .hidden{display:none}
 
@@ -175,7 +175,7 @@ h1 .yr{color:var(--gold)}
 .mline:last-child{border-bottom:0}
 .mline .lab{font-size:11px;color:var(--mut);width:78px;flex:none}
 .mline .flag{font-size:20px}.mline .nm{font-weight:600;font-size:14px}
-footer{margin-top:26px;font-size:11.5px;color:var(--mut2);border-top:1px solid var(--line);padding-top:14px;line-height:1.6}
+footer{margin-top:26px;font-size:11.5px;color:var(--mut2);border-top:1px solid var(--line);padding-top:14px;line-height:1.6;max-width:96ch}
 footer b{color:var(--mut)}
 ::-webkit-scrollbar{height:10px;width:10px}::-webkit-scrollbar-thumb{background:#1f3329;border-radius:6px}
 *:focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:6px}
@@ -312,6 +312,22 @@ footer b{color:var(--mut)}
 .lb-sub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;margin-top:1px}
 .lb-when{color:var(--mut);font-weight:600}
 .lb-pred{color:var(--gold);font-weight:700;background:rgba(244,194,75,.1);padding:1px 7px;border-radius:5px}
+/* navegação de dia da tabela do dia */
+.lb-nav{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.lb-navbtn{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line2);background:var(--surf);color:var(--txt);font-size:18px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.12s}
+.lb-navbtn:hover,.lb-navbtn:active{background:var(--surf2);border-color:var(--live)}
+.lb-daylabel{flex:1;text-align:center;display:flex;flex-direction:column;gap:1px;min-width:0}
+.lb-dl-main{font-family:Archivo;font-weight:800;font-size:15px;color:var(--txt)}
+.lb-dl-sub{font-size:10.5px;color:var(--mut2);text-transform:capitalize}
+.lb-today{flex:none;font-family:Archivo;font-weight:800;font-size:10.5px;color:var(--live);background:rgba(54,196,107,.12);border:1px solid rgba(54,196,107,.3);border-radius:7px;padding:5px 10px;cursor:pointer}
+.lb-today:hover{background:rgba(54,196,107,.2)}
+.lb-sec+.lb-sec{margin-top:12px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.09)}
+.lb-head-sched{color:var(--mut2)!important}
+@media(min-width:1000px){
+  .lb-sec{display:grid;grid-template-columns:1fr 1fr;gap:0 28px}
+  .lb-sec>.lb-head{grid-column:1/-1}
+  .lb-sec>.lb-game{border-top:1px solid rgba(255,255,255,.06)}
+}
 /* ===== aba Sedes (mapa) ===== */
 .venue-pick{margin-bottom:12px}
 .venue-pick select{width:100%;padding:11px 13px;font-family:"Twemoji Country Flags",Inter;font-size:14px;font-weight:600;color:var(--txt);background:var(--surf);border:1px solid var(--line2);border-radius:11px;-webkit-appearance:none;appearance:none}
@@ -1503,7 +1519,9 @@ async function loadSaved(){ try{ if(window.storage&&window.storage.get){ const r
 
 // ---- placar ao vivo (fonte pública ESPN; com plano B via proxy e diagnóstico) ----
 function _ymd(){ const d=new Date(); return ''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
-const ESPN_URL='https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates='+_ymd();
+const ESPN_BASE='https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=';
+function ymdOff(off){ const d=new Date(); d.setDate(d.getDate()+(off||0)); return ''+d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0'); }
+let dayOffset=0;   // 0=hoje; navegação de dia da tabela do dia
 async function _try(url){
   const r=await fetch(url,{cache:'no-store',headers:{'Accept':'application/json'}});
   if(!r||!r.ok) throw new Error('http'+(r&&r.status));
@@ -1537,11 +1555,12 @@ function refreshLiveCards(){
   else if(state.tab==='ko'){ recompute(); renderKO(); }             // bracket reflete a colocação ao vivo
   window.scrollTo(0,y);
 }
-async function fetchLive(){
+async function fetchScore(ymd){
+  const url=ESPN_BASE+ymd;
   // 1) direto
-  try{ return {ok:true,src:'direto',games:_parse(await _try(ESPN_URL))}; }catch(e){}
+  try{ return {ok:true,src:'direto',games:_parse(await _try(url))}; }catch(e){}
   // 2) plano B: proxy CORS público
-  try{ return {ok:true,src:'proxy',games:_parse(await _try('https://api.allorigins.win/raw?url='+encodeURIComponent(ESPN_URL)))}; }catch(e){}
+  try{ return {ok:true,src:'proxy',games:_parse(await _try('https://api.allorigins.win/raw?url='+encodeURIComponent(url)))}; }catch(e){}
   return {ok:false,src:'',games:[]};
 }
 function _gm(g){
@@ -1568,20 +1587,57 @@ function _gm(g){
   const clickAttr=canStat?' data-livestat="'+g.id+'" role="button" tabindex="0"':'';
   return '<div class="lb-game'+(canStat?' tappable':'')+'"'+clickAttr+'><span class="lb-status '+cls+'">'+lab+'</span><div class="lb-body"><span class="lb-match"><b>'+h+'</b> '+sc+' <b>'+a+'</b></span>'+sub+'</div></div>';
 }
-function renderLiveBar(res){
+const _WD=['dom','seg','ter','qua','qui','sex','sáb'], _MO=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+function dayLabel(off){
+  if(off===0) return 'Hoje'; if(off===1) return 'Amanhã'; if(off===-1) return 'Ontem';
+  const d=new Date(); d.setDate(d.getDate()+off); return _WD[d.getDay()]+' '+d.getDate()+'/'+_MO[d.getMonth()];
+}
+function dayNavHTML(off){
+  const d=new Date(); d.setDate(d.getDate()+off);
+  const full=_WD[d.getDay()]+', '+d.getDate()+' '+_MO[d.getMonth()];
+  return '<div class="lb-nav">'
+    +'<button class="lb-navbtn" data-dayoff="'+(off-1)+'" aria-label="Dia anterior">‹</button>'
+    +'<div class="lb-daylabel"><span class="lb-dl-main">'+dayLabel(off)+'</span><span class="lb-dl-sub">'+full+'</span></div>'
+    +'<button class="lb-navbtn" data-dayoff="'+(off+1)+'" aria-label="Próximo dia">›</button>'
+    +(off!==0?'<button class="lb-today" data-dayoff="0">hoje</button>':'')
+    +'</div>';
+}
+function renderDayBar(res, off){
   const bar=document.getElementById('liveBar'); if(!bar) return;
   if(!res){ bar.className='livebar hidden'; bar.innerHTML=''; return; }
-  if(!res.ok){ bar.className='livebar diag-fail'; bar.innerHTML='<div class="lb-head" style="color:var(--copa)">⚠ não consegui conectar na fonte de placar ao vivo</div>'; return; }
-  const games=res.games||[];
-  const live=games.filter(g=>g.state==='in');
-  const show=(live.length?live:games).slice(0,6);
-  if(!show.length){ bar.className='livebar'; bar.innerHTML='<div class="lb-head" style="color:var(--mut2)">✓ fonte ao vivo conectada ('+res.src+') · nenhum jogo hoje</div>'; return; }
-  const head=live.length ? '<div class="lb-head"><span class="lb-dot"></span>Ao vivo agora</div>'
-    : '<div class="lb-head" style="color:var(--mut2)">Jogos de hoje · fonte conectada ✓ ('+res.src+')</div>';
-  bar.className='livebar'; bar.innerHTML=head+show.map(_gm).join('');
+  bar.className='livebar';
+  if(!res.ok){ bar.innerHTML=dayNavHTML(off)+'<div class="lb-head" style="color:var(--copa)">⚠ não consegui conectar na fonte de placar</div>'; return; }
+  const games=res.games||[]; _lastGames=games;
+  const live = off===0 ? games.filter(g=>g.state==='in') : [];
+  const rest = off===0 ? games.filter(g=>g.state!=='in') : games;
+  let h=dayNavHTML(off);
+  if(live.length) h+='<div class="lb-sec"><div class="lb-head"><span class="lb-dot"></span>Ao vivo agora</div>'+live.map(_gm).join('')+'</div>';
+  if(rest.length){
+    const t = off===0 ? (live.length?'Também hoje':'Programação de hoje') : 'Jogos · '+dayLabel(off);
+    h+='<div class="lb-sec"><div class="lb-head lb-head-sched">'+t+'</div>'+rest.map(_gm).join('')+'</div>';
+  }
+  if(!live.length && !rest.length) h+='<div class="lb-head" style="color:var(--mut2)">Sem jogos neste dia · fonte ✓ ('+res.src+')</div>';
+  bar.innerHTML=h;
 }
-async function tickLive(){ try{ const res=await fetchLive(); _lastGames=res.games||[]; renderLiveBar(res); if(res.ok){ updateLive(res.games); refreshLiveCards(); } }catch(e){} }
+async function tickLive(){
+  try{
+    const today=await fetchScore(ymdOff(0));
+    if(today.ok){ updateLive(today.games); refreshLiveCards(); }
+    if(dayOffset===0){ _lastGames=today.games||[]; renderDayBar(today, 0); }  // só mexe em _lastGames se a barra mostra hoje
+  }catch(e){}
+}
+async function showDay(off){
+  dayOffset=off;
+  if(off===0){ tickLive(); return; }
+  const bar=document.getElementById('liveBar');
+  if(bar){ bar.className='livebar'; bar.innerHTML=dayNavHTML(off)+'<div class="lb-head" style="color:var(--mut2)">carregando…</div>'; }
+  const res=await fetchScore(ymdOff(off));
+  if(dayOffset===off) renderDayBar(res, off);   // ignora se o usuário já trocou de dia
+}
 tickLive(); setInterval(tickLive, 30000);
+(function(){ const bar=document.getElementById('liveBar'); if(bar) bar.addEventListener('click', e=>{
+  const b=e.target.closest('[data-dayoff]'); if(!b) return; showDay(parseInt(b.getAttribute('data-dayoff'),10)||0);
+}); })();
 
 // ---- estatísticas detalhadas do jogo (endpoint summary da ESPN) ----
 let _lastGames=[];
