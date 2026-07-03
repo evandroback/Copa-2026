@@ -393,6 +393,10 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 .h2h-chip b{font-family:"Twemoji Country Flags",Archivo;font-weight:900;color:var(--txt)}
 .h2h-note{font-size:12.5px;color:var(--mut2);background:var(--surf2);border:1px solid var(--line2);border-radius:9px;padding:11px 13px}
 .bp-pos{background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:14px}
+.bp-picker{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.bp-picker label{font-family:Archivo;font-weight:800;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut2)}
+.bp-picker select{flex:1;min-width:0;font-family:"Twemoji Country Flags",Archivo;font-weight:700;font-size:15px;color:var(--txt);background:var(--surf);border:1px solid var(--line2);border-radius:11px;padding:11px 13px;cursor:pointer}
+.bp-picker select:focus{outline:2px solid var(--live);outline-offset:1px}
 .bp-pos-t{font-family:"Twemoji Country Flags",Archivo;font-weight:800;font-size:13px;color:var(--txt);margin-bottom:10px}
 .bp-pb{display:flex;align-items:center;gap:10px;margin-bottom:7px}
 .bp-pb-l{font-size:12px;color:var(--mut);width:108px;flex:none}
@@ -608,7 +612,7 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
   </section>
 
   <section class="panel hidden" id="secBraPath">
-    <div class="hint">O <b>caminho do Brasil no mata-mata</b> simulado milhares de vezes (Monte Carlo). Escolha <b>passar em 1º ou 2º</b> do grupo e veja, fase a fase até a final, <b>quem ele pode pegar</b>, a chance de cada adversário e a probabilidade de avançar. Atualiza conforme os resultados saem.</div>
+    <div class="hint">O <b>caminho de qualquer seleção no mata-mata</b>, simulado milhares de vezes (Monte Carlo). <b>Escolha a seleção</b> (Brasil por padrão) e o cenário (1º ou 2º do grupo) e veja, fase a fase até a final, <b>quem ela pode pegar</b>, a chance de cada adversário e a de avançar. Atualiza conforme os resultados saem.</div>
     <div id="braPathBox"></div>
   </section>
 
@@ -655,6 +659,7 @@ for(const k of KO_REAL){
 }
 const VENUE_KO=DATA.VENUE_KO||{};
 const BRA_PATH=DATA.BRA_PATH||{pos:{},first:[],second:[]};
+const PATHS=DATA.PATHS||{BRA:BRA_PATH};
 const BRASIL=DATA.BRASIL||{hero:[],sections:[]};
 const PROFILES=DATA.PROFILES||{};
 const PROB=DATA.PROB||{};
@@ -734,7 +739,7 @@ const KO_IDS=Object.keys(KO).map(Number).sort((x,y)=>x-y);
 const DISPLAY={R32:[74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87],R16:[89,90,93,94,91,92,95,96],QF:[97,98,99,100],SF:[101,102],F:[104]};
 const RTITLE={R32:"32-avos",R16:"Oitavas",QF:"Quartas",SF:"Semis",F:"Final"};
 
-let state={ games:clone(GAMES0), edits:{}, manual:{}, follow:"BRA", tab:"groups", blank:false };
+let state={ games:clone(GAMES0), edits:{}, manual:{}, follow:"BRA", tab:"groups", blank:false, pathCode:"BRA" };
 
 // ---- classificação ----
 let TAB={};
@@ -985,30 +990,39 @@ function renderBlocks(data, boxId){
 function renderBrasil(){ renderBlocks(BRASIL,'brasilBox'); }
 function renderBraPath(){
   const box=document.getElementById('braPathBox'); if(!box) return;
+  const code=state.pathCode||'BRA';
+  const DP=(typeof PATHS!=='undefined'&&PATHS[code])||BRA_PATH||{};
   const scen=state.braScen||'first';
-  const pos=BRA_PATH.pos||{};
-  const faseNm={R32:'32-avos de final',R16:'Oitavas de final',QF:'Quartas de final',SF:'Semifinal',F:'🏆 FINAL'};
-  let h=`<div class="bp-pos"><div class="bp-pos-t">Como o Brasil se classifica (simulado)</div>`;
+  const pos=DP.pos||{};
+  const nm=NAME[code]||code, fl=FLAG[code]||'';
+  const grp=(function(){ for(const gK in GR){ if(GR[gK].indexOf(code)>=0) return gK; } return null; })();
+  const faseNm={R32:'32-avos de final',R16:'Oitavas de final',QF:'Quartas de final',SF:'Semifinal',F:'FINAL'};
+  const codes=Object.keys((typeof PATHS!=='undefined'&&PATHS)||{BRA:1}).sort((a,b)=>(NAME[a]||a).localeCompare(NAME[b]||b,'pt'));
+  let sel='<div class="bp-picker"><label for="pathSel">Seleção</label><select id="pathSel">';
+  codes.forEach(c=>{ sel+=`<option value="${c}"${c===code?' selected':''}>${NAME[c]||c}</option>`; });
+  sel+='</select></div>';
+  let h=sel+`<div class="bp-pos"><div class="bp-pos-t">${fl} Como ${nm} se classifica (simulado)</div>`;
   const pb=(lab,v,cls)=>`<div class="bp-pb"><span class="bp-pb-l">${lab}</span><span class="bp-pb-bar"><span class="${cls}" style="width:${Math.max(2,v)}%"></span></span><span class="bp-pb-v">${v}%</span></div>`;
   h+=pb('em 1º do grupo',pos.first||0,'f1')+pb('em 2º do grupo',pos.second||0,'f2');
   if((pos.third||0)>0) h+=pb('como melhor 3º',pos.third,'f3');
+  if((pos.out||0)>0)   h+=pb('fora do mata-mata',pos.out,'f3');
   h+=`</div>`;
   h+=`<div class="bp-toggle"><button class="bp-tg ${scen==='first'?'on':''}" data-brascen="first">Se passar em 1º</button><button class="bp-tg ${scen==='second'?'on':''}" data-brascen="second">Se passar em 2º</button></div>`;
-  h+=`<div class="bp-note">Para cada fase: <b>data, sede e todos os possíveis adversários</b> com a chance de cada um (do Monte Carlo). "BRA %" = chance do Brasil vencer aquele rival. Conforme os grupos fecham, as opções vão sumindo até virar o adversário certo.</div>`;
-  const fases=BRA_PATH[scen]||[];
+  h+=`<div class="bp-note">Para cada fase: <b>data, sede e todos os possíveis adversários</b> com a chance de cada um (do Monte Carlo). "${code} %" = chance de ${nm} vencer aquele rival. Conforme os grupos fecham, as opções vão sumindo até virar o adversário certo.</div>`;
+  const fases=DP[scen]||[];
+  if(!fases.length){ h+=`<div class="bp-note" style="border-left-color:var(--copa)">Sem caminho simulado para ${nm} neste cenário — pode já estar eliminado ou não se classificar em ${scen==='first'?'1º':'2º'}.</div>`; box.innerHTML=h; return; }
   fases.forEach((f,i)=>{
     const vk=VENUE_KO[f.game]||{};
     const when=vk.dt?`${vk.dt}${vk.hr?' · '+vk.hr:''}`:'';
     const place=vk.vn?`${vk.vn}${vk.co?' · '+vk.cf+' '+vk.co:''}`:'';
-    // origem do adversário (apenas 32-avos é simples e direto)
-    const src = i===0 ? (scen==='first'?'sai do <b>2º colocado do Grupo F</b>':'sai do <b>1º colocado do Grupo F</b>') : '';
+    const src = (i===0&&grp) ? (scen==='first'?`sai do <b>2º colocado do Grupo ${grp}</b>`:`sai do <b>1º colocado do Grupo ${grp}</b>`) : '';
     h+=`<div class="bp-fase${f.phase==='F'?' final':''}">`;
-    h+=`<div class="bp-fh"><span class="bp-num">${i+1}</span><div class="bp-fhx"><span class="bp-phase">${faseNm[f.phase]}</span>${when?`<span class="bp-when">📅 ${when}</span>`:''}${place?`<span class="bp-place">📍 ${place}</span>`:''}</div></div>`;
+    h+=`<div class="bp-fh"><span class="bp-num">${i+1}</span><div class="bp-fhx"><span class="bp-phase">${faseNm[f.phase]}</span>${when?`<span class="bp-when">${when}</span>`:''}${place?`<span class="bp-place">${place}</span>`:''}</div></div>`;
     if(src) h+=`<div class="bp-src">Adversário ${src}</div>`;
     if(f.advs&&f.advs.length){
       h+=`<div class="bp-advl">Pode pegar — ${f.npos} possíveis</div><div class="bp-advs">`;
       f.advs.forEach(a=>{
-        h+=`<div class="bp-adv proteam" data-pro="${a.c}"><span class="bp-adv-fl">${FLAG[a.c]||''}</span><span class="bp-adv-nm">${NAME[a.c]||a.c}</span><span class="bp-adv-bar"><span style="width:${Math.max(3,a.pct)}%"></span></span><span class="bp-adv-pct">${a.pct}%</span><span class="bp-adv-win">BRA ${a.win}%</span></div>`;
+        h+=`<div class="bp-adv proteam" data-pro="${a.c}"><span class="bp-adv-fl">${FLAG[a.c]||''}</span><span class="bp-adv-nm">${NAME[a.c]||a.c}</span><span class="bp-adv-bar"><span style="width:${Math.max(3,a.pct)}%"></span></span><span class="bp-adv-pct">${a.pct}%</span><span class="bp-adv-win">${code} ${a.win}%</span></div>`;
       });
       if(f.nother>0) h+=`<div class="bp-adv-others">+ ${f.nother} ${f.nother===1?'outro time possível':'outros times possíveis'} (${f.others}% somados)</div>`;
       h+=`</div>`;
@@ -1489,6 +1503,7 @@ function setTab(t){ state.tab=t;
   saveSoon(); }
 tg.onclick=()=>setTab('groups'); tk.onclick=()=>setTab('ko'); tp.onclick=()=>setTab('prob'); tn.onclick=()=>setTab('numbers'); tpls.onclick=()=>setTab('players'); ta.onclick=()=>setTab('acc'); tb.onclick=()=>setTab('brasil'); tbp.onclick=()=>setTab('brapath'); tv.onclick=()=>setTab('venues');
 document.getElementById('braPathBox').addEventListener('click',e=>{ const b=e.target.closest('[data-brascen]'); if(b){ state.braScen=b.dataset.brascen; renderBraPath(); } });
+document.getElementById('braPathBox').addEventListener('change',e=>{ const s=e.target.closest('#pathSel'); if(s){ state.pathCode=s.value; state.braScen='first'; renderBraPath(); } });
 document.getElementById('accBox').addEventListener('click',e=>{
   const d=e.target.closest('[data-dim]');
   if(d){ accDim=d.dataset.dim; renderAccuracy(); return; }
