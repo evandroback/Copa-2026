@@ -1409,31 +1409,31 @@ function accKOHTML(){
     if(realSet.size) h+=`<div class="acphsub">acertei <b>${hit.length}</b> de ${realSet.size} — ${noun}</div><div class="acphbar"><div class="acphfill" style="width:${pct}%"></div></div>`;
     if(hit.length){ h+=`<div class="acphlist">`+hit.map(c=>`<span class="acphteam hit">${FLAG[c]} ${NAME[c]} ✓</span>`).join('')+`</div>`; }
     if(surp.length){ h+=`<div class="acphlist">`+surp.map(c=>`<span class="acphteam miss">${FLAG[c]} ${NAME[c]} ✗</span>`).join('')+`</div>`; }
-    // ---- VAGAS EM DISPUTA ----
-    // Confronto REAL pendente da fase k = jogo de DISPLAY[k] sem resultado cujos DOIS lados já
-    // são reais (os feeders já foram vencidos). Os lados = VENCEDORES REAIS dos feeders (não projeção).
-    if((partial || realSet.size===0) && DISPLAY[k]){
-      const NEXT={R32:'R16',R16:'QF',QF:'SF',SF:'F',F:'CH'};
-      // "passar da fase k" = estar projetado na fase SEGUINTE (k+1). Ex: vencer a oitava = estar nas quartas do meu palpite.
-      const advSet=new Set(PRED_PHASES[NEXT[k]]||[]);
+    // ---- VAGAS EM DISPUTA (quem CHEGA a esta fase) ----
+    // Os jogos que decidem quem entra na fase k são os da fase ANTERIOR (PREV[k]).
+    // Ex: os jogos de QUARTA decidem quem chega à SEMI -> aparecem no bloco da SEMI.
+    // "acho que chega" = o time está no meu palpite PRED_PHASES[k] (projetei ele nesta fase).
+    const prev=PREV[k];
+    if((partial || realSet.size===0) && prev && DISPLAY[prev]){
+      const chegaSet=new Set(PRED_PHASES[k]||[]);   // quem EU projetei chegar a ESTA fase
       const realPend=[];
-      for(const gid of DISPLAY[k]){
-        if(REALSC[gid]) continue;                        // já jogado -> vencedor nos confirmados
+      for(const gid of DISPLAY[prev]){
+        if(REALSC[gid]) continue;                        // jogo da fase anterior já decidido -> vencedor já é confirmado de k
         const fA=KO[gid].a&&KO[gid].a.win, fB=KO[gid].b&&KO[gid].b.win;
         let a=null,b=null;
-        if(fA==null && fB==null){ const r=RES[gid]; a=r&&r.a; b=r&&r.b; }   // R32 (vem dos grupos)
+        if(fA==null && fB==null){ const r=RES[gid]; a=r&&r.a; b=r&&r.b; }   // R32 vem dos grupos
         else { const wa=winByN[fA], wb=winByN[fB]; if(!wa||!wb) continue; a=team(wa); b=team(wb); }
         if(a&&b) realPend.push({a,b});
       }
       if(realPend.length){
-        h+=`<div class="acpbet"><div class="acpbet-h">Vagas em disputa · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
+        h+=`<div class="acpbet"><div class="acpbet-h">Quem chega aqui · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
         for(const p of realPend){
-          const chip=(t,win)=>`<span class="acphteam ${win?'bet-win':'bet-out'}">${t.flag} ${t.name} ${win?'— acho que passa':'— acho que cai'}</span>`;
-          h+=`<div class="acpmatch">${chip(p.a,advSet.has(p.a.code))}<span class="acpvs">x</span>${chip(p.b,advSet.has(p.b.code))}</div>`;
+          const chip=(t,win)=>`<span class="acphteam ${win?'bet-win':'bet-out'}">${t.flag} ${t.name} ${win?'— acho que chega':'— acho que não'}</span>`;
+          h+=`<div class="acpmatch">${chip(p.a,chegaSet.has(p.a.code))}<span class="acpvs">x</span>${chip(p.b,chegaSet.has(p.b.code))}</div>`;
         }
         h+=`</div>`;
       } else {
-        const proj=[...predSet].filter(c=>!dead.has(c));  // fase distante: só projeção, sem confronto
+        const proj=[...new Set(PRED_PHASES[k]||[])].filter(c=>!dead.has(c));  // fase distante: só projeção
         if(proj.length){
           h+=`<div class="acpbet"><div class="acpbet-h">No meu palpite, chegam aqui <span class="acpbet-tag proj">projeção</span></div>`+
              `<div class="acphlist">`+proj.map(c=>`<span class="acphteam bet-win">${FLAG[c]} ${NAME[c]}</span>`).join('')+`</div></div>`;
