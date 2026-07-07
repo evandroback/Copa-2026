@@ -229,6 +229,8 @@ footer b{color:var(--mut)}
 .acpbet-tag{font-family:Archivo;font-weight:800;font-size:8.5px;letter-spacing:.06em;color:var(--gold);background:rgba(226,180,87,.12);border:1px solid rgba(226,180,87,.3);border-radius:5px;padding:1px 6px}
 .acphteam.bet-win{color:var(--live);background:rgba(63,214,139,.08);border:1px dashed rgba(63,214,139,.4)}
 .acphteam.bet-out{color:var(--mut);background:rgba(255,255,255,.03);border:1px dashed var(--line2)}
+.acpmatch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+.acpvs{font-family:Archivo;font-weight:800;font-size:10px;color:var(--mut2);flex:none}
 .acphp{font-family:"Twemoji Country Flags",Archivo;font-weight:900;font-size:22px;color:var(--gold)}
 .acphsub{font-size:12px;color:var(--mut);margin:2px 0 8px}
 .acphbar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:9px}
@@ -1403,17 +1405,22 @@ function accKOHTML(){
     if(realSet.size) h+=`<div class="acphsub">acertei <b>${hit.length}</b> de ${realSet.size} — ${noun}</div><div class="acphbar"><div class="acphfill" style="width:${pct}%"></div></div>`;
     if(hit.length){ h+=`<div class="acphlist">`+hit.map(c=>`<span class="acphteam hit">${FLAG[c]} ${NAME[c]} ✓</span>`).join('')+`</div>`; }
     if(surp.length){ h+=`<div class="acphlist">`+surp.map(c=>`<span class="acphteam miss">${FLAG[c]} ${NAME[c]} ✗</span>`).join('')+`</div>`; }
-    // ---- PALPITE (a confirmar): só quando a fase ainda não fechou ----
-    if(partial || realSet.size===0){
-      // aposto que CHEGA: projetei p/ esta fase, ainda não confirmado e não eliminado na vida real
-      const bettoReach=[...predSet].filter(c=>!realSet.has(c) && !dead.has(c));
-      // aposto que CAI aqui: projetei p/ a fase anterior mas NÃO p/ esta (no meu bracket, para aqui) e ainda vivo
-      const prevPred=new Set(PRED_PHASES[PREV[k]]||[]);
-      const bettoFall=[...prevPred].filter(c=>!predSet.has(c) && !dead.has(c) && !realSet.has(c));
-      if(bettoReach.length || bettoFall.length){
-        h+=`<div class="acpbet"><div class="acpbet-h">Meu palpite para o que falta <span class="acpbet-tag">a confirmar</span></div>`;
-        if(bettoReach.length) h+=`<div class="acphlist">`+bettoReach.map(c=>`<span class="acphteam bet-win">${FLAG[c]} ${NAME[c]} — acho que passa</span>`).join('')+`</div>`;
-        if(bettoFall.length)  h+=`<div class="acphlist">`+bettoFall.map(c=>`<span class="acphteam bet-out">${FLAG[c]} ${NAME[c]} — acho que cai</span>`).join('')+`</div>`;
+    // ---- VAGAS ABERTAS (a confirmar): confrontos reais que ainda vão preencher esta fase ----
+    if((partial || realSet.size===0) && PREV[k] && DISPLAY[PREV[k]]){
+      const predSetK=predSet;                 // quem EU projetei para ESTA fase
+      const pend=[];                           // jogos da fase anterior ainda sem resultado
+      for(const gid of DISPLAY[PREV[k]]){
+        if(REALSC[gid]) continue;              // já decidido -> vencedor já entrou nos confirmados
+        const r=RES[gid]; if(!r||!r.a||!r.b) continue;   // precisa dos 2 lados definidos
+        pend.push({gid, a:r.a, b:r.b});
+      }
+      if(pend.length){
+        h+=`<div class="acpbet"><div class="acpbet-h">Vagas em disputa · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
+        for(const p of pend){
+          const aWin=predSetK.has(p.a.code), bWin=predSetK.has(p.b.code);
+          const chip=(t,win)=>`<span class="acphteam ${win?'bet-win':'bet-out'}">${t.flag} ${t.name} ${win?'— acho que passa':'— acho que cai'}</span>`;
+          h+=`<div class="acpmatch">${chip(p.a,aWin)}<span class="acpvs">x</span>${chip(p.b,bWin)}</div>`;
+        }
         h+=`</div>`;
       }
     }
