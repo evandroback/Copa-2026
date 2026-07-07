@@ -223,6 +223,7 @@ footer b{color:var(--mut)}
 .accphase{background:var(--surf);border:1px solid var(--line);border-radius:12px;padding:13px 14px;margin-bottom:10px}
 .acphh{display:flex;align-items:center;justify-content:space-between}
 .acphn{font-family:"Twemoji Country Flags",Archivo;font-weight:800;font-size:15px;color:var(--txt)}
+.acphpart{font-family:Archivo;font-weight:800;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut2);background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:5px;padding:1px 6px;vertical-align:middle}
 .acphp{font-family:"Twemoji Country Flags",Archivo;font-weight:900;font-size:22px;color:var(--gold)}
 .acphsub{font-size:12px;color:var(--mut);margin:2px 0 8px}
 .acphbar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:9px}
@@ -1349,15 +1350,22 @@ function accGroupsHTML(){
   return h;
 }
 function realByPhase(){
+  // "Quem CHEGOU à fase X" (semântica A):
+  //  - R32: os 32 classificados do grupo = todos que disputaram algum jogo de R32 (os dois lados).
+  //  - R16..F: os VENCEDORES da fase anterior (quem foi eliminado NÃO chegou à fase seguinte).
+  //  - CH: o vencedor da Final.
   const bp={R32:new Set(),R16:new Set(),QF:new Set(),SF:new Set(),F:new Set(),CH:new Set()};
+  const NEXT={R32:'R16',R16:'QF',QF:'SF',SF:'F',F:'CH'};
   for(const j of (KO_REAL||[])){
-    if(bp[j.ph]){ if(j.h)bp[j.ph].add(j.h); if(j.a)bp[j.ph].add(j.a); }
-    if(j.ph==='F'&&j.w) bp.CH.add(j.w);
+    if(j.ph==='R32'){ if(j.h)bp.R32.add(j.h); if(j.a)bp.R32.add(j.a); }  // caso especial: todos disputam
+    const nx=NEXT[j.ph];
+    if(nx&&j.w) bp[nx].add(j.w);   // vencedor da fase j.ph -> chegou à fase seguinte
   }
   return bp;
 }
 function accKOHTML(){
   const real=realByPhase();
+  const FULL={R32:32,R16:16,QF:8,SF:4,F:2,CH:1};   // quantos chegam quando a fase fecha
   const order=[['R32','16-avos de final'],['R16','Oitavas de final'],['QF','Quartas de final'],['SF','Semifinais'],['F','Final'],['CH','Campeão']];
   const active=order.filter(([k])=> real[k]&&real[k].size>0);
   if(!active.length) return `<div class="accempty">O mata-mata ainda não começou.<br>Quando os 16-avos arrancarem, a precisão do palpite <b>por fase</b> aparece aqui sozinha — comparando quem eu projetei em cada fase com quem realmente chegou.</div>`;
@@ -1367,15 +1375,17 @@ function accKOHTML(){
     const hit=[...realSet].filter(c=>predSet.has(c));
     const surp=[...realSet].filter(c=>!predSet.has(c));
     const pct=realSet.size?Math.round(hit.length/realSet.size*100):0;
-    const noun = k==='CH'?'o campeão':`os ${realSet.size} que chegaram`;
-    h+=`<div class="accphase"><div class="acphh"><span class="acphn">${label}</span><span class="acphp">${pct}%</span></div>`+
+    const full=FULL[k]||realSet.size;
+    const partial = realSet.size < full;
+    const noun = k==='CH'?'o campeão':(partial?`dos ${realSet.size} já definidos (de ${full})`:`os ${realSet.size} que chegaram`);
+    h+=`<div class="accphase"><div class="acphh"><span class="acphn">${label}${partial?' <span class="acphpart">parcial</span>':''}</span><span class="acphp">${pct}%</span></div>`+
        `<div class="acphsub">acertei <b>${hit.length}</b> de ${realSet.size} — ${noun}</div>`+
        `<div class="acphbar"><div class="acphfill" style="width:${pct}%"></div></div>`;
     if(hit.length){ h+=`<div class="acphlist">`+hit.map(c=>`<span class="acphteam hit">${FLAG[c]} ${NAME[c]} ✓</span>`).join('')+`</div>`; }
     if(surp.length){ h+=`<div class="acphlist">`+surp.map(c=>`<span class="acphteam miss">${FLAG[c]} ${NAME[c]} ✗</span>`).join('')+`</div>`; }
     h+=`</div>`;
   }
-  h+=`<div class="acphnote">✓ = projetei nesta fase e o time chegou · ✗ = chegou, mas eu não projetava. Aqui a métrica é <b>"quem alcança cada fase"</b> — não o placar do jogo — porque no mata-mata o confronto previsto pode nem acontecer.</div>`;
+  h+=`<div class="acphnote">✓ = projetei nesta fase e o time chegou · ✗ = chegou, mas eu não projetava. "Chegou à fase" = venceu a fase anterior. Métrica de <b>quem alcança cada fase</b>, não de placar. <b>parcial</b> = ainda há jogos da fase anterior em aberto.</div>`;
   return h;
 }
 function renderAccuracy(){
