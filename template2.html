@@ -229,8 +229,10 @@ footer b{color:var(--mut)}
 .acpbet-tag{font-family:Archivo;font-weight:800;font-size:8.5px;letter-spacing:.06em;color:var(--gold);background:rgba(226,180,87,.12);border:1px solid rgba(226,180,87,.3);border-radius:5px;padding:1px 6px}
 .acphteam.bet-win{color:var(--live);background:rgba(63,214,139,.08);border:1px dashed rgba(63,214,139,.4)}
 .acphteam.bet-out{color:var(--mut);background:rgba(255,255,255,.03);border:1px dashed var(--line2)}
-.acpmatch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
-.acpvs{font-family:Archivo;font-weight:800;font-size:10px;color:var(--mut2);flex:none}
+.acpmatch{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:7px}
+.acpmatch .acphteam{white-space:normal}
+.acpvs{font-family:Archivo;font-weight:800;font-size:10px;color:var(--mut2);text-align:center}
+@media(max-width:520px){.acpmatch{grid-template-columns:1fr}.acpmatch .acpvs{display:none}}
 .acpbet-tag.proj{color:var(--mut);background:rgba(255,255,255,.05);border-color:var(--line2)}
 .acphp{font-family:"Twemoji Country Flags",Archivo;font-weight:900;font-size:22px;color:var(--gold)}
 .acphsub{font-size:12px;color:var(--mut);margin:2px 0 8px}
@@ -1358,16 +1360,15 @@ function accGroupsHTML(){
   return h;
 }
 function realByPhase(){
-  // "Quem CHEGOU à fase X" (semântica A):
-  //  - R32: os 32 classificados do grupo = todos que disputaram algum jogo de R32 (os dois lados).
-  //  - R16..F: os VENCEDORES da fase anterior (quem foi eliminado NÃO chegou à fase seguinte).
-  //  - CH: o vencedor da Final.
+  // "Quem CHEGOU à fase X" (interpretação B): venceu o jogo DA PRÓPRIA fase X.
+  //  - R32: exceção — vieram dos grupos, então "chegou" = disputou algum jogo de R32 (os 2 lados).
+  //  - R16..F: chegou = VENCEU o jogo daquela fase (j.w do jogo cuja ph===X).
+  //  - CH: venceu a final.
   const bp={R32:new Set(),R16:new Set(),QF:new Set(),SF:new Set(),F:new Set(),CH:new Set()};
-  const NEXT={R32:'R16',R16:'QF',QF:'SF',SF:'F',F:'CH'};
   for(const j of (KO_REAL||[])){
-    if(j.ph==='R32'){ if(j.h)bp.R32.add(j.h); if(j.a)bp.R32.add(j.a); }  // caso especial: todos disputam
-    const nx=NEXT[j.ph];
-    if(nx&&j.w) bp[nx].add(j.w);   // vencedor da fase j.ph -> chegou à fase seguinte
+    if(j.ph==='R32'){ if(j.h)bp.R32.add(j.h); if(j.a)bp.R32.add(j.a); }  // 16-avos: quem disputou
+    if(bp[j.ph] && j.w) bp[j.ph].add(j.w);   // venceu o jogo desta fase -> confirmado nela
+    if(j.ph==='F' && j.w) bp.CH.add(j.w);
   }
   return bp;
 }
@@ -1387,8 +1388,9 @@ function realEliminated(){
 function accKOHTML(){
   const real=realByPhase();
   const dead=realEliminated();
-  const FULL={R32:32,R16:16,QF:8,SF:4,F:2,CH:1};   // quantos chegam quando a fase fecha
+  const FULL={R32:32,R16:8,QF:4,SF:2,F:1,CH:1};   // quantos CONFIRMAM cada fase (vencedores); R32=classificados
   const PREV={R16:'R32',QF:'R16',SF:'QF',F:'SF',CH:'F'};
+  const winByN={}; for(const j of (KO_REAL||[])) if(j.n!=null && j.w) winByN[j.n]=j.w;  // vencedor real por jogo
   const order=[['R32','16-avos de final'],['R16','Oitavas de final'],['QF','Quartas de final'],['SF','Semifinais'],['F','Final'],['CH','Campeão']];
   const active=order.filter(([k])=> (real[k]&&real[k].size>0) || (PRED_PHASES[k]&&PRED_PHASES[k].length>0));
   if(!active.length) return `<div class="accempty">O mata-mata ainda não começou.<br>Quando os 16-avos arrancarem, a precisão do palpite <b>por fase</b> aparece aqui sozinha — comparando quem eu projetei em cada fase com quem realmente chegou.</div>`;
@@ -1406,20 +1408,19 @@ function accKOHTML(){
     if(realSet.size) h+=`<div class="acphsub">acertei <b>${hit.length}</b> de ${realSet.size} — ${noun}</div><div class="acphbar"><div class="acphfill" style="width:${pct}%"></div></div>`;
     if(hit.length){ h+=`<div class="acphlist">`+hit.map(c=>`<span class="acphteam hit">${FLAG[c]} ${NAME[c]} ✓</span>`).join('')+`</div>`; }
     if(surp.length){ h+=`<div class="acphlist">`+surp.map(c=>`<span class="acphteam miss">${FLAG[c]} ${NAME[c]} ✗</span>`).join('')+`</div>`; }
-    // ---- VAGAS ABERTAS ----
-    // Um confronto da fase k é REAL e pendente quando: o jogo (em DISPLAY[k]) ainda não tem
-    // resultado, MAS os dois jogos que o alimentam (feeders) já têm resultado real.
-    // Isso só ocorre na 1ª fase ainda aberta. Nas demais, mostro só a LISTA do meu palpite.
+    // ---- VAGAS EM DISPUTA ----
+    // Confronto REAL pendente da fase k = jogo de DISPLAY[k] sem resultado cujos DOIS lados já
+    // são reais (os feeders já foram vencidos). Os lados = VENCEDORES REAIS dos feeders (não projeção).
     if((partial || realSet.size===0) && DISPLAY[k]){
       const predSetK=predSet;
       const realPend=[];
       for(const gid of DISPLAY[k]){
-        if(REALSC[gid]) continue;                        // já jogado
-        const r=RES[gid]; if(!r||!r.a||!r.b) continue;
-        const feeders=[KO[gid].a,KO[gid].b].map(s=>s&&s.win).filter(x=>x!=null);
-        const bothReal = feeders.length===2 && feeders.every(fg=>REALSC[fg]);
-        const noFeeders = feeders.length===0;            // R32: alimentado pelos grupos (real)
-        if(bothReal || noFeeders) realPend.push({a:r.a,b:r.b});
+        if(REALSC[gid]) continue;                        // já jogado -> vencedor nos confirmados
+        const fA=KO[gid].a&&KO[gid].a.win, fB=KO[gid].b&&KO[gid].b.win;
+        let a=null,b=null;
+        if(fA==null && fB==null){ const r=RES[gid]; a=r&&r.a; b=r&&r.b; }   // R32 (vem dos grupos)
+        else { const wa=winByN[fA], wb=winByN[fB]; if(!wa||!wb) continue; a=team(wa); b=team(wb); }
+        if(a&&b) realPend.push({a,b});
       }
       if(realPend.length){
         h+=`<div class="acpbet"><div class="acpbet-h">Vagas em disputa · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
@@ -1438,7 +1439,7 @@ function accKOHTML(){
     }
     h+=`</div>`;
   }
-  h+=`<div class="acphnote">✓ = projetei nesta fase e o time chegou · ✗ = chegou, mas eu não projetava. "Chegou à fase" = venceu a fase anterior. O bloco <b>a confirmar</b> é só o meu palpite inicial (do chaveamento) para os jogos que ainda não aconteceram — não entra na conta do %.</div>`;
+  h+=`<div class="acphnote">✓ = projetei este vencedor e ele venceu · ✗ = venceu, mas eu não projetava. "Chegou à fase" = <b>venceu o jogo daquela fase</b>. O bloco <b>a confirmar</b> mostra os confrontos reais ainda não jogados com o meu palpite — não entra na conta do %.</div>`;
   return h;
 }
 function renderAccuracy(){
