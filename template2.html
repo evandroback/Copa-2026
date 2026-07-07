@@ -1360,15 +1360,16 @@ function accGroupsHTML(){
   return h;
 }
 function realByPhase(){
-  // "Quem CHEGOU à fase X" (interpretação B): venceu o jogo DA PRÓPRIA fase X.
-  //  - R32: exceção — vieram dos grupos, então "chegou" = disputou algum jogo de R32 (os 2 lados).
-  //  - R16..F: chegou = VENCEU o jogo daquela fase (j.w do jogo cuja ph===X).
-  //  - CH: venceu a final.
+  // "Quem CHEGOU à fase X" (interpretação A): quem ENTROU/disputa a fase X.
+  //  - R32: os 32 classificados dos grupos (quem disputou algum jogo de R32).
+  //  - R16..F: os VENCEDORES da fase ANTERIOR (quem venceu R32 disputa R16, etc.).
+  //  - CH: o vencedor da Final.
   const bp={R32:new Set(),R16:new Set(),QF:new Set(),SF:new Set(),F:new Set(),CH:new Set()};
+  const NEXT={R32:'R16',R16:'QF',QF:'SF',SF:'F',F:'CH'};
   for(const j of (KO_REAL||[])){
-    if(j.ph==='R32'){ if(j.h)bp.R32.add(j.h); if(j.a)bp.R32.add(j.a); }  // 16-avos: quem disputou
-    if(bp[j.ph] && j.w) bp[j.ph].add(j.w);   // venceu o jogo desta fase -> confirmado nela
-    if(j.ph==='F' && j.w) bp.CH.add(j.w);
+    if(j.ph==='R32'){ if(j.h)bp.R32.add(j.h); if(j.a)bp.R32.add(j.a); }  // disputaram os 16-avos
+    const nx=NEXT[j.ph];
+    if(nx && j.w) bp[nx].add(j.w);   // venceu a fase j.ph -> disputa a fase seguinte
   }
   return bp;
 }
@@ -1388,7 +1389,7 @@ function realEliminated(){
 function accKOHTML(){
   const real=realByPhase();
   const dead=realEliminated();
-  const FULL={R32:32,R16:8,QF:4,SF:2,F:1,CH:1};   // quantos CONFIRMAM cada fase (vencedores); R32=classificados
+  const FULL={R32:32,R16:16,QF:8,SF:4,F:2,CH:1};   // quantos ENTRAM em cada fase quando ela fecha
   const PREV={R16:'R32',QF:'R16',SF:'QF',F:'SF',CH:'F'};
   const winByN={}; for(const j of (KO_REAL||[])) if(j.n!=null && j.w) winByN[j.n]=j.w;  // vencedor real por jogo
   const order=[['R32','16-avos de final'],['R16','Oitavas de final'],['QF','Quartas de final'],['SF','Semifinais'],['F','Final'],['CH','Campeão']];
@@ -1412,7 +1413,9 @@ function accKOHTML(){
     // Confronto REAL pendente da fase k = jogo de DISPLAY[k] sem resultado cujos DOIS lados já
     // são reais (os feeders já foram vencidos). Os lados = VENCEDORES REAIS dos feeders (não projeção).
     if((partial || realSet.size===0) && DISPLAY[k]){
-      const predSetK=predSet;
+      const NEXT={R32:'R16',R16:'QF',QF:'SF',SF:'F',F:'CH'};
+      // "passar da fase k" = estar projetado na fase SEGUINTE (k+1). Ex: vencer a oitava = estar nas quartas do meu palpite.
+      const advSet=new Set(PRED_PHASES[NEXT[k]]||[]);
       const realPend=[];
       for(const gid of DISPLAY[k]){
         if(REALSC[gid]) continue;                        // já jogado -> vencedor nos confirmados
@@ -1426,7 +1429,7 @@ function accKOHTML(){
         h+=`<div class="acpbet"><div class="acpbet-h">Vagas em disputa · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
         for(const p of realPend){
           const chip=(t,win)=>`<span class="acphteam ${win?'bet-win':'bet-out'}">${t.flag} ${t.name} ${win?'— acho que passa':'— acho que cai'}</span>`;
-          h+=`<div class="acpmatch">${chip(p.a,predSetK.has(p.a.code))}<span class="acpvs">x</span>${chip(p.b,predSetK.has(p.b.code))}</div>`;
+          h+=`<div class="acpmatch">${chip(p.a,advSet.has(p.a.code))}<span class="acpvs">x</span>${chip(p.b,advSet.has(p.b.code))}</div>`;
         }
         h+=`</div>`;
       } else {
