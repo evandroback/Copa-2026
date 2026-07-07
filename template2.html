@@ -230,6 +230,16 @@ footer b{color:var(--mut)}
 .acphteam.bet-win{color:var(--live);background:rgba(63,214,139,.08);border:1px dashed rgba(63,214,139,.4)}
 .acphteam.bet-out{color:var(--mut);background:rgba(255,255,255,.03);border:1px dashed var(--line2)}
 .acpmatch{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;margin-bottom:7px}
+.acpcols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:560px){.acpcols{grid-template-columns:1fr;gap:14px}}
+.acpcol-h{font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:7px}
+.acpcol.up .acpcol-h{color:var(--live)} .acpcol.down .acpcol-h{color:var(--copa)}
+.acpdot{width:7px;height:7px;border-radius:50%;flex:none}
+.acpdot.up{background:var(--live)} .acpdot.down{background:var(--copa)}
+.acprow{font-size:13px;font-weight:600;padding:7px 11px;border-radius:9px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.acprow.up{color:var(--live);background:rgba(63,214,139,.08);border:1px solid rgba(63,214,139,.22)}
+.acprow.down{color:var(--mut);background:rgba(255,255,255,.03);border:1px solid var(--line2)}
+.acpforce{margin-left:auto;font-family:Archivo;font-weight:800;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--gold);background:rgba(226,180,87,.12);border:1px solid rgba(226,180,87,.3);border-radius:5px;padding:1px 6px}
 .acpmatch .acphteam{white-space:normal}
 .acpvs{font-family:Archivo;font-weight:800;font-size:10px;color:var(--mut2);text-align:center}
 @media(max-width:520px){.acpmatch{grid-template-columns:1fr}.acpmatch .acpvs{display:none}}
@@ -1416,28 +1426,33 @@ function accKOHTML(){
     const prev=PREV[k];
     if((partial || realSet.size===0) && prev && DISPLAY[prev]){
       const chegaSet=new Set(PRED_PHASES[k]||[]);   // quem EU projetei chegar a ESTA fase
-      const realPend=[];
+      const up=[], down=[];   // up = podem chegar · down = devem cair
       for(const gid of DISPLAY[prev]){
-        if(REALSC[gid]) continue;                        // jogo da fase anterior já decidido -> vencedor já é confirmado de k
+        if(REALSC[gid]) continue;                        // jogo já decidido -> vencedor já é confirmado
         const fA=KO[gid].a&&KO[gid].a.win, fB=KO[gid].b&&KO[gid].b.win;
         let a=null,b=null;
         if(fA==null && fB==null){ const r=RES[gid]; a=r&&r.a; b=r&&r.b; }   // R32 vem dos grupos
         else { const wa=winByN[fA], wb=winByN[fB]; if(!wa||!wb) continue; a=team(wa); b=team(wb); }
-        if(a&&b) realPend.push({a,b});
+        if(!a||!b) continue;
+        const aMine=chegaSet.has(a.code), bMine=chegaSet.has(b.code);
+        if(aMine && !bMine){ up.push({t:a}); down.push({t:b}); }
+        else if(bMine && !aMine){ up.push({t:b}); down.push({t:a}); }
+        else {
+          // vaga órfã: meu palpite não cobriu (ou cobriu os dois) -> favorito por FORÇA preenche
+          const favA = (F[a.code]||0) >= (F[b.code]||0);
+          const fav = favA?a:b, oth = favA?b:a;
+          up.push({t:fav, force:true}); down.push({t:oth});
+        }
       }
-      if(realPend.length){
-        h+=`<div class="acpbet"><div class="acpbet-h">Quem chega aqui · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
-        for(const p of realPend){
-          const chip=(t,win)=>`<span class="acphteam ${win?'bet-win':'bet-out'}">${t.flag} ${t.name} ${win?'— acho que chega':'— acho que não'}</span>`;
-          h+=`<div class="acpmatch">${chip(p.a,chegaSet.has(p.a.code))}<span class="acpvs">x</span>${chip(p.b,chegaSet.has(p.b.code))}</div>`;
-        }
-        h+=`</div>`;
-      } else {
-        const proj=[...new Set(PRED_PHASES[k]||[])].filter(c=>!dead.has(c));  // fase distante: só projeção
-        if(proj.length){
-          h+=`<div class="acpbet"><div class="acpbet-h">No meu palpite, chegam aqui <span class="acpbet-tag proj">projeção</span></div>`+
-             `<div class="acphlist">`+proj.map(c=>`<span class="acphteam bet-win">${FLAG[c]} ${NAME[c]}</span>`).join('')+`</div></div>`;
-        }
+      if(up.length || down.length){
+        const restam = up.length; // quantas vagas ainda abrem
+        h+=`<div class="acpbet"><div class="acpbet-h">${realSet.size?`Faltam ${restam} vaga${restam>1?'s':''}`:'Meu palpite'} · quem chega <span class="acpbet-tag">a confirmar</span></div>`;
+        h+=`<div class="acpcols">`;
+        h+=`<div class="acpcol up"><div class="acpcol-h"><span class="acpdot up"></span>podem chegar</div>`+
+           up.map(o=>`<div class="acprow up">${o.t.flag} ${o.t.name}${o.force?'<span class="acpforce">força</span>':''}</div>`).join('')+`</div>`;
+        h+=`<div class="acpcol down"><div class="acpcol-h"><span class="acpdot down"></span>devem cair</div>`+
+           down.map(o=>`<div class="acprow down">${o.t.flag} ${o.t.name}</div>`).join('')+`</div>`;
+        h+=`</div></div>`;
       }
     }
     h+=`</div>`;
