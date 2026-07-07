@@ -231,6 +231,7 @@ footer b{color:var(--mut)}
 .acphteam.bet-out{color:var(--mut);background:rgba(255,255,255,.03);border:1px dashed var(--line2)}
 .acpmatch{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
 .acpvs{font-family:Archivo;font-weight:800;font-size:10px;color:var(--mut2);flex:none}
+.acpbet-tag.proj{color:var(--mut);background:rgba(255,255,255,.05);border-color:var(--line2)}
 .acphp{font-family:"Twemoji Country Flags",Archivo;font-weight:900;font-size:22px;color:var(--gold)}
 .acphsub{font-size:12px;color:var(--mut);margin:2px 0 8px}
 .acphbar{height:8px;border-radius:5px;background:rgba(255,255,255,.07);overflow:hidden;margin-bottom:9px}
@@ -1405,23 +1406,34 @@ function accKOHTML(){
     if(realSet.size) h+=`<div class="acphsub">acertei <b>${hit.length}</b> de ${realSet.size} — ${noun}</div><div class="acphbar"><div class="acphfill" style="width:${pct}%"></div></div>`;
     if(hit.length){ h+=`<div class="acphlist">`+hit.map(c=>`<span class="acphteam hit">${FLAG[c]} ${NAME[c]} ✓</span>`).join('')+`</div>`; }
     if(surp.length){ h+=`<div class="acphlist">`+surp.map(c=>`<span class="acphteam miss">${FLAG[c]} ${NAME[c]} ✗</span>`).join('')+`</div>`; }
-    // ---- VAGAS ABERTAS (a confirmar): confrontos reais que ainda vão preencher esta fase ----
-    if((partial || realSet.size===0) && PREV[k] && DISPLAY[PREV[k]]){
-      const predSetK=predSet;                 // quem EU projetei para ESTA fase
-      const pend=[];                           // jogos da fase anterior ainda sem resultado
-      for(const gid of DISPLAY[PREV[k]]){
-        if(REALSC[gid]) continue;              // já decidido -> vencedor já entrou nos confirmados
-        const r=RES[gid]; if(!r||!r.a||!r.b) continue;   // precisa dos 2 lados definidos
-        pend.push({gid, a:r.a, b:r.b});
+    // ---- VAGAS ABERTAS ----
+    // Um confronto da fase k é REAL e pendente quando: o jogo (em DISPLAY[k]) ainda não tem
+    // resultado, MAS os dois jogos que o alimentam (feeders) já têm resultado real.
+    // Isso só ocorre na 1ª fase ainda aberta. Nas demais, mostro só a LISTA do meu palpite.
+    if((partial || realSet.size===0) && DISPLAY[k]){
+      const predSetK=predSet;
+      const realPend=[];
+      for(const gid of DISPLAY[k]){
+        if(REALSC[gid]) continue;                        // já jogado
+        const r=RES[gid]; if(!r||!r.a||!r.b) continue;
+        const feeders=[KO[gid].a,KO[gid].b].map(s=>s&&s.win).filter(x=>x!=null);
+        const bothReal = feeders.length===2 && feeders.every(fg=>REALSC[fg]);
+        const noFeeders = feeders.length===0;            // R32: alimentado pelos grupos (real)
+        if(bothReal || noFeeders) realPend.push({a:r.a,b:r.b});
       }
-      if(pend.length){
+      if(realPend.length){
         h+=`<div class="acpbet"><div class="acpbet-h">Vagas em disputa · meu palpite <span class="acpbet-tag">a confirmar</span></div>`;
-        for(const p of pend){
-          const aWin=predSetK.has(p.a.code), bWin=predSetK.has(p.b.code);
+        for(const p of realPend){
           const chip=(t,win)=>`<span class="acphteam ${win?'bet-win':'bet-out'}">${t.flag} ${t.name} ${win?'— acho que passa':'— acho que cai'}</span>`;
-          h+=`<div class="acpmatch">${chip(p.a,aWin)}<span class="acpvs">x</span>${chip(p.b,bWin)}</div>`;
+          h+=`<div class="acpmatch">${chip(p.a,predSetK.has(p.a.code))}<span class="acpvs">x</span>${chip(p.b,predSetK.has(p.b.code))}</div>`;
         }
         h+=`</div>`;
+      } else {
+        const proj=[...predSet].filter(c=>!dead.has(c));  // fase distante: só projeção, sem confronto
+        if(proj.length){
+          h+=`<div class="acpbet"><div class="acpbet-h">No meu palpite, chegam aqui <span class="acpbet-tag proj">projeção</span></div>`+
+             `<div class="acphlist">`+proj.map(c=>`<span class="acphteam bet-win">${FLAG[c]} ${NAME[c]}</span>`).join('')+`</div></div>`;
+        }
       }
     }
     h+=`</div>`;
