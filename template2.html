@@ -1480,16 +1480,16 @@ function accSummaryHTML(){
   const gPct=gTotal?Math.round(gHits/gTotal*100):null;
 
   const real=realByPhase();
-  const koOrder=['R32','R16','QF','SF','F'];
-  let r32Hit=0,r32Tot=0, koHit=0, koTot=0;
-  for(const k of koOrder){
+  const koPhases=[['R32','🎟️ 16-avos','classificados'],['R16','🏅 Oitavas','classificados'],
+    ['QF','🎯 Quartas','classificados'],['SF','🔥 Semis','classificados'],['F','🏆 Final','finalistas']];
+  const rows=[];
+  let koHit=0, koTot=0;
+  for(const [k,label,noun] of koPhases){
     const realSet=real[k]||new Set(), predSet=new Set(PRED_PHASES[k]||[]);
     const hit=[...realSet].filter(c=>predSet.has(c)).length, tot=realSet.size;
-    if(k==='R32'){ r32Hit=hit; r32Tot=tot; }
     koHit+=hit; koTot+=tot;
+    rows.push([label, tot?Math.round(hit/tot*100):null, tot?`${hit}/${tot} ${noun}`:'ainda não começou']);
   }
-  const r32Pct=r32Tot?Math.round(r32Hit/r32Tot*100):null;
-  const koPct=koTot?Math.round(koHit/koTot*100):null;
   const overHits=gHits+koHit, overTot=gTotal+koTot;
   const overPct=overTot?Math.round(overHits/overTot*100):null;
 
@@ -1497,8 +1497,7 @@ function accSummaryHTML(){
   let h=`<div class="accsumbox"><div class="accsumh">📊 % de acerto por fase</div>`;
   h+=`<table class="accsumtab"><thead><tr><th>Fase</th><th>Acerto</th><th></th></tr></thead><tbody>`;
   h+=row('⚽ Grupos', gPct, gTotal?`${gHits}/${gTotal} jogos`:'sem jogos ainda');
-  h+=row('🎟️ 16-avos', r32Pct, r32Tot?`${r32Hit}/${r32Tot} classificados`:'ainda não começou');
-  h+=row('🏆 Até a final', koPct, koTot?`${koHit}/${koTot} vagas no mata-mata`:'ainda não começou');
+  rows.forEach(([label,pct,sub])=> h+=row(label,pct,sub));
   h+=`</tbody></table>`;
   h+=`<div class="accsumavg"><span class="accsumavglab">Média geral da Copa</span><span class="accsumavgval">${overPct==null?'—':overPct+'%'}</span></div>`;
   h+=`</div>`;
