@@ -575,8 +575,8 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
 
   <div class="bar">
     <div class="tabs">
-      <button class="tab on" id="tabGroups">Grupos</button>
-      <button class="tab" id="tabKO">Chaveamento</button>
+      <button class="tab" id="tabGroups">Grupos</button>
+      <button class="tab on" id="tabKO">Chaveamento</button>
       <button class="tab" id="tabProb">Favoritos</button>
       <button class="tab" id="tabNumbers">Números</button>
       <button class="tab" id="tabPlayers">Jogadores</button>
@@ -587,13 +587,13 @@ td.l .proteam:hover .nm{text-decoration:underline;text-decoration-color:var(--go
     </div>
   </div>
 
-  <section class="panel" id="secGroups">
+  <section class="panel hidden" id="secGroups">
     <div class="panel-actions"><button class="btn btn-blank">Zerar o que falta</button><button class="btn gold btn-restore">Restaurar palpite</button></div>
     <div class="hint"><span class="real">FIM</span> = resultado real, travado. Nos jogos de palpite, ajuste o placar nos botões <b>+</b>/<b>−</b> — tudo recalcula na hora. <b>Toque em qualquer seleção</b> para ver a história dela nas Copas.</div>
     <div class="gridg" id="groupsGrid"></div>
   </section>
 
-  <section class="panel hidden" id="secKO">
+  <section class="panel" id="secKO">
     <div class="panel-actions"><button class="btn btn-blank">Zerar o que falta</button><button class="btn gold btn-restore">Restaurar palpite</button></div>
     <div class="korow">
       <div class="follow">Seguir seleção: <select id="followSel"></select></div>
@@ -760,7 +760,7 @@ const KO_IDS=Object.keys(KO).map(Number).sort((x,y)=>x-y);
 const DISPLAY={R32:[74,77,73,75,83,84,81,82,76,78,79,80,86,88,85,87],R16:[89,90,93,94,91,92,95,96],QF:[97,98,99,100],SF:[101,102],F:[104]};
 const RTITLE={R32:"32-avos",R16:"Oitavas",QF:"Quartas",SF:"Semis",F:"Final"};
 
-let state={ games:clone(GAMES0), edits:{}, manual:{}, follow:"BRA", tab:"groups", blank:false, pathCode:"BRA" };
+let state={ games:clone(GAMES0), edits:{}, manual:{}, follow:"BRA", tab:"ko", blank:false, pathCode:"BRA" };
 
 // ---- classificação ----
 let TAB={};
@@ -1894,7 +1894,7 @@ function shareImage(){
   },'image/png');
 }
 var _sb=document.getElementById('shareBtn'); if(_sb) _sb.onclick=shareImage;
-(async function(){ await loadSaved(); buildFollow(); renderAll(); setTab(state.tab||'groups'); })();
+(async function(){ await loadSaved(); buildFollow(); renderAll(); setTab(state.tab||'ko'); })();
 </script>
 </body>
 </html>
